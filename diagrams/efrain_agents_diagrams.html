@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Efrain AI — Diagramas por Agente</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'IBM Plex Sans',sans-serif;min-height:100vh}
+header{padding:1.5rem 2rem 1rem;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:2rem;flex-wrap:wrap}
+header h1{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;color:#58a6ff}
+header p{font-size:0.78rem;color:#7d8590;font-family:'IBM Plex Mono',monospace}
+.agent-nav{display:flex;padding:0 2rem;border-bottom:1px solid #21262d;background:#0d1117;position:sticky;top:0;z-index:20;overflow-x:auto}
+.anav{padding:0.7rem 1rem;cursor:pointer;font-size:0.75rem;color:#7d8590;border-bottom:3px solid transparent;transition:all 0.15s;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.anav:hover{color:#e6edf3}
+.anav.a1.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.anav.a2.active{color:#f0883e;border-bottom-color:#f0883e}
+.anav.a3.active{color:#a371f7;border-bottom-color:#a371f7}
+.anav.a4.active{color:#f85149;border-bottom-color:#f85149}
+.anav.a5.active{color:#3fb950;border-bottom-color:#3fb950}
+.anav.a6.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.panel{display:none;padding:1.75rem 2rem}
+.panel.active{display:block}
+.agent-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.25rem;margin-bottom:1.75rem}
+.agent-title{display:flex;flex-direction:column;gap:0.25rem}
+.agent-num{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:#7d8590;letter-spacing:2px;text-transform:uppercase}
+.agent-name{font-size:1.5rem;font-weight:700;line-height:1}
+.agent-role{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#7d8590}
+.meta-pills{display:flex;flex-wrap:wrap;gap:0.5rem}
+.pill{padding:0.3rem 0.65rem;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;background:#161b22;border:1px solid #21262d;color:#7d8590}
+.pill span{color:#e6edf3;font-weight:600}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+@media(max-width:860px){.two-col,.three-col{grid-template-columns:1fr}}
+.card{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:1.1rem}
+.card-title{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#7d8590;margin-bottom:0.85rem}
+.io-row{display:flex;flex-direction:column;gap:0.4rem}
+.io-item{display:flex;align-items:flex-start;gap:0.5rem;font-size:0.78rem;padding:0.45rem 0.6rem;border-radius:4px;background:#0d1117}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;padding:0.12rem 0.38rem;border-radius:3px;white-space:nowrap;flex-shrink:0;font-weight:600}
+.in-badge{background:#1c3a2e;color:#3fb950}
+.out-badge{background:#1e2d4a;color:#58a6ff}
+.mcp-badge{background:#2d1f3d;color:#a371f7}
+.err-badge{background:#3d1a1a;color:#f85149}
+.diagram-wrap{background:#161b22;border:1px solid #21262d;border-radius:8px;padding:1.5rem;overflow-x:auto;margin-bottom:1.25rem}
+.diagram-wrap .mermaid{display:flex;justify-content:center}
+.section-title{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#7d8590;margin-bottom:0.85rem;margin-top:1.25rem}
+.fallback-row{display:flex;flex-direction:column;gap:0.5rem}
+.fb-item{display:flex;gap:0.65rem;align-items:flex-start;padding:0.6rem 0.75rem;border-radius:6px;border-left:3px solid}
+.fb-l1{background:#0f1a2e;border-color:#2563eb}
+.fb-l2{background:#1a1a0f;border-color:#d97706}
+.fb-last{background:#1a0f0f;border-color:#dc2626}
+.fb-mnpi{background:#2a0808;border-color:#7f1d1d}
+.fb-label{font-family:'IBM Plex Mono',monospace;font-size:0.67rem;font-weight:600;white-space:nowrap;margin-top:0.05rem}
+.fb-l1 .fb-label{color:#3b82f6}
+.fb-l2 .fb-label{color:#f59e0b}
+.fb-last .fb-label,.fb-mnpi .fb-label{color:#ef4444}
+.fb-text{font-size:0.76rem;color:#9ca3af;line-height:1.4}
+.fb-adj{font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:#6b7280;margin-top:0.2rem}
+.dtable{width:100%;border-collapse:collapse;font-size:0.76rem}
+.dtable th{text-align:left;padding:0.45rem 0.65rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:#7d8590;border-bottom:1px solid #21262d;text-transform:uppercase}
+.dtable td{padding:0.5rem 0.65rem;border-bottom:1px solid #0d1117;color:#e6edf3}
+.dtable tr:hover td{background:#0d1117}
+.cc{font-family:'IBM Plex Mono',monospace;color:#58a6ff;font-size:0.73rem}
+.cg{color:#3fb950}.cr{color:#f85149}.co{color:#f0883e}
+.thresh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.6rem}
+.thresh{background:#0d1117;border:1px solid #21262d;border-radius:5px;padding:0.6rem 0.8rem}
+.thresh .k{font-size:0.65rem;color:#7d8590;font-family:'IBM Plex Mono',monospace;margin-bottom:0.15rem}
+.thresh .v{font-size:0.95rem;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.tv-g{color:#3fb950}.tv-o{color:#f0883e}.tv-r{color:#f85149}.tv-b{color:#58a6ff}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>EFRAIN AI — Diagramas por Agente</h1>
+  <p>v2.2.0 · 6 agentes · Feb 2026</p>
+</header>
+
+<div class="agent-nav">
+  <div class="anav a1 active" onclick="show(1)">01 SCOUT</div>
+  <div class="anav a2" onclick="show(2)">02 INTEL</div>
+  <div class="anav a3" onclick="show(3)">03 CRITICAL FACTOR</div>
+  <div class="anav a4" onclick="show(4)">04 FORENSIC</div>
+  <div class="anav a5" onclick="show(5)">05 VALUATION</div>
+  <div class="anav a6" onclick="show(6)">06 COMMUNICATION</div>
+</div>
+
+<!-- ══════════════════════ AGENT 1 SCOUT ══════════════════════ -->
+<div id="p1" class="panel active">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 01 — GATE</div>
+      <div class="agent-name" style="color:#58a6ff">SCOUT</div>
+      <div class="agent-role">coverage_universe_optimizer</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-sonnet-4-6</span></div>
+      <div class="pill">temp <span>0.2</span></div>
+      <div class="pill">costo <span>$0.003/run</span></div>
+      <div class="pill">latencia P50 <span>800ms</span></div>
+      <div class="pill">accuracy <span>82% a 85%</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["ticker + analyst_id + catalyst"]) --> S1
+
+    subgraph SCORE["ALPHA SCORE 0-100"]
+        S1["coverage_gap_score 0-25"] --> SUM["base_score"]
+        S2["market_cap_fit 0-20"] --> SUM
+        S3["sector_relevance 0-25"] --> SUM
+        S4["valuation_anomaly 0-30"] --> SUM
+        SUM --> GUNN{"EM flags?"}
+        GUNN -->|"2+ flags"| BONUS["gunn_bonus +10 pts/flag"]
+        GUNN -->|"0-1 flags"| NOBNS["gunn_bonus = 0"]
+        BONUS --> TOT["total_score"]
+        NOBNS --> TOT
+    end
+
+    TOT --> G{"total_score?"}
+    G -->|"menor 65"| D1(["DROP rescreen 90d"])
+    G -->|"65 a 70"| RZ(["REVIEW ZONE human decision"])
+    G -->|"70 o mas"| PRE["Pre-screen Forensic Quick"]
+
+    PRE --> QS{"Quick Scan result"}
+    QS -->|"BLOCK"| D2(["DROP no rescreen"])
+    QS -->|"CONDITIONAL"| RO["Reorient thesis alpha sube"]
+    QS -->|"PASS"| MD
+    RO --> MD
+
+    MD{"downstream_mode?"}
+    MD -->|"0-1 Gunn + catalyst"| VM(["VALENTINE horizon SHORT"])
+    MD -->|"2+ Gunn flags"| GM(["GUNN horizon COMPOUNDER"])
+    MD -->|"1 Gunn + catalyst"| DM(["DUAL horizon MEDIUM"])
+
+    style D1 fill:#7f1d1d,color:#fff,stroke:none
+    style D2 fill:#7f1d1d,color:#fff,stroke:none
+    style RZ fill:#78350f,color:#fff,stroke:none
+    style VM fill:#1e3a5f,color:#fff,stroke:none
+    style GM fill:#14532d,color:#fff,stroke:none
+    style DM fill:#3b1f6e,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">Inputs / Outputs / MCPs</div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge in-badge">IN</span>ticker + analyst_id</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>catalyst (free text)</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>idea_source_tag</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>financial_data_mcp</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>edgar_sec</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>world_bank_api</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Outputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge out-badge">OUT</span>alpha_score {base, gunn_bonus, total}</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>horizon_tag SHORT / MEDIUM / COMPOUNDER</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>downstream_mode</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>decision MUST_COVER / DROP / REVIEW_ZONE</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>rescreen_eligible_after</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>forensic_pre_result</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Umbrales</div>
+      <div class="thresh-grid">
+        <div class="thresh"><div class="k">MUST_COVER</div><div class="v tv-g">70 o mas</div></div>
+        <div class="thresh"><div class="k">REVIEW_ZONE</div><div class="v tv-o">65 a 70</div></div>
+        <div class="thresh"><div class="k">DROP</div><div class="v tv-r">menos 65</div></div>
+        <div class="thresh"><div class="k">Gunn bonus</div><div class="v tv-b">+10/flag</div></div>
+        <div class="thresh"><div class="k">Rescreen</div><div class="v">90 dias</div></div>
+        <div class="thresh"><div class="k">Coverage max</div><div class="v">25</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">financial_data_mcp timeout → cache local TTL 24h</div>
+        <div class="fb-adj">conf_adj: -0.05 · SCOUT_FINANCIAL_DATA_FROM_CACHE</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">world_bank_api caido → gunn_bonus = 0 conservative</div>
+        <div class="fb-adj">conf_adj: 0 · GUNN_BONUS_CONSERVATIVE_NO_GDP_DATA</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">Sin cache valida → alpha con solo EDGAR. market_cap = NULL, valuation_anomaly = 0</div>
+        <div class="fb-adj">conf_adj: -0.15 · SCOUT_PARTIAL_EDGAR_ONLY</div>
+      </div></div>
+      <div class="fb-item fb-last"><div class="fb-label">LAST</div><div>
+        <div class="fb-text">Todos MCPs caidos → formulario manual 5 campos al analista</div>
+        <div class="fb-adj">conf_adj: -0.25 · SCOUT_MANUAL_SCORING</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ AGENT 2 INTEL ══════════════════════ -->
+<div id="p2" class="panel">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 02 — SIGNAL</div>
+      <div class="agent-name" style="color:#f0883e">INTEL</div>
+      <div class="agent-role">information_hub</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-sonnet-4-6</span></div>
+      <div class="pill">temp <span>0.1</span></div>
+      <div class="pill">costo <span>$0.005/run</span></div>
+      <div class="pill">latencia P50 <span>1200ms</span></div>
+      <div class="pill">accuracy <span>79% a 82%</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["idea_id + ticker + horizon_tag"]) --> F1
+
+    subgraph FETCH["INGESTION 300 noticias/dia"]
+        F1["news_api tier-1 Bloomberg Reuters"] --> POOL
+        F2["news_api tier-2 The Information Axios"] --> POOL
+        F3["EDGAR 8-K recientes"] --> POOL
+        F4["CRM contacts briefings"] --> POOL
+        POOL[("raw news pool")]
+    end
+
+    POOL --> MN{"MNPI detectado?"}
+    MN -->|"SI"| HALT(["COMPLIANCE HALT mosaic_clear=false notify menos 30min"])
+    MN -->|"NO"| SC["news_score = keyword 25 + eps_impact 30 + source 25 + timeliness 20"]
+
+    SC --> TH{"score mayor 40?"}
+    TH -->|"NO"| SUP["suppressed_items++"]
+    TH -->|"SI"| BND["add to IntelBundle surfaced++"]
+
+    BND --> MG["mgmt_comm_score backward-from-customer"]
+
+    MG --> HY{"hipotesis para CF?"}
+    HY -->|"SI"| CT["asignar contacto CRM insight_rate mayor 0.30"]
+    HY -->|"NO"| OUT
+    CT --> OUT
+
+    OUT(["IntelBundle + Hypothesis list + mgmt_comm_score"])
+
+    OUT --> RT{"re-trigger mayor 2 en 15min?"}
+    RT -->|"SI"| BATCH["BATCH mode cooldown 15min"]
+    RT -->|"NO"| FIN(["bundle listo para CF"])
+
+    style HALT fill:#7f1d1d,color:#fff,stroke:none
+    style SUP fill:#1f2937,color:#6b7280,stroke:none
+    style BATCH fill:#78350f,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">Inputs / Outputs / Umbrales</div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge in-badge">IN</span>idea_id + ticker + horizon_tag</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>downstream_mode</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>news_api</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>edgar_sec 8-K</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>crm_contacts</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>world_bank_api macro EM</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Outputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge out-badge">OUT</span>IntelBundle surfaced_count + mosaic_clear</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>NewsItem[] score mayor 40</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>Hypothesis[] lifecycle=PENDING</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>mgmt_comm_score 0-100</div>
+        <div class="io-item"><span class="badge err-badge">HALT</span>COMPLIANCE_HALT si MNPI</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Umbrales</div>
+      <div class="thresh-grid">
+        <div class="thresh"><div class="k">news_score min</div><div class="v tv-g">40</div></div>
+        <div class="thresh"><div class="k">MNPI tolerance</div><div class="v tv-r">0</div></div>
+        <div class="thresh"><div class="k">signal/noise</div><div class="v tv-b">60%</div></div>
+        <div class="thresh"><div class="k">Cache TTL</div><div class="v">6h</div></div>
+        <div class="thresh"><div class="k">Cooldown</div><div class="v tv-o">15min</div></div>
+        <div class="thresh"><div class="k">insight_rate</div><div class="v">0.30+</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">rate limit → backoff 60s/120s/240s + bundle parcial desde cache TTL 6h</div>
+        <div class="fb-adj">conf_adj: -0.08 · INTEL_PARTIAL_RATE_LIMIT</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">CRM caido → hipotesis sin contacto, lifecycle = PENDING_CONTACT_UNAVAILABLE</div>
+        <div class="fb-adj">conf_adj: -0.05 · INTEL_CRM_UNAVAILABLE</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">news_api caido sin cache → solo EDGAR 8-K ultimos 30 dias</div>
+        <div class="fb-adj">conf_adj: -0.18 · INTEL_EDGAR_ONLY_NO_NEWS</div>
+      </div></div>
+      <div class="fb-item fb-last"><div class="fb-label">LAST</div><div>
+        <div class="fb-text">EDGAR tambien caido → analista provee 3 items manualmente</div>
+        <div class="fb-adj">conf_adj: -0.28 · INTEL_MANUAL_ANALYST_ITEMS</div>
+      </div></div>
+      <div class="fb-item fb-mnpi"><div class="fb-label">MNPI</div><div>
+        <div class="fb-text">Sin fallback. Item no se borra. Compliance notificado en menos de 30min.</div>
+        <div class="fb-adj">INTEL_MNPI_DETECTED · publication_possible = false</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ AGENT 3 CF ══════════════════════ -->
+<div id="p3" class="panel">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 03 — THESIS</div>
+      <div class="agent-name" style="color:#a371f7">CRITICAL FACTOR</div>
+      <div class="agent-role">thesis_engine</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-sonnet-4-6</span></div>
+      <div class="pill">temp <span>0.3</span></div>
+      <div class="pill">costo <span>$0.008/run</span></div>
+      <div class="pill">latencia P50 <span>2500ms Valentine / 5000ms Gunn</span></div>
+      <div class="pill">accuracy <span>76% a 80% mayor prioridad</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["IntelBundle + ForensicProfile + horizon_tag"]) --> MODE
+
+    MODE{"downstream_mode?"}
+    MODE -->|"valentine"| VF["factores eps_impact mayor 5pct horizon 12M"]
+    MODE -->|"gunn"| GF["factores eps_impact mayor 4pct horizon 5Y + BTL"]
+    MODE -->|"dual"| DF["Valentine factors + BTL components"]
+
+    VF --> FK
+    GF --> FK
+    DF --> FK
+
+    FK{"factores encontrados?"}
+    FK -->|"NO al 5pct"| RLX["relajar threshold a 3pct"]
+    RLX --> FK2{"factores al 3pct?"}
+    FK2 -->|"NO"| DROP(["DROP No material factors found"])
+    FK2 -->|"SI"| FAC["2-4 factores seleccionados"]
+    FK -->|"SI"| FAC
+
+    FAC --> BTL{"Gunn mode?"}
+    BTL -->|"SI"| BTS["Build-to-Last score Management + TAM + Moat"]
+    BTL -->|"NO"| SCN
+    BTS --> SCN
+
+    SCN["generar Bull + Base + Bear probs sum = 1.0"]
+
+    SCN --> PS{"sum = 1.0?"}
+    PS -->|"NO desv menor 10pct"| NRM["auto-normalizar proporcional"]
+    PS -->|"NO desv mayor 10pct"| RGN["re-generar escenarios"]
+    PS -->|"SI"| DLG
+    NRM --> DLG
+    RGN --> DLG
+
+    DLG{"hipotesis para Intel?"}
+    DLG -->|"SI"| VLD["CF envia hipotesis Intel valida con contactos"]
+    DLG -->|"NO"| EV
+    VLD --> LP{"loop mayor 2?"}
+    LP -->|"SI"| FC["force convergence UNRESOLVABLE"]
+    LP -->|"NO"| EV
+    FC --> EV
+
+    EV(["expected_value_pt listo para Valuation"])
+
+    style DROP fill:#7f1d1d,color:#fff,stroke:none
+    style NRM fill:#1a2a1a,color:#9ca3af,stroke:none
+    style RGN fill:#2a2a0a,color:#9ca3af,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">Inputs / Outputs / Umbrales</div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-title">Inputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge in-badge">IN</span>IntelBundle de Intel</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>ForensicProfile con flags</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>horizon_tag + downstream_mode</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>financial_data_mcp earnings</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>world_bank_api TAM EM</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Outputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge out-badge">OUT</span>CriticalFactor[] 2-4 factores</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>Scenario[] Bull/Base/Bear</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>expected_value_pt</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>build_to_last_score Gunn</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>Hypothesis[] lifecycle final</div>
+        <div class="io-item"><span class="badge err-badge">DROP</span>si cero factores materiales</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Umbrales</div>
+      <div class="thresh-grid">
+        <div class="thresh"><div class="k">EPS Valentine</div><div class="v tv-g">mayor 5%</div></div>
+        <div class="thresh"><div class="k">EPS Gunn</div><div class="v tv-g">mayor 4%</div></div>
+        <div class="thresh"><div class="k">EPS relajado</div><div class="v tv-o">mayor 3%</div></div>
+        <div class="thresh"><div class="k">Factores max</div><div class="v tv-b">4</div></div>
+        <div class="thresh"><div class="k">Prob norm tol</div><div class="v">10%</div></div>
+        <div class="thresh"><div class="k">Loop max</div><div class="v tv-o">2</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">Prob sum desviacion menor 10% → auto-normalizar proporcional</div>
+        <div class="fb-adj">conf_adj: -0.03 · CF_SCENARIO_PROBS_AUTO_NORMALIZED</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">Hypothesis loop mayor 2 rondas → force convergence UNRESOLVABLE_WITH_PUBLIC_DATA</div>
+        <div class="fb-adj">conf_adj: -0.12 · CF_HYPOTHESIS_LOOP_FORCED_CONVERGENCE</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">Prob sum desviacion mayor 10% → re-generar escenarios con prompt actualizado</div>
+        <div class="fb-adj">conf_adj: -0.08 · CF_SCENARIOS_REGENERATED</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">Build-to-Last incompleto Gunn → sub-scores faltantes = null, publicar si mayor 2/3 disponibles</div>
+        <div class="fb-adj">conf_adj: -0.15 · CF_GUNN_BUILD_TO_LAST_PARTIAL</div>
+      </div></div>
+      <div class="fb-item fb-last"><div class="fb-label">LAST</div><div>
+        <div class="fb-text">Cero factores al 3% → DROP. No hay tesis viable.</div>
+        <div class="fb-adj">decision: DROP · No material factors at relaxed threshold</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ AGENT 4 FORENSIC ══════════════════════ -->
+<div id="p4" class="panel">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 04 — RISK</div>
+      <div class="agent-name" style="color:#f85149">FORENSIC</div>
+      <div class="agent-role">risk_and_trust_engine</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-sonnet-4-6</span></div>
+      <div class="pill">temp <span>0.1</span></div>
+      <div class="pill">costo <span>$0.004 Quick / $0.080 Full</span></div>
+      <div class="pill">latencia <span>8s Quick / 120s Full</span></div>
+      <div class="pill">accuracy <span>88% a 90%</span></div>
+      <div class="pill">FP target <span>menos 5%</span></div>
+      <div class="pill">FN target <span>menos 2%</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["idea_id + run_mode"]) --> MD
+
+    MD{"run_mode?"}
+    MD -->|"PRE-SCREEN"| QS
+    MD -->|"FULL"| FS
+
+    subgraph QS["QUICK SCAN 8s"]
+        Q1["10-K delay check"] --> Q2["going concern flags"]
+        Q2 --> Q3["SEC investigation recent"]
+        Q3 --> QR{"critical flags?"}
+        QR -->|"SEV-5"| BQ(["BLOCK no reorientation no rescreen"])
+        QR -->|"SEV-3 o SEV-4"| CQ(["CONDITIONAL thesis reorientation posible"])
+        QR -->|"PASS"| PQ(["PASS continuar a FULL SCAN"])
+    end
+
+    subgraph FS["FULL SCAN 120s"]
+        F1["accrual ratio CF from operations"] --> F2["DSO expansion vs sector benchmark"]
+        F2 --> F3["auditor quality COB separation"]
+        F3 --> F4["insider transactions 30d pre-catalyst"]
+        F4 --> F5["governance score bloomberg + capiq"]
+        F5 --> F6["Shadow Test 3Y mgmt guidance vs actual"]
+    end
+
+    F6 --> FL["clasificar flags SEV 1-5"]
+    FL --> RS["risk_score 0-100"]
+    RS --> MT["mgmt_trust_score Shadow Test"]
+
+    MT --> RES{"resultado final?"}
+    RES -->|"risk mayor 75 con SEV-5"| BLK(["BLOCK decision DROP no reorientation"])
+    RES -->|"risk mayor 75 sin SEV-5"| CDN(["CONDITIONAL eps_haircut + dr_add aplicado"])
+    RES -->|"risk menor 75"| CLR(["CLEAR ForensicProfile listo para Valuation"])
+
+    style BQ fill:#7f1d1d,color:#fff,stroke:none
+    style BLK fill:#7f1d1d,color:#fff,stroke:none
+    style CQ fill:#78350f,color:#fff,stroke:none
+    style CDN fill:#78350f,color:#fff,stroke:none
+    style PQ fill:#14532d,color:#fff,stroke:none
+    style CLR fill:#14532d,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">Severidades / Inputs / Outputs</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Tabla SEV flags</div>
+      <table class="dtable">
+        <thead><tr><th>SEV</th><th>Ejemplo</th><th>haircut</th><th>dr_add</th><th>resultado</th></tr></thead>
+        <tbody>
+          <tr><td class="cc">SEV-5</td><td>Fraud / Restatement</td><td class="cr">30%</td><td class="cr">300bps</td><td class="cr">BLOCK</td></tr>
+          <tr><td class="cc">SEV-4</td><td>Going concern</td><td class="co">20%</td><td class="co">200bps</td><td class="co">CONDITIONAL</td></tr>
+          <tr><td class="cc">SEV-3</td><td>Governance COB</td><td>10%</td><td>150bps</td><td class="co">CONDITIONAL</td></tr>
+          <tr><td class="cc">SEV-2</td><td>DSO expansion</td><td>5%</td><td>75bps</td><td class="cg">CLEAR+adj</td></tr>
+          <tr><td class="cc">SEV-1</td><td>Minor irregularity</td><td>0%</td><td>25bps</td><td class="cg">CLEAR+adj</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Inputs / Outputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge in-badge">IN</span>idea_id + run_mode</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>edgar_sec 10-K 10-Q DEF14A</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>bloomberg_governance COB board</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>capital_iq accruals peers</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>ForensicProfile risk_score + mgmt_trust</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>YellowFlag[] SEV + haircut por flag</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>eps_haircut_total + dr_add_bps_total</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>recommendation BLOCK / CONDITIONAL / CLEAR</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">Full Scan mayor 80% al timeout → resultados parciales + analista revisa flags faltantes</div>
+        <div class="fb-adj">conf_adj: -0.07 · FORENSIC_PARTIAL_80PCT</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">bloomberg_governance caido → proxy EDGAR DEF14A para COB e insider ownership</div>
+        <div class="fb-adj">conf_adj: -0.05 · FORENSIC_GOVERNANCE_EDGAR_PROXY_ONLY</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">EDGAR caido mas de 30min sin cache → degradar a Quick Scan mas revision manual analista</div>
+        <div class="fb-adj">conf_adj: -0.18 · FORENSIC_FULL_DEGRADED_TO_QUICK_PLUS_MANUAL</div>
+      </div></div>
+      <div class="fb-item fb-last"><div class="fb-label">LAST</div><div>
+        <div class="fb-text">EDGAR caido sin cache ni Quick posible → PAUSE pipeline max 30min. Nunca saltarse el Forensic.</div>
+        <div class="fb-adj">pipeline.status = PAUSED_FORENSIC_UNAVAILABLE</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ AGENT 5 VALUATION ══════════════════════ -->
+<div id="p5" class="panel">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 05 — PRICE</div>
+      <div class="agent-name" style="color:#3fb950">VALUATION</div>
+      <div class="agent-role">price_target_engine</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-opus-4-6</span></div>
+      <div class="pill">temp <span>0.2</span></div>
+      <div class="pill">costo <span>$0.018/run</span></div>
+      <div class="pill">latencia P50 <span>3500ms</span></div>
+      <div class="pill">accuracy <span>71% a 76% mayor gap</span></div>
+      <div class="pill">PT hit rate <span>58% target</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["ForensicProfile + CFScenarios + IntelBundle"]) --> ADJ
+
+    subgraph ADJ["FORENSIC ADJUSTMENTS"]
+        A1["eps_haircut total por flags SEV"] --> A2["discount_rate_add bps acumulado"]
+        A2 --> A3{"buy_rating_blocked?"}
+        A3 -->|"SI BLOCK"| NOBE["rating = UNDERPERFORM forzado"]
+        A3 -->|"NO"| SRC
+        NOBE --> SRC
+    end
+
+    subgraph SRC["MARKET DATA"]
+        SRC1["Bloomberg primary"] --> MRG
+        SRC2["Capital IQ fallback"] --> MRG
+        MRG{"datos disponibles?"}
+        MRG -->|"bloomberg OK"| PRI["usar Bloomberg"]
+        MRG -->|"bloomberg caido"| FB1["usar CapIQ conf -0.12"]
+        MRG -->|"ambos caidos"| FB2["sector averages conf -0.20"]
+    end
+
+    PRI --> MTH
+    FB1 --> MTH
+    FB2 --> MTH
+
+    subgraph MTH["METODOS POR SECTOR"]
+        M1["PE multiple peso segun sector"] --> DIV
+        M2["EV/EBITDA peso segun sector"] --> DIV
+        M3["DCF con WACC mas dr_add"] --> DIV
+        DIV{"divergencia mayor 30pct?"}
+        DIV -->|"SI"| CNS["bound conservador BUY=lower SELL=upper conf -0.08"]
+        DIV -->|"NO"| PTC
+        CNS --> PTC
+    end
+
+    PTC["PT 12M + PT 5Y si Gunn rating BUY HOLD UNDERPERFORM"]
+
+    PTC --> FV
+
+    subgraph FV["FaVeS EDGE CHECK"]
+        FV1["F Frequency catalyst 2-4x year"] --> FVS["faves_score 1-9"]
+        FV2["V Visibility pre-announced"] --> FVS
+        FV3["S Significance eps_impact mayor 5pct"] --> FVS
+    end
+
+    FVS --> RR["RR ratio = upside pct / downside pct"]
+    RR --> RG{"RR mayor 2:1 Y gap mayor 5pct?"}
+    RG -->|"NO"| DRP(["DROP sin edge diferencial"])
+    RG -->|"SI"| IC
+
+    subgraph IC["IC PREMIUM solo Gunn"]
+        IC1["mgmt_trust_score Shadow Test"] --> ICS["ic_premium 0 a 1.5"]
+        IC2["build_to_last_score CF"] --> ICS
+        IC3["moat_durability 3-5Y"] --> ICS
+    end
+
+    ICS --> OUT(["ValuationModel pt_12m pt_5y rating rr_ratio faves_score ic_premium"])
+
+    style DRP fill:#7f1d1d,color:#fff,stroke:none
+    style CNS fill:#2a2a0a,color:#ccc,stroke:none
+    style FB1 fill:#1a1a2a,color:#9ca3af,stroke:none
+    style FB2 fill:#1a1a2a,color:#9ca3af,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">Pesos por Sector / Inputs / Outputs</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Pesos PE / EV / DCF por sector</div>
+      <table class="dtable">
+        <thead><tr><th>Sector</th><th>PE</th><th>EV/EBITDA</th><th>DCF</th></tr></thead>
+        <tbody>
+          <tr><td>Tech hardware</td><td>25%</td><td>40%</td><td>35%</td></tr>
+          <tr><td>Fintech pre-revenue</td><td>15%</td><td>25%</td><td class="cg">60%</td></tr>
+          <tr><td>Consumer staples</td><td class="cg">45%</td><td>35%</td><td>20%</td></tr>
+          <tr><td>Gunn compounder EM</td><td>20%</td><td>30%</td><td>50%</td></tr>
+          <tr><td>Default Valentine</td><td>40%</td><td>35%</td><td>25%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Inputs / Outputs</div>
+      <div class="io-row">
+        <div class="io-item"><span class="badge in-badge">IN</span>ForensicProfile eps_haircut + dr_add + mgmt_trust</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>CF Scenarios Bull/Base/Bear implied_pt</div>
+        <div class="io-item"><span class="badge in-badge">IN</span>build_to_last_score Gunn</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>bloomberg consensus + multiples</div>
+        <div class="io-item"><span class="badge mcp-badge">MCP</span>capital_iq peer EV/EBITDA</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>pt_12m + pt_5y + rating</div>
+        <div class="io-item"><span class="badge out-badge">OUT</span>rr_ratio + faves_score + ic_premium</div>
+        <div class="io-item"><span class="badge err-badge">DROP</span>si RR menor 2:1 o gap menor 5%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">Bloomberg timeout → Capital IQ como fuente primaria</div>
+        <div class="fb-adj">conf_adj: -0.12 · VAL_BLOOMBERG_CAPIQ_FALLBACK</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">ForensicProfile no recibido → defaults conservadores haircut 10% + dr_add 100bps</div>
+        <div class="fb-adj">conf_adj: -0.10 · VAL_FORENSIC_CONSERVATIVE_DEFAULTS</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">Bloomberg y CapIQ caidos → sector averages internos + analista provee consensus</div>
+        <div class="fb-adj">conf_adj: -0.20 · VAL_SECTOR_AVERAGES_ONLY</div>
+      </div></div>
+      <div class="fb-item fb-last"><div class="fb-label">LAST</div><div>
+        <div class="fb-text">Sin ningun dato de mercado → analista provee PT manualmente con estructura del sistema</div>
+        <div class="fb-adj">conf_adj: -0.30 · VAL_MANUAL_PT_ANALYST</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ AGENT 6 COMMUNICATION ══════════════════════ -->
+<div id="p6" class="panel">
+  <div class="agent-header">
+    <div class="agent-title">
+      <div class="agent-num">AGENTE 06 — GATE</div>
+      <div class="agent-name" style="color:#58a6ff">COMMUNICATION</div>
+      <div class="agent-role">publication_gate</div>
+    </div>
+    <div class="meta-pills">
+      <div class="pill">modelo <span>claude-opus-4-6</span></div>
+      <div class="pill">temp <span>0.4</span></div>
+      <div class="pill">costo <span>$0.035 Flash / $0.120 Initiation</span></div>
+      <div class="pill">latencia <span>3min Flash / 14hrs Initiation</span></div>
+      <div class="pill">accuracy <span>91% a 92%</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="mermaid">
+flowchart TD
+    IN(["ValuationModel + ForensicProfile + CFScenarios + IntelBundle"]) --> MC
+
+    MC{"MNPI en alguna fuente upstream?"}
+    MC -->|"SI"| HALT(["COMPLIANCE HALT ABSOLUTO publication_possible = false notify menos 30min"])
+    MC -->|"NO"| EG
+
+    subgraph EG["ENTER GATE 5 criterios"]
+        E1{"E Edge alpha mayor consensus"} --> SC
+        E2{"N New no en precio"} --> SC
+        E3{"T Timely catalyst activo"} --> SC
+        E4{"E2 Examples 3 data points seccion D"} --> SC
+        E5{"R Revealing cambia perspectiva"} --> SC
+        SC["base_score 0-5 menos forensic_penalty = effective_score"]
+    end
+
+    SC --> EGR{"effective_score?"}
+    EGR -->|"3 o menos"| DRP(["DROP insufficient ENTER criteria"])
+    EGR -->|"4"| HLD(["HOLD missing_criterion_code auto-downgrade 2hrs"])
+    EGR -->|"5"| CR
+
+    subgraph CR["CONSENSUS ROUND"]
+        CR1["Scout confirma horizon"] --> AG
+        CR2["Intel confirma mosaic_clear"] --> AG
+        CR3["CF confirma factors unchanged"] --> AG
+        CR4["Forensic confirma no new flags"] --> AG
+        CR5["Valuation confirma PT correcto"] --> AG
+        AG{"conflicto mayor 15pct?"}
+        AG -->|"SI"| ESC(["ESCALAR analista 45min timeout defer 24h"])
+        AG -->|"NO"| SLA
+    end
+
+    SLA{"SLA ok?"}
+    SLA -->|"Flash mayor 2hrs"| ALT(["ALERT 1 parrafo formato abreviado"])
+    SLA -->|"OK"| FMT
+
+    subgraph FMT["FORMATO CASCADE"]
+        FC["C Conclusion rating PT conviction"]
+        FA["A Action posicion timing size"]
+        FS["S Scenario Bull Base Bear probs"]
+        FC2["C2 Catalysts tipos y timing"]
+        FD["D Data citas EDGAR fuentes tier-1"]
+    end
+
+    FMT --> AUD["AuditTrail agents confidence fallback_flags"]
+    AUD --> PUB{"output_type?"}
+    PUB -->|"Flash Note"| FN(["FLASH NOTE CASCADE 2p SLA 2hrs"])
+    PUB -->|"Initiation"| IR(["INITIATION REPORT 8-15p trimestral"])
+    PUB -->|"Alert"| AL(["ALERT 1p menos 30min"])
+
+    style HALT fill:#7f1d1d,color:#fff,stroke:none
+    style DRP fill:#7f1d1d,color:#fff,stroke:none
+    style HLD fill:#78350f,color:#fff,stroke:none
+    style ESC fill:#78350f,color:#fff,stroke:none
+    style ALT fill:#78350f,color:#fff,stroke:none
+    style FN fill:#14532d,color:#fff,stroke:none
+    style IR fill:#14532d,color:#fff,stroke:none
+    style AL fill:#78350f,color:#fff,stroke:none
+    </div>
+  </div>
+
+  <div class="section-title">ENTER Gate / SLAs / Fallback</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Criterios ENTER Gate</div>
+      <table class="dtable">
+        <thead><tr><th>Criterio</th><th>Descripcion</th><th>Falla si</th></tr></thead>
+        <tbody>
+          <tr><td class="cc">E Edge</td><td>Alpha diferencial vs consensus</td><td class="cr">Idea = consensus</td></tr>
+          <tr><td class="cc">N New</td><td>No reflejado en precio</td><td class="cr">Ya descontado</td></tr>
+          <tr><td class="cc">T Timely</td><td>Catalyst activo en horizonte</td><td class="cr">Sin catalyst</td></tr>
+          <tr><td class="cc">E2 Examples</td><td>3+ data points seccion D</td><td class="co">Solo 1-2 citas</td></tr>
+          <tr><td class="cc">R Revealing</td><td>Cambia perspectiva</td><td class="cr">No agrega vision</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">SLAs y Costos</div>
+      <table class="dtable">
+        <thead><tr><th>Output</th><th>SLA</th><th>Costo</th><th>Modelo</th></tr></thead>
+        <tbody>
+          <tr><td class="cc">ALERT</td><td class="cg">30 min</td><td>$0.008</td><td>Sonnet</td></tr>
+          <tr><td class="cc">FLASH_NOTE</td><td class="cg">2 hrs</td><td>$0.035</td><td>Opus</td></tr>
+          <tr><td class="cc">QUARTERLY</td><td>same day</td><td>$0.020</td><td>Sonnet</td></tr>
+          <tr><td class="cc">INITIATION</td><td>72 hrs</td><td>$0.120</td><td>Opus</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">Fallback L1 / L2 / Last</div>
+  <div class="card">
+    <div class="fallback-row">
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">Conflicto consensus menor 15% → estimacion conservadora lower bound BUY / upper SELL</div>
+        <div class="fb-adj">conf_adj: -0.05 · COMM_CONSENSUS_CONSERVATIVE</div>
+      </div></div>
+      <div class="fb-item fb-l1"><div class="fb-label">L1</div><div>
+        <div class="fb-text">AuditTrail corrompido → reconstruir desde AgentRunLog. Si imposible: compliance review manual.</div>
+        <div class="fb-adj">COMM_AUDIT_TRAIL_RECONSTRUCTED</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">SLA breach Flash mayor 2hrs → downgrade automatico a formato ALERT</div>
+        <div class="fb-adj">conf_adj: -0.10 · COMM_DOWNGRADED_TO_ALERT</div>
+      </div></div>
+      <div class="fb-item fb-l2"><div class="fb-label">L2</div><div>
+        <div class="fb-text">HOLD sin respuesta mayor 2hrs → si SLA critico ALERT format. Si no: defer 24h + reminder</div>
+        <div class="fb-adj">COMM_HOLD_AUTO_DEFERRED</div>
+      </div></div>
+      <div class="fb-item fb-mnpi"><div class="fb-label">MNPI</div><div>
+        <div class="fb-text">Sin fallback posible. Item no se borra. Compliance notificado en menos de 30min. AuditTrail preservado.</div>
+        <div class="fb-adj">pipeline.status = COMPLIANCE_HALT · publication_possible = false</div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#1f2937',
+    primaryTextColor: '#e6edf3',
+    primaryBorderColor: '#374151',
+    lineColor: '#4b5563',
+    secondaryColor: '#111827',
+    tertiaryColor: '#1f2937',
+    background: '#0d1117',
+    mainBkg: '#161b22',
+    nodeBorder: '#374151',
+    clusterBkg: '#0d1117',
+    clusterBorder: '#374151',
+    titleColor: '#e6edf3',
+    edgeLabelBackground: '#0d1117',
+  },
+  flowchart: { curve: 'basis', padding: 15 }
+});
+
+function show(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.anav').forEach(a => a.classList.remove('active'));
+  document.getElementById('p' + n).classList.add('active');
+  document.querySelectorAll('.anav')[n - 1].classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(claude-developer-platform)",
+      "Skill(claude-developer-platform:*)",
+      "Bash(npm install)",
+      "Bash(npm run lint)",
+      "Bash(npm show @anthropic-ai/sdk version)",
+      "Bash(npm install @anthropic-ai/sdk@latest)",
+      "Bash(npm install openai dotenv)",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(git add .)",
+      "Bash(git commit -m \"feat: initial Efrain AI v2.2.0 repo structure:*)"
+    ]
+  }
+}
