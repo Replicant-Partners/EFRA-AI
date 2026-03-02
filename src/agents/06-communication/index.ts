@@ -81,8 +81,7 @@ Evalúa ENTER GATE, determina output_type y genera el reporte CASCADE completo.
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.4,
-    max_tokens:  8192,
-    thinking:    true,
+    max_tokens:  4096,
   });
 
   for await (const chunk of gen) {

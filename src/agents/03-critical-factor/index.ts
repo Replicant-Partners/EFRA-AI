@@ -63,8 +63,8 @@ ${isGunn ? "Incluye build_to_last_score (Gunn mode)." : "build_to_last_score deb
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.3,
-    max_tokens:  4096,
-    thinking:    true,
+    max_tokens:  2048,
+    json_mode:   true,
   });
 
   // Extract JSON from possible markdown wrapping
