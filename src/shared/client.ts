@@ -32,7 +32,8 @@ export async function chat(params: {
   temperature?: number;
   max_tokens?: number;
   thinking?: boolean;        // enables adaptive thinking via extra_body
-  json_schema?: object;      // if provided, enforces structured output
+  json_schema?: object;      // full strict schema (slower, use sparingly)
+  json_mode?: boolean;       // simple json_object mode (fast, recommended)
 }): Promise<string> {
   const body: Record<string, unknown> = {
     model: params.model,
@@ -44,7 +45,9 @@ export async function chat(params: {
     ],
   };
 
-  if (params.json_schema) {
+  if (params.json_mode) {
+    body.response_format = { type: "json_object" };
+  } else if (params.json_schema) {
     body.response_format = {
       type: "json_schema",
       json_schema: {

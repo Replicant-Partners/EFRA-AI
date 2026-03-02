@@ -80,7 +80,7 @@ Calcula el Alpha Score, determina downstream_mode, horizon_tag y decision.
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  1024,
-    json_schema: JSON_SCHEMA,
+    json_mode:   true,
   });
 
   return JSON.parse(text) as ScoutOutput;
