@@ -26,7 +26,7 @@ export default function ResultPanel({ state }: Props) {
         {comm && <span className="text-xs opacity-70">{comm.output_type}</span>}
       </div>
 
-      {status === "COMPLETED" && comm && valuation && (
+      {comm && valuation && (
         <>
           {/* Key metrics */}
           <div className="grid grid-cols-4 gap-2">

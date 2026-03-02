@@ -144,9 +144,9 @@ export async function POST(request: Request) {
         });
         send({ agent: "communication", status: "done", result: state.communication });
 
-        state.status = state.communication.publication_possible
-          ? "COMPLETED"
-          : "DROPPED";
+        // Always COMPLETED if pipeline ran to the end — Communication's
+        // publication_possible is shown in the UI output, not used as a hard drop
+        state.status = "COMPLETED";
 
         send({
           agent: "pipeline",
