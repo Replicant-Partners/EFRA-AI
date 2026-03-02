@@ -133,22 +133,6 @@ export async function POST(request: Request) {
         });
         send({ agent: "valuation", status: "done", result: state.valuation });
 
-        if (
-          state.valuation.rr_ratio < 2 &&
-          state.valuation.rating === "UNDERPERFORM"
-        ) {
-          state.status = "DROPPED";
-          send({
-            agent: "pipeline",
-            status: "dropped",
-            reason: "rr_too_low",
-            result: state,
-            final: true,
-          });
-          controller.close();
-          return;
-        }
-
         // ── 06 COMMUNICATION ────────────────────────────
         send({ agent: "communication", status: "running" });
         state.communication = await runCommunication({
