@@ -134,7 +134,7 @@ export default function ResultPanel({ state }: Props) {
         </>
       )}
 
-      {(status === "DROPPED" || status === "COMPLIANCE_HALT") && (
+      {(status === "DROPPED" || status === "COMPLIANCE_HALT") && !comm && (
         <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4 text-sm text-gray-400">
           {status === "COMPLIANCE_HALT"
             ? "Pipeline halted — MNPI concern detected. Compliance team notified."
