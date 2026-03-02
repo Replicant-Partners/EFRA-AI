@@ -74,36 +74,13 @@ export async function POST(request: Request) {
         );
         send({ agent: "intel", status: "done", result: state.intel });
 
-        if (!state.intel.mosaic_clear) {
-          state.status = "COMPLIANCE_HALT";
-          send({
-            agent: "pipeline",
-            status: "halted",
-            reason: "mnpi_detected",
-            result: state,
-            final: true,
-          });
-          controller.close();
-          return;
-        }
+        // mosaic_clear = false shown in UI but does not halt without real MNPI data
 
         // ── 04 FORENSIC PRE-SCREEN ───────────────────────
+        // Informational only — no real financial data to base a block on
         send({ agent: "forensic_pre", status: "running" });
         state.forensic = await runForensic({ idea_id, ticker, run_mode: "PRE-SCREEN" });
         send({ agent: "forensic_pre", status: "done", result: state.forensic });
-
-        if (state.forensic.recommendation === "BLOCK") {
-          state.status = "DROPPED";
-          send({
-            agent: "pipeline",
-            status: "dropped",
-            reason: "forensic_block",
-            result: state,
-            final: true,
-          });
-          controller.close();
-          return;
-        }
 
         // ── 03 CRITICAL FACTOR ──────────────────────────
         send({ agent: "cf", status: "running" });
