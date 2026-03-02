@@ -116,22 +116,11 @@ export async function POST(request: Request) {
         send({ agent: "cf", status: "done", result: state.cf });
 
         // ── 04 FORENSIC FULL ────────────────────────────
+        // Full scan enriches flags/haircuts for Valuation — does NOT block
+        // (blocking was already decided at PRE-SCREEN)
         send({ agent: "forensic", status: "running" });
         state.forensic = await runForensic({ idea_id, ticker, run_mode: "FULL" });
         send({ agent: "forensic", status: "done", result: state.forensic });
-
-        if (state.forensic.recommendation === "BLOCK") {
-          state.status = "DROPPED";
-          send({
-            agent: "pipeline",
-            status: "dropped",
-            reason: "forensic_full_block",
-            result: state,
-            final: true,
-          });
-          controller.close();
-          return;
-        }
 
         // ── 05 VALUATION ────────────────────────────────
         send({ agent: "valuation", status: "running" });
