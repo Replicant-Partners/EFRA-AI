@@ -11,7 +11,14 @@
       "Bash(python3 -c \":*)",
       "Bash(node -e \":*)",
       "Bash(git add .)",
-      "Bash(git commit -m \"feat: initial Efrain AI v2.2.0 repo structure:*)"
+      "Bash(git commit -m \"feat: initial Efrain AI v2.2.0 repo structure:*)",
+      "Bash(gh repo create efrain-ai --private --source=. --push)",
+      "Bash(winget install GitHub.cli)",
+      "Bash(winget install GitHub.cli --accept-source-agreements --accept-package-agreements)",
+      "Bash(git remote add origin https://github.com/Replicant-Partners/EFRA-AI.git)",
+      "Bash(git push -u origin master)",
+      "Bash(npm run build)",
+      "Bash(git commit -m \"feat: add Next.js web frontend with SSE streaming pipeline:*)"
     ]
   }
 }

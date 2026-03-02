@@ -2,22 +2,27 @@
   "name": "efrain-ai",
   "version": "0.1.0",
   "description": "Efrain AI — Multi-agent investment research system",
-  "type": "module",
-  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "lint": "tsc --noEmit"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
-    "dotenv": "^17.3.1",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "openai": "^6.25.0",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "dotenv": "^17.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
   }
 }
