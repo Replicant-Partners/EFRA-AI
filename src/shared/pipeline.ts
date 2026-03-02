@@ -61,7 +61,7 @@ export async function runPipeline(
 
   // ── Agent 04: FORENSIC (PRE-SCREEN) ─────────────────────────
   console.log("\n[04] FORENSIC — Quick Scan (pre-screen)...");
-  state.forensic = await runForensic({ idea_id, run_mode: "PRE-SCREEN" });
+  state.forensic = await runForensic({ idea_id, ticker: scoutInput.ticker, run_mode: "PRE-SCREEN" });
   console.log(
     `     recommendation: ${state.forensic.recommendation} | risk_score: ${state.forensic.risk_score}`,
   );
@@ -86,7 +86,7 @@ export async function runPipeline(
 
   // ── Agent 04: FORENSIC (FULL) ────────────────────────────────
   console.log("\n[04] FORENSIC — Full Scan...");
-  state.forensic = await runForensic({ idea_id, run_mode: "FULL" });
+  state.forensic = await runForensic({ idea_id, ticker: scoutInput.ticker, run_mode: "FULL" });
   console.log(
     `     eps_haircut: ${state.forensic.eps_haircut_total}% | dr_add: ${state.forensic.dr_add_bps_total}bps | flags: ${state.forensic.flags.length}`,
   );
