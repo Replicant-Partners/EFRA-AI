@@ -75,10 +75,11 @@ Calcula el Alpha Score, determina downstream_mode, horizon_tag y decision.
 `.trim();
 
   const text = await chat({
-    model:       MODELS.sonnet,
+    model:       MODELS.haiku,
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.2,
+    max_tokens:  1024,
     json_schema: JSON_SCHEMA,
   });
 

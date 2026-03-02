@@ -16,7 +16,8 @@ export const client = new OpenAI({
 
 // Model aliases — update here if OpenRouter changes slugs
 export const MODELS = {
-  sonnet: "anthropic/claude-sonnet-4-6",   // Agents 01–04
+  haiku:  "anthropic/claude-haiku-4-5",    // Agent 01 (fast scoring)
+  sonnet: "anthropic/claude-sonnet-4-6",   // Agents 02–04
   opus:   "anthropic/claude-opus-4-6",     // Agents 05–06
 } as const;
 
