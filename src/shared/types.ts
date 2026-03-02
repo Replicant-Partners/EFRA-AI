@@ -124,6 +124,7 @@ export interface ForensicProfile {
 
 export interface ForensicInput {
   idea_id: string;
+  ticker: string;
   run_mode: "PRE-SCREEN" | "FULL";
 }
 

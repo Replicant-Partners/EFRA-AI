@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
         // ── 04 FORENSIC PRE-SCREEN ───────────────────────
         send({ agent: "forensic_pre", status: "running" });
-        state.forensic = await runForensic({ idea_id, run_mode: "PRE-SCREEN" });
+        state.forensic = await runForensic({ idea_id, ticker, run_mode: "PRE-SCREEN" });
         send({ agent: "forensic_pre", status: "done", result: state.forensic });
 
         if (state.forensic.recommendation === "BLOCK") {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 
         // ── 04 FORENSIC FULL ────────────────────────────
         send({ agent: "forensic", status: "running" });
-        state.forensic = await runForensic({ idea_id, run_mode: "FULL" });
+        state.forensic = await runForensic({ idea_id, ticker, run_mode: "FULL" });
         send({ agent: "forensic", status: "done", result: state.forensic });
 
         if (state.forensic.recommendation === "BLOCK") {

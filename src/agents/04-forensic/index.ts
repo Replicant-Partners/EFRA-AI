@@ -62,6 +62,7 @@ const JSON_SCHEMA = {
 
 export async function runForensic(input: ForensicInput): Promise<ForensicProfile> {
   const userMessage = `
+Ticker:   ${input.ticker}
 Idea ID:  ${input.idea_id}
 Run mode: ${input.run_mode}
 
@@ -79,7 +80,7 @@ Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.1,
-    max_tokens:  2048,
+    max_tokens:  1024,
     json_mode:   true,
   });
 
