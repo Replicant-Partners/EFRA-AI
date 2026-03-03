@@ -30,6 +30,9 @@ export async function POST(request: Request) {
 
       const log = (msg: string) => send({ type: "log", msg });
       const pause = (ms: number) => new Promise(r => setTimeout(r, ms));
+      // Safe helpers so undefined never reaches the log lines
+      const n  = (v: unknown, max?: number) => v != null ? (max ? `${v}/${max}` : `${v}`) : "?";
+      const pct = (v: unknown, d = 0) => v != null ? `${(Number(v) * 100).toFixed(d)}%` : "?";
 
       try {
         const idea_id = state.idea_id ?? `idea_${Date.now()}`;
@@ -66,18 +69,18 @@ export async function POST(request: Request) {
           const a = result?.alpha_score;
           if (a) {
             log(`─────────────────────`);
-            await pause(80);  log(`Coverage gap:       ${a.coverage_gap_score}/25`);
-            await pause(60);  log(`Market cap fit:     ${a.market_cap_fit}/20`);
-            await pause(60);  log(`Sector relevance:   ${a.sector_relevance}/25`);
-            await pause(60);  log(`Valuation anomaly:  ${a.valuation_anomaly}/30`);
+            await pause(80);  log(`Coverage gap:       ${n(a.coverage_gap_score, 25)}`);
+            await pause(60);  log(`Market cap fit:     ${n(a.market_cap_fit, 20)}`);
+            await pause(60);  log(`Sector relevance:   ${n(a.sector_relevance, 25)}`);
+            await pause(60);  log(`Valuation anomaly:  ${n(a.valuation_anomaly, 30)}`);
             if ((a.gunn_bonus ?? 0) > 0) {
               await pause(60);
               log(`Gunn bonus:         +${a.gunn_bonus}${a.bessembinder_bonus ? " (Bessembinder)" : ""}${a.em_gdp_bonus ? " (EM GDP)" : ""}${a.low_coverage_bonus ? " (Low Coverage)" : ""}`);
             }
-            await pause(60);  log(`Total alpha score:  ${a.total}/100`);
+            await pause(60);  log(`Total alpha score:  ${n(a.total, 100)}`);
           }
           if (result?.decision) {
-            await pause(60);  log(`Decision:           ${result.decision} — ${result.horizon_tag} horizon`);
+            await pause(60);  log(`Decision:           ${result.decision} — ${result.horizon_tag ?? "?"} horizon`);
           }
           if (result?.score_reasoning?.coverage_gap_rationale) {
             await pause(60);
@@ -92,30 +95,31 @@ export async function POST(request: Request) {
 
         // ── 02 INTEL ──────────────────────────────────────────────────────
         } else if (agent === "intel") {
-          const n = (news ?? []).length;
-          log(`Processing ${n} news item${n !== 1 ? "s" : ""} — building mosaic…`);
+          const cnt = (news ?? []).length;
+          log(`Processing ${cnt} news item${cnt !== 1 ? "s" : ""} — building mosaic…`);
 
+          const scout = state.scout;
           const result = await runIntel(
             {
               idea_id,
               ticker,
-              horizon_tag: state.scout!.horizon_tag,
-              downstream_mode: state.scout!.downstream_mode,
+              horizon_tag:     scout?.horizon_tag     ?? "SHORT",
+              downstream_mode: scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
             },
             news ?? []
           );
 
-          await pause(80);  log(`Surfaced:     ${result.surfaced_count} relevant / ${result.suppressed_count} suppressed`);
-          await pause(60);  log(`Mosaic:       ${result.mosaic_clear ? "CLEAR — no MNPI concern" : "HALT — possible MNPI concern flagged"}`);
-          await pause(60);  log(`Mgmt comms:   score ${result.mgmt_comm_score}`);
-          await pause(60);  log(`Hypotheses:   ${result.hypotheses?.length ?? 0} investment hypotheses generated`);
+          await pause(80);  log(`Surfaced:     ${n(result?.surfaced_count)} relevant / ${n(result?.suppressed_count)} suppressed`);
+          await pause(60);  log(`Mosaic:       ${result?.mosaic_clear ? "CLEAR — no MNPI concern" : "HALT — possible MNPI concern flagged"}`);
+          await pause(60);  log(`Mgmt comms:   score ${n(result?.mgmt_comm_score)}`);
+          await pause(60);  log(`Hypotheses:   ${result?.hypotheses?.length ?? 0} investment hypotheses generated`);
 
-          if (result.news_items?.length) {
+          if (result?.news_items?.length) {
             await pause(60);
             log(`Top news items:`);
             for (const item of result.news_items.slice(0, 3)) {
               await pause(40);
-              log(`  [${item.score}] ${item.headline}`);
+              log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
             }
           }
 
@@ -126,11 +130,11 @@ export async function POST(request: Request) {
           log(`Pre-screening ${ticker} — checking 10-K filings, going concern, SEC actions…`);
 
           const result = await runForensic({ idea_id, ticker, run_mode: "PRE-SCREEN" });
-          const flags = result.flags ?? [];
+          const flags = result?.flags ?? [];
 
-          await pause(80);  log(`Risk score:    ${result.risk_score}/100`);
-          await pause(60);  log(`Mgmt trust:    ${result.mgmt_trust_score}/100`);
-          await pause(60);  log(`Recommendation: ${result.recommendation}`);
+          await pause(80);  log(`Risk score:    ${n(result?.risk_score, 100)}`);
+          await pause(60);  log(`Mgmt trust:    ${n(result?.mgmt_trust_score, 100)}`);
+          await pause(60);  log(`Recommendation: ${result?.recommendation ?? "?"}`);
           if (flags.length === 0) {
             await pause(60);
             log(`Flags:         none detected`);
@@ -139,10 +143,10 @@ export async function POST(request: Request) {
             log(`Flags:         ${flags.length} identified:`);
             for (const f of flags) {
               await pause(40);
-              log(`  SEV-${f.severity}: ${f.description} (−${(f.eps_haircut_pct * 100).toFixed(0)}% eps)`);
+              log(`  SEV-${f.severity ?? "?"}: ${f.description ?? "—"} (−${f.eps_haircut_pct != null ? (f.eps_haircut_pct * 100).toFixed(0) : "?"}% eps)`);
             }
           }
-          await pause(60);  log(`EPS haircut:   ${(result.eps_haircut_total ?? 0).toFixed(0)}%`);
+          await pause(60);  log(`EPS haircut:   ${(result?.eps_haircut_total ?? 0).toFixed(0)}%`);
 
           send({ type: "done", result });
 
@@ -150,37 +154,40 @@ export async function POST(request: Request) {
         } else if (agent === "cf") {
           log(`Identifying critical factors — building probability-weighted scenarios…`);
 
+          const scout = state.scout;
           const result = await runCriticalFactor(
             state.intel!,
             state.forensic!,
-            state.scout!.downstream_mode,
-            state.scout!.horizon_tag
+            scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
+            scout?.horizon_tag     ?? "SHORT"
           );
 
-          const factors = result.factors ?? [];
-          const scenarios = result.scenarios ?? [];
+          const factors  = result?.factors  ?? [];
+          const scenarios = result?.scenarios ?? [];
 
           await pause(80);
           log(`Critical factors: ${factors.length} identified:`);
           for (const f of factors.slice(0, 4)) {
             await pause(50);
-            log(`  ${f.description} (+${f.eps_impact_pct}% EPS impact)`);
+            log(`  ${f.description ?? "—"} (+${f.eps_impact_pct ?? "?"}% EPS impact)`);
           }
 
           await pause(80);
           log(`Scenarios:`);
           for (const s of scenarios) {
             await pause(50);
-            log(`  ${s.type.padEnd(5)}: $${s.implied_pt}  (${(s.probability * 100).toFixed(0)}% probability)`);
+            log(`  ${(s.type ?? "?").padEnd(5)}: $${s.implied_pt ?? "?"}  (${s.probability != null ? (s.probability * 100).toFixed(0) : "?"}% probability)`);
           }
 
-          await pause(60);
-          log(`Expected value: $${result.expected_value_pt}`);
+          if (result?.expected_value_pt != null) {
+            await pause(60);
+            log(`Expected value: $${result.expected_value_pt}`);
+          }
 
-          if (result.build_to_last_score) {
+          if (result?.build_to_last_score) {
             const b = result.build_to_last_score;
             await pause(60);
-            log(`Build-to-Last:  Management ${b.management} · TAM ${b.tam} · Moat ${b.moat} · Total ${b.total}`);
+            log(`Build-to-Last:  Management ${n(b.management)} · TAM ${n(b.tam)} · Moat ${n(b.moat)} · Total ${n(b.total)}`);
           }
 
           send({ type: "done", result });
@@ -190,11 +197,11 @@ export async function POST(request: Request) {
           log(`Full forensic scan — accruals, DSO, auditor quality, insider activity, governance…`);
 
           const result = await runForensic({ idea_id, ticker, run_mode: "FULL" });
-          const flags = result.flags ?? [];
+          const flags = result?.flags ?? [];
 
-          await pause(80);  log(`Risk score:    ${result.risk_score}/100`);
-          await pause(60);  log(`Mgmt trust:    ${result.mgmt_trust_score}/100`);
-          await pause(60);  log(`Recommendation: ${result.recommendation}`);
+          await pause(80);  log(`Risk score:    ${n(result?.risk_score, 100)}`);
+          await pause(60);  log(`Mgmt trust:    ${n(result?.mgmt_trust_score, 100)}`);
+          await pause(60);  log(`Recommendation: ${result?.recommendation ?? "?"}`);
           if (flags.length === 0) {
             await pause(60);
             log(`Flags:         none detected`);
@@ -203,10 +210,10 @@ export async function POST(request: Request) {
             log(`Flags:         ${flags.length} identified:`);
             for (const f of flags) {
               await pause(40);
-              log(`  SEV-${f.severity}: ${f.description} (−${(f.eps_haircut_pct * 100).toFixed(0)}% eps)`);
+              log(`  SEV-${f.severity ?? "?"}: ${f.description ?? "—"} (−${f.eps_haircut_pct != null ? (f.eps_haircut_pct * 100).toFixed(0) : "?"}% eps)`);
             }
           }
-          await pause(60);  log(`Total EPS haircut: ${(result.eps_haircut_total ?? 0).toFixed(0)}%  |  DR add: ${result.dr_add_bps_total ?? 0}bps`);
+          await pause(60);  log(`Total EPS haircut: ${(result?.eps_haircut_total ?? 0).toFixed(0)}%  |  DR add: ${result?.dr_add_bps_total ?? 0}bps`);
 
           send({ type: "done", result });
 
@@ -214,27 +221,29 @@ export async function POST(request: Request) {
         } else if (agent === "valuation") {
           log(`Running sector-weighted DCF and multiples — applying forensic adjustments…`);
 
+          const scout = state.scout;
+          const cf    = state.cf;
           const result = await runValuation({
-            forensic_profile: state.forensic!,
-            cf_scenarios: state.cf!.scenarios,
-            intel_bundle: state.intel!,
-            build_to_last_score: state.cf!.build_to_last_score,
-            downstream_mode: state.scout!.downstream_mode,
+            forensic_profile:    state.forensic!,
+            cf_scenarios:        cf?.scenarios        ?? [],
+            intel_bundle:        state.intel!,
+            build_to_last_score: cf?.build_to_last_score,
+            downstream_mode:     scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
           });
 
-          await pause(80);  log(`Price target (12M): $${result.pt_12m}`);
-          if (result.pt_5y) {
+          await pause(80);  log(`Price target (12M): $${result?.pt_12m ?? "?"}`);
+          if (result?.pt_5y) {
             await pause(60);
             log(`Price target (5Y):  $${result.pt_5y}`);
           }
-          await pause(60);  log(`Rating:             ${result.rating}`);
-          await pause(60);  log(`R/R ratio:          ${(result.rr_ratio ?? 0).toFixed(1)}:1`);
-          const f = result.faves_score;
+          await pause(60);  log(`Rating:             ${result?.rating ?? "?"}`);
+          await pause(60);  log(`R/R ratio:          ${result?.rr_ratio != null ? result.rr_ratio.toFixed(1) : "?"}:1`);
+          const f = result?.faves_score;
           if (f) {
             await pause(60);
-            log(`FaVeS score:        ${f.total}/9  (Frequency ${f.frequency} · Visibility ${f.visibility} · Significance ${f.significance})`);
+            log(`FaVeS score:        ${n(f.total, 9)}  (Frequency ${n(f.frequency)} · Visibility ${n(f.visibility)} · Significance ${n(f.significance)})`);
           }
-          if (result.ic_premium) {
+          if (result?.ic_premium) {
             await pause(60);
             log(`IC premium:         ${result.ic_premium}`);
           }
@@ -245,23 +254,26 @@ export async function POST(request: Request) {
         } else if (agent === "communication") {
           log(`Evaluating ENTER gate — drafting CASCADE research note…`);
 
+          const scout = state.scout;
           const result = await runCommunication({
-            valuation_model: state.valuation!,
+            valuation_model:  state.valuation!,
             forensic_profile: state.forensic!,
-            cf_output: state.cf!,
-            intel_bundle: state.intel!,
-            downstream_mode: state.scout!.downstream_mode,
+            cf_output:        state.cf!,
+            intel_bundle:     state.intel!,
+            downstream_mode:  scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
           });
 
-          const g = result.enter_gate;
-          await pause(80);  log(`ENTER gate score: ${g.effective_score}/5`);
-          await pause(60);  log(`  E Edge:      ${g.edge        ? "✓ pass" : "✗ fail"}`);
-          await pause(40);  log(`  N New:       ${g.new_catalyst ? "✓ pass" : "✗ fail"}`);
-          await pause(40);  log(`  T Timely:    ${g.timely      ? "✓ pass" : "✗ fail"}`);
-          await pause(40);  log(`  E Examples:  ${g.examples    ? "✓ pass" : "✗ fail"}`);
-          await pause(40);  log(`  R Revealing: ${g.revealing   ? "✓ pass" : "✗ fail"}`);
-          await pause(60);  log(`Publication:      ${result.publication_possible ? result.output_type : "DROP — gate below threshold"}`);
-          await pause(60);  log(`Final confidence: ${((result.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%`);
+          const g = result?.enter_gate;
+          if (g) {
+            await pause(80);  log(`ENTER gate score: ${n(g.effective_score, 5)}`);
+            await pause(60);  log(`  E Edge:      ${g.edge        ? "✓ pass" : "✗ fail"}`);
+            await pause(40);  log(`  N New:       ${g.new_catalyst ? "✓ pass" : "✗ fail"}`);
+            await pause(40);  log(`  T Timely:    ${g.timely      ? "✓ pass" : "✗ fail"}`);
+            await pause(40);  log(`  E Examples:  ${g.examples    ? "✓ pass" : "✗ fail"}`);
+            await pause(40);  log(`  R Revealing: ${g.revealing   ? "✓ pass" : "✗ fail"}`);
+          }
+          await pause(60);  log(`Publication:      ${result?.publication_possible ? result.output_type : "DROP — gate below threshold"}`);
+          await pause(60);  log(`Final confidence: ${pct(result?.audit_trail?.final_confidence, 0)}`);
 
           send({ type: "done", result, final: true });
         }
