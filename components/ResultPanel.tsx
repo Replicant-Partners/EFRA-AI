@@ -10,72 +10,77 @@ export default function ResultPanel({ state }: Props) {
   const { status, scout, valuation, communication, forensic, cf } = state;
   const comm = communication;
 
-  const statusColor = {
-    COMPLETED: "border-green-500 bg-green-500/10 text-green-400",
-    DROPPED: "border-red-500 bg-red-500/10 text-red-400",
-    COMPLIANCE_HALT: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
-    RUNNING: "border-gray-500 bg-gray-500/10 text-gray-400",
-    PAUSED_FORENSIC_UNAVAILABLE: "border-yellow-500 bg-yellow-500/10 text-yellow-400",
-  }[status] ?? "border-gray-500 text-gray-400";
+  const statusColor =
+    status === "COMPLETED"   ? "text-green-400" :
+    status === "DROPPED"     ? "text-red-400"   :
+    status === "COMPLIANCE_HALT" ? "text-yellow-400" :
+    "text-gray-400";
 
   return (
-    <div className="space-y-4 mt-6">
-      {/* Status badge */}
-      <div className={`border px-4 py-3 flex items-center justify-between ${statusColor}`}>
-        <span className="font-bold tracking-widest text-sm">{status}</span>
-        {comm && <span className="text-xs opacity-70">{comm.output_type}</span>}
+    <div className="mt-8 space-y-0">
+      <hr className="t-rule mb-4" />
+
+      {/* Status line */}
+      <div className="flex items-baseline gap-4 mb-6">
+        <span className={`text-xs font-bold tracking-widest ${statusColor}`}>{status}</span>
+        {comm && <span className="t-label">{comm.output_type.toLowerCase().replace(/_/g, " ")}</span>}
       </div>
 
       {comm && valuation && (
         <>
-          {/* Key metrics */}
-          <div className="grid grid-cols-4 gap-2">
-            <Metric label="Rating" value={valuation.rating} color={valuation.rating === "BUY" ? "text-green-400" : valuation.rating === "UNDERPERFORM" ? "text-red-400" : "text-yellow-400"} />
-            <Metric label="PT 12M" value={`$${valuation.pt_12m}`} color="text-green-400" />
-            <Metric label="RR Ratio" value={`${(valuation.rr_ratio ?? 0).toFixed(1)}:1`} color="text-green-400" />
-            <Metric label="Confidence" value={`${((comm.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%`} color="text-green-400" />
+          {/* Key metrics — inline data row */}
+          <div className="flex items-baseline gap-6 mb-6 text-xs">
+            <DataPoint
+              label="Rating"
+              value={valuation.rating}
+              color={valuation.rating === "BUY" ? "text-green-400" : valuation.rating === "UNDERPERFORM" ? "text-red-400" : "text-yellow-400"}
+            />
+            <DataPoint label="PT 12M" value={`$${valuation.pt_12m}`} color="text-green-400" />
+            <DataPoint label="RR" value={`${(valuation.rr_ratio ?? 0).toFixed(1)}:1`} color="text-green-400" />
+            <DataPoint
+              label="Confidence"
+              value={`${((comm.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%`}
+              color="text-[#aaa]"
+            />
+            <DataPoint
+              label="FaVeS"
+              value={`${valuation.faves_score?.total ?? "?"}/9`}
+              color="text-[#aaa]"
+            />
           </div>
 
-          {/* ENTER gate */}
-          <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-            <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">ENTER Gate</div>
-            <div className="grid grid-cols-5 gap-2 text-xs">
-              {[
-                ["E", "Edge", comm.enter_gate.edge],
-                ["N", "New", comm.enter_gate.new_catalyst],
-                ["T", "Timely", comm.enter_gate.timely],
-                ["E", "Examples", comm.enter_gate.examples],
-                ["R", "Revealing", comm.enter_gate.revealing],
-              ].map(([abbr, name, pass]) => (
-                <div key={String(name)} className="text-center">
-                  <div className={`text-lg font-bold ${pass ? "text-green-400" : "text-red-500"}`}>{String(abbr)}</div>
-                  <div className="text-gray-600 text-xs">{String(name)}</div>
-                  <div className={pass ? "text-green-400" : "text-red-400"}>{pass ? "✓" : "✗"}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <hr className="t-rule mb-4" />
 
-          {/* CASCADE preview */}
-          {comm.content && (
-            <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-              <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">CASCADE Output</div>
-              <pre className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed overflow-auto max-h-96">
-                {comm.content}
-              </pre>
-            </div>
-          )}
+          {/* ENTER gate — compact inline */}
+          <div className="mb-6">
+            <span className="t-label mr-4">ENTER Gate</span>
+            <span className="text-xs text-[#aaa]">
+              score <span className={comm.enter_gate.effective_score >= 5 ? "text-green-400" : "text-red-400"}>{comm.enter_gate.effective_score}/5</span>
+              {" · "}
+              {(["Edge", "New", "Timely", "Examples", "Revealing"] as const).map((name, i) => {
+                const vals = [comm.enter_gate.edge, comm.enter_gate.new_catalyst, comm.enter_gate.timely, comm.enter_gate.examples, comm.enter_gate.revealing];
+                const pass = vals[i];
+                return (
+                  <span key={name} className={`mr-2 ${pass ? "text-green-400" : "text-[#555]"}`}>
+                    {name[0]}
+                  </span>
+                );
+              })}
+            </span>
+          </div>
 
           {/* Scenarios */}
-          {cf && (
-            <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-              <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">Scenarios</div>
-              <div className="grid grid-cols-3 gap-3">
+          {cf && (cf.scenarios ?? []).length > 0 && (
+            <div className="mb-6">
+              <div className="t-label mb-2">Scenarios</div>
+              <div className="flex gap-8 text-xs">
                 {(cf.scenarios ?? []).map(s => (
-                  <div key={s.type} className="text-center">
-                    <div className="text-xs text-gray-500">{s.type}</div>
-                    <div className="text-lg font-bold text-green-400">${s.implied_pt}</div>
-                    <div className="text-xs text-gray-500">{(s.probability * 100).toFixed(0)}%</div>
+                  <div key={s.type}>
+                    <span className="text-[#555]">{s.type.toLowerCase()}</span>
+                    {" "}
+                    <span className="text-green-400">${s.implied_pt}</span>
+                    {" "}
+                    <span className="text-[#555]">{(s.probability * 100).toFixed(0)}%</span>
                   </div>
                 ))}
               </div>
@@ -84,18 +89,19 @@ export default function ResultPanel({ state }: Props) {
 
           {/* Forensic flags */}
           {forensic && (forensic.flags ?? []).length > 0 && (
-            <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-              <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">
-                Forensic Flags ({(forensic.flags ?? []).length})
+            <div className="mb-6">
+              <div className="t-label mb-2">
+                Forensic Flags · {(forensic.flags ?? []).length} · haircut{" "}
+                <span className="text-[#aaa]">{(forensic.eps_haircut_total ?? 0).toFixed(0)}%</span>
               </div>
               <div className="space-y-1">
                 {(forensic.flags ?? []).map((f, i) => (
-                  <div key={i} className="flex items-start gap-3 text-xs">
-                    <span className={`font-bold ${f.severity >= 4 ? "text-red-400" : f.severity === 3 ? "text-yellow-400" : "text-gray-400"}`}>
-                      SEV-{f.severity}
+                  <div key={i} className="flex items-baseline gap-3 text-xs">
+                    <span className={`font-mono ${f.severity >= 4 ? "text-red-400" : f.severity === 3 ? "text-yellow-400" : "text-[#555]"}`}>
+                      {f.severity}
                     </span>
-                    <span className="text-gray-400 flex-1">{f.description}</span>
-                    <span className="text-gray-600">-{(f.eps_haircut_pct * 100).toFixed(0)}%eps</span>
+                    <span className="text-[#888] flex-1">{f.description}</span>
+                    <span className="text-[#555]">−{(f.eps_haircut_pct * 100).toFixed(0)}% eps</span>
                   </div>
                 ))}
               </div>
@@ -104,36 +110,35 @@ export default function ResultPanel({ state }: Props) {
 
           {/* Fallback flags */}
           {(comm.audit_trail?.fallback_flags ?? []).length > 0 && (
-            <div className="border border-yellow-500/20 bg-yellow-500/5 p-3">
-              <div className="text-xs text-yellow-500/70 uppercase tracking-widest mb-2">Fallback flags</div>
-              <div className="flex flex-wrap gap-2">
-                {(comm.audit_trail?.fallback_flags ?? []).map(flag => (
-                  <span key={flag} className="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-0.5 border border-yellow-500/20">
-                    {flag}
-                  </span>
-                ))}
-              </div>
+            <div className="mb-6">
+              <span className="t-label mr-3">Fallbacks</span>
+              <span className="text-xs text-yellow-500/70">
+                {(comm.audit_trail?.fallback_flags ?? []).join(" · ")}
+              </span>
             </div>
           )}
 
+          <hr className="t-rule mb-4" />
+
           {/* Alpha score breakdown */}
           {scout && (
-            <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-              <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">
-                Alpha Score · <span className="text-green-400 font-bold">{scout.alpha_score.total}</span>/100
+            <div className="mb-6">
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className="t-label">Alpha Score</span>
+                <span className="text-green-400 text-xs font-bold">{scout.alpha_score.total}/100</span>
                 {scout.confidence != null && (
-                  <span className="ml-3 text-gray-600">conf {(scout.confidence * 100).toFixed(0)}%</span>
+                  <span className="text-[#555] text-xs">conf {(scout.confidence * 100).toFixed(0)}%</span>
                 )}
               </div>
-              <div className="grid grid-cols-5 gap-2 text-xs text-center mb-3">
-                <ScoreBar label="Coverage" value={scout.alpha_score.coverage_gap_score} max={25} />
-                <ScoreBar label="Mkt Cap" value={scout.alpha_score.market_cap_fit} max={20} />
-                <ScoreBar label="Sector" value={scout.alpha_score.sector_relevance} max={25} />
-                <ScoreBar label="Valuation" value={scout.alpha_score.valuation_anomaly} max={30} />
-                <ScoreBar label="Gunn +" value={scout.alpha_score.gunn_bonus} max={25} />
+              <div className="flex gap-6 text-xs">
+                <ScorePair label="Coverage" value={scout.alpha_score.coverage_gap_score} max={25} />
+                <ScorePair label="Mkt Cap" value={scout.alpha_score.market_cap_fit} max={20} />
+                <ScorePair label="Sector" value={scout.alpha_score.sector_relevance} max={25} />
+                <ScorePair label="Valuation" value={scout.alpha_score.valuation_anomaly} max={30} />
+                <ScorePair label="Gunn +" value={scout.alpha_score.gunn_bonus} max={25} />
               </div>
               {scout.alpha_score.gunn_bonus > 0 && (
-                <div className="flex gap-3 text-xs text-gray-600 mt-1">
+                <div className="flex gap-3 text-xs text-[#555] mt-2">
                   {scout.alpha_score.em_gdp_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.em_gdp_bonus} EM GDP</span>}
                   {scout.alpha_score.bessembinder_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.bessembinder_bonus} Bessembinder</span>}
                   {scout.alpha_score.low_coverage_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.low_coverage_bonus} Low Coverage</span>}
@@ -141,38 +146,47 @@ export default function ResultPanel({ state }: Props) {
               )}
             </div>
           )}
+
+          <hr className="t-rule mb-4" />
+
+          {/* CASCADE output */}
+          {comm.content && (
+            <div className="mb-6">
+              <div className="t-label mb-3">CASCADE Output</div>
+              <pre className="text-xs text-[#888] whitespace-pre-wrap leading-relaxed overflow-auto max-h-96 prose-tufte font-mono">
+                {comm.content}
+              </pre>
+            </div>
+          )}
         </>
       )}
 
       {(status === "DROPPED" || status === "COMPLIANCE_HALT") && !comm && (
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4 text-sm text-gray-400">
+        <p className="prose-tufte text-sm">
           {status === "COMPLIANCE_HALT"
             ? "Pipeline halted — MNPI concern detected. Compliance team notified."
             : "Idea did not pass pipeline gates. See agent steps above for drop reason."}
-        </div>
+        </p>
       )}
     </div>
   );
 }
 
-function Metric({ label, value, color }: { label: string; value: string; color: string }) {
+function DataPoint({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-3 text-center">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className={`font-bold text-lg ${color}`}>{value}</div>
-    </div>
+    <span>
+      <span className="t-label mr-1">{label}</span>
+      <span className={`font-bold ${color}`}>{value}</span>
+    </span>
   );
 }
 
-function ScoreBar({ label, value, max }: { label: string; value: number; max: number }) {
-  const pct = Math.round((value / max) * 100);
+function ScorePair({ label, value, max }: { label: string; value: number; max: number }) {
   return (
-    <div>
-      <div className="text-gray-500 mb-1">{label}</div>
-      <div className="text-green-400 font-bold">{value}<span className="text-gray-600">/{max}</span></div>
-      <div className="h-1 bg-[#2a2a2a] mt-1">
-        <div className="h-1 bg-green-500" style={{ width: `${pct}%` }} />
-      </div>
-    </div>
+    <span className="text-[#555]">
+      {label}{" "}
+      <span className="text-[#aaa]">{value}</span>
+      <span className="text-[#3a3a3a]">/{max}</span>
+    </span>
   );
 }

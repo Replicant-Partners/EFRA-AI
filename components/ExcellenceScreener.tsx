@@ -41,12 +41,12 @@ interface ScreenerCandidate {
   sector: string;
   exchange: string;
   // Financials
-  revenue_ttm: string;        // e.g. "$4.2B"
-  gross_margin_pct: string;   // e.g. "72%"
-  ps_ratio: string;           // e.g. "8.2x"
-  pe_ratio: string;           // e.g. "24x" or "N/M"
-  pb_ratio: string;           // e.g. "5.1x"
-  debt_assets_pct: string;    // e.g. "18%"
+  revenue_ttm: string;
+  gross_margin_pct: string;
+  ps_ratio: string;
+  pe_ratio: string;
+  pb_ratio: string;
+  debt_assets_pct: string;
   // Narrative
   rationale: string;
   criteria_notes: string;
@@ -125,277 +125,274 @@ export default function ExcellenceScreener() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-green-500 tracking-tight">Excellence Universe Screener</h1>
-          <p className="text-gray-500 text-sm mt-1">Ajusta los criterios S1–S11 y obtén ideas de compañías candidatas</p>
+          <h1 className="text-lg font-bold text-green-500 tracking-widest uppercase">Excellence Universe Screener</h1>
+          <p className="t-label mt-1">Ajusta los criterios S1–S11 y obtén ideas de compañías candidatas</p>
         </div>
         <button
           onClick={resetDefaults}
-          className="text-xs text-gray-600 border border-[#2a2a2a] px-3 py-1.5 hover:border-[#3a3a3a] hover:text-gray-400 transition-colors"
+          className="text-xs text-[#555] hover:text-[#888] transition-colors"
         >
           Reset defaults
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <hr className="t-rule" />
 
-        {/* S1 + S2 — Fixed */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">S1–S2 · Fixed Criteria</div>
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-2 text-green-400">
-              <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-              S1 · Trading Status: Active
-            </div>
-            <div className="flex items-center gap-2 text-green-400">
-              <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-              S2 · Primary Security only
-            </div>
+      {/* S1 + S2 — Fixed */}
+      <Section label="S1–S2 · Fixed Criteria">
+        <div className="flex gap-6 text-xs text-[#555]">
+          <span className="text-green-600">S1 · Trading Status: Active</span>
+          <span className="text-green-600">S2 · Primary Security only</span>
+        </div>
+      </Section>
+
+      <hr className="t-rule" />
+
+      {/* S3 — Exchange exclusions */}
+      <Section label="S3 · Exchange Exclusions">
+        <div className="flex flex-wrap gap-3 mt-1">
+          {EXCHANGES.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => set(key, !criteria[key])}
+              className={`text-xs transition-colors border-b pb-0.5 ${
+                criteria[key]
+                  ? "text-red-400 border-red-500/40"
+                  : "text-[#555] border-[#2a2a2a] hover:text-[#888]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="t-label mt-2">Red = excluded · gray = included</p>
+      </Section>
+
+      <hr className="t-rule" />
+
+      {/* S4–S6 */}
+      <Section label="S4–S6 · Price, Capital &amp; Debt">
+        <div className="grid grid-cols-3 gap-6 mt-2">
+          <CriteriaInput
+            label="S4 · Min Price (USD)"
+            value={criteria.min_price}
+            onChange={v => set("min_price", v)}
+            step={0.10}
+            min={0}
+            prefix="$"
+          />
+          <CriteriaInput
+            label="S5 · Working Capital / Revenue max"
+            value={criteria.working_capital_revenue_max}
+            onChange={v => set("working_capital_revenue_max", v)}
+            step={0.01}
+            min={0}
+            max={1}
+          />
+          <CriteriaInput
+            label="S6 · Debt / Assets max"
+            value={criteria.debt_assets_max_pct}
+            onChange={v => set("debt_assets_max_pct", v)}
+            step={1}
+            min={0}
+            max={100}
+            suffix="%"
+          />
+        </div>
+      </Section>
+
+      <hr className="t-rule" />
+
+      {/* S7–S9 */}
+      <Section label="S7–S9 · Gross Margin &amp; Profitability">
+        <div className="grid grid-cols-4 gap-6 mt-2">
+          <CriteriaInput
+            label="S7 · GM Stability max (10Y)"
+            value={criteria.gm_stability_max}
+            onChange={v => set("gm_stability_max", v)}
+            step={0.5}
+            min={0}
+            max={20}
+          />
+          <CriteriaInput
+            label="S8 · GM min"
+            value={criteria.gm_min_pct}
+            onChange={v => set("gm_min_pct", v)}
+            step={1}
+            min={0}
+            max={100}
+            suffix="%"
+          />
+          <CriteriaInput
+            label="S8 · GM max"
+            value={criteria.gm_max_pct}
+            onChange={v => set("gm_max_pct", v)}
+            step={1}
+            min={0}
+            max={100}
+            suffix="%"
+          />
+          <CriteriaInput
+            label="S9 · Gross Profitability min"
+            value={criteria.gross_profitability_min_pct}
+            onChange={v => set("gross_profitability_min_pct", v)}
+            step={1}
+            min={0}
+            max={100}
+            suffix="%"
+          />
+        </div>
+      </Section>
+
+      <hr className="t-rule" />
+
+      {/* S10–S11 */}
+      <Section label="S10–S11 · Market Cap &amp; Growth">
+        <div className="grid grid-cols-2 gap-6 mt-2">
+          <CriteriaInput
+            label="S10 · Market Cap min (USD)"
+            value={criteria.market_cap_min_usd_m}
+            onChange={v => set("market_cap_min_usd_m", v)}
+            step={50}
+            min={0}
+            prefix="$"
+            suffix="M"
+          />
+          <CriteriaInput
+            label="S11 · Sales Growth min (Q vs 5Y avg)"
+            value={criteria.sales_growth_min_pct}
+            onChange={v => set("sales_growth_min_pct", v)}
+            step={0.5}
+            min={0}
+            suffix="%"
+          />
+        </div>
+      </Section>
+
+      <hr className="t-rule" />
+
+      {/* Optional filters */}
+      <Section label="Filtros Adicionales">
+        <div className="grid grid-cols-2 gap-6 mt-2">
+          <div>
+            <label className="t-label block mb-2">Sector focus (opcional)</label>
+            <input
+              type="text"
+              value={criteria.sector_focus}
+              onChange={e => set("sector_focus", e.target.value)}
+              placeholder="Technology, Healthcare, Industrials…"
+              className="w-full bg-transparent border-b border-[#2a2a2a] pb-1 text-sm text-gray-300 placeholder-[#333] focus:outline-none focus:border-[#3a3a3a] transition-colors"
+            />
+          </div>
+          <div>
+            <label className="t-label block mb-2">Número de candidatas</label>
+            <select
+              value={criteria.max_results}
+              onChange={e => set("max_results", Number(e.target.value))}
+              className="w-full bg-transparent border-b border-[#2a2a2a] pb-1 text-sm text-gray-300 focus:outline-none focus:border-[#3a3a3a] transition-colors"
+            >
+              {[5, 10, 15, 20].map(n => (
+                <option key={n} value={n} className="bg-[#0d0d0d]">{n} compañías</option>
+              ))}
+            </select>
           </div>
         </div>
+      </Section>
 
-        {/* S3 — Exchange exclusions */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">S3 · Exchange Exclusions</div>
-          <div className="flex flex-wrap gap-2">
-            {EXCHANGES.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => set(key, !criteria[key])}
-                className={`px-3 py-1.5 border text-xs transition-colors ${
-                  criteria[key]
-                    ? "border-red-500/50 bg-red-500/10 text-red-400"
-                    : "border-[#3a3a3a] text-gray-500 hover:border-[#4a4a4a]"
-                }`}
-              >
-                {criteria[key] ? "✕ " : "+ "}{label}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-gray-600 mt-2">Rojo = excluido · Gris = incluido</p>
-        </div>
+      <hr className="t-rule" />
 
-        {/* S4–S6 */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-4">S4–S6 · Price, Capital & Debt</div>
-          <div className="grid grid-cols-3 gap-4">
-            <CriteriaInput
-              label="S4 · Min Price (USD)"
-              value={criteria.min_price}
-              onChange={v => set("min_price", v)}
-              step={0.10}
-              min={0}
-              prefix="$"
-            />
-            <CriteriaInput
-              label="S5 · Working Capital / Revenue max"
-              value={criteria.working_capital_revenue_max}
-              onChange={v => set("working_capital_revenue_max", v)}
-              step={0.01}
-              min={0}
-              max={1}
-            />
-            <CriteriaInput
-              label="S6 · Debt / Assets max"
-              value={criteria.debt_assets_max_pct}
-              onChange={v => set("debt_assets_max_pct", v)}
-              step={1}
-              min={0}
-              max={100}
-              suffix="%"
-            />
-          </div>
-        </div>
-
-        {/* S7–S9 */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-4">S7–S9 · Gross Margin & Profitability</div>
-          <div className="grid grid-cols-4 gap-4">
-            <CriteriaInput
-              label="S7 · GM Stability max (10Y)"
-              value={criteria.gm_stability_max}
-              onChange={v => set("gm_stability_max", v)}
-              step={0.5}
-              min={0}
-              max={20}
-            />
-            <CriteriaInput
-              label="S8 · GM min"
-              value={criteria.gm_min_pct}
-              onChange={v => set("gm_min_pct", v)}
-              step={1}
-              min={0}
-              max={100}
-              suffix="%"
-            />
-            <CriteriaInput
-              label="S8 · GM max"
-              value={criteria.gm_max_pct}
-              onChange={v => set("gm_max_pct", v)}
-              step={1}
-              min={0}
-              max={100}
-              suffix="%"
-            />
-            <CriteriaInput
-              label="S9 · Gross Profitability min"
-              value={criteria.gross_profitability_min_pct}
-              onChange={v => set("gross_profitability_min_pct", v)}
-              step={1}
-              min={0}
-              max={100}
-              suffix="%"
-            />
-          </div>
-        </div>
-
-        {/* S10–S11 */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-4">S10–S11 · Market Cap & Growth</div>
-          <div className="grid grid-cols-2 gap-4">
-            <CriteriaInput
-              label="S10 · Market Cap min (USD)"
-              value={criteria.market_cap_min_usd_m}
-              onChange={v => set("market_cap_min_usd_m", v)}
-              step={50}
-              min={0}
-              prefix="$"
-              suffix="M"
-            />
-            <CriteriaInput
-              label="S11 · Sales Growth min (Q vs 5Y avg)"
-              value={criteria.sales_growth_min_pct}
-              onChange={v => set("sales_growth_min_pct", v)}
-              step={0.5}
-              min={0}
-              suffix="%"
-            />
-          </div>
-        </div>
-
-        {/* Optional filters */}
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest mb-4">Filtros Adicionales</div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-gray-600 mb-1.5">Sector focus (opcional)</label>
-              <input
-                type="text"
-                value={criteria.sector_focus}
-                onChange={e => set("sector_focus", e.target.value)}
-                placeholder="ej: Technology, Healthcare, Industrials…"
-                className="w-full bg-[#0f0f0f] border border-[#2a2a2a] px-3 py-2 text-sm text-gray-300 placeholder-[#3a3a3a] focus:outline-none focus:border-[#3a3a3a]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1.5">Número de candidatas</label>
-              <select
-                value={criteria.max_results}
-                onChange={e => set("max_results", Number(e.target.value))}
-                className="w-full bg-[#0f0f0f] border border-[#2a2a2a] px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-[#3a3a3a]"
-              >
-                {[5, 10, 15, 20].map(n => (
-                  <option key={n} value={n}>{n} compañías</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Screen button */}
-        <button
-          onClick={handleScreen}
-          disabled={phase === "running"}
-          className="w-full py-4 font-bold text-sm tracking-widest uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed border border-green-500 text-green-500 hover:bg-green-500 hover:text-black"
-        >
-          {phase === "running" ? "Screening…" : "Screen Universe →"}
-        </button>
-      </div>
+      {/* Screen button */}
+      <button
+        onClick={handleScreen}
+        disabled={phase === "running"}
+        className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-20 disabled:cursor-not-allowed text-green-500 hover:text-green-400 border-b border-green-500/30 hover:border-green-400 pb-0.5"
+      >
+        {phase === "running" ? "Screening…" : "Screen Universe →"}
+      </button>
 
       {/* Error */}
       {error && (
-        <div className="border border-red-500 bg-red-500/10 p-4 text-red-400 text-sm">
-          ERROR: {error}
-        </div>
+        <p className="prose-tufte text-red-400 text-sm">Error: {error}</p>
       )}
 
       {/* Results */}
       {phase === "done" && results.length > 0 && (
-        <div className="space-y-4">
-          <div className="text-xs text-gray-500 uppercase tracking-widest">
+        <div className="space-y-0 mt-6">
+          <hr className="t-rule mb-4" />
+          <div className="t-label mb-6">
             {results.length} candidata{results.length !== 1 ? "s" : ""} encontrada{results.length !== 1 ? "s" : ""}
           </div>
           {results.map((c, i) => (
-            <div key={c.ticker} className="border border-[#2a2a2a] bg-[#1a1a1a] p-4 space-y-3">
-              {/* Header row */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-600 text-xs">#{i + 1}</span>
-                  <span className="text-green-400 font-bold text-lg tracking-widest">{c.ticker}</span>
-                  <span className="text-gray-300 text-sm">{c.company_name}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs flex-shrink-0">
-                  <span className="text-gray-500 border border-[#2a2a2a] px-2 py-0.5">{c.sector}</span>
-                  <span className="text-gray-600 border border-[#2a2a2a] px-2 py-0.5">{c.exchange}</span>
-                </div>
+            <div key={c.ticker} className="border-b border-[#1e1e1e] py-5">
+              {/* Header */}
+              <div className="flex items-baseline gap-3 mb-3">
+                <span className="text-[#444] text-xs">{i + 1}</span>
+                <span className="text-green-400 font-bold tracking-widest">{c.ticker}</span>
+                <span className="text-gray-300 text-sm">{c.company_name}</span>
+                <span className="t-label">{c.sector}</span>
+                <span className="t-label">{c.exchange}</span>
               </div>
 
-              {/* Financial metrics grid */}
-              <div className="grid grid-cols-7 gap-2 border border-[#222] bg-[#141414] px-3 py-2">
-                <FinMetric label="Mkt Cap"      value={c.market_cap_estimate} highlight />
-                <FinMetric label="Revenue TTM"  value={c.revenue_ttm} />
-                <FinMetric label="Gross Margin" value={c.gross_margin_pct} />
-                <FinMetric label="P/Sales"      value={c.ps_ratio} />
-                <FinMetric label="P/Earnings"   value={c.pe_ratio} />
-                <FinMetric label="P/Book"       value={c.pb_ratio} />
-                <FinMetric label="Debt/Assets"  value={c.debt_assets_pct} />
+              {/* Financial metrics — inline data row */}
+              <div className="flex gap-6 text-xs mb-3">
+                <FinMetric label="Mkt Cap"     value={c.market_cap_estimate} />
+                <FinMetric label="Revenue TTM" value={c.revenue_ttm} />
+                <FinMetric label="Grs Margin"  value={c.gross_margin_pct} />
+                <FinMetric label="P/Sales"     value={c.ps_ratio} />
+                <FinMetric label="P/E"         value={c.pe_ratio} />
+                <FinMetric label="P/Book"      value={c.pb_ratio} />
+                <FinMetric label="Debt/Assets" value={c.debt_assets_pct} />
               </div>
 
               {/* Narrative */}
-              <p className="text-xs text-gray-400 leading-relaxed">{c.rationale}</p>
+              <p className="prose-tufte text-sm leading-relaxed">{c.rationale}</p>
               {c.criteria_notes && (
-                <p className="text-xs text-gray-600 italic">{c.criteria_notes}</p>
+                <p className="text-xs text-[#555] mt-1 italic">{c.criteria_notes}</p>
               )}
-              <div className="pt-1">
-                <a
-                  href={`/?ticker=${c.ticker}`}
-                  className="text-xs text-green-600 hover:text-green-400 transition-colors"
-                  onClick={e => {
-                    e.preventDefault();
-                    window.location.href = `/?ticker=${c.ticker}`;
-                  }}
-                >
-                  → Enviar al Pipeline
-                </a>
-              </div>
+              <button
+                onClick={() => { window.location.href = `/?ticker=${c.ticker}`; }}
+                className="mt-2 text-xs text-[#555] hover:text-green-500 transition-colors"
+              >
+                → Send to Pipeline
+              </button>
             </div>
           ))}
         </div>
       )}
 
       {phase === "done" && results.length === 0 && !error && (
-        <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-6 text-center text-gray-500 text-sm">
+        <p className="prose-tufte">
           No se encontraron candidatas con los criterios actuales. Intenta relajar algún umbral.
-        </div>
+        </p>
       )}
+    </div>
+  );
+}
+
+// ─── Section ──────────────────────────────────────────────────────────────────
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="t-label mb-3">{label}</div>
+      {children}
     </div>
   );
 }
 
 // ─── FinMetric ────────────────────────────────────────────────────────────────
 
-function FinMetric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function FinMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="text-center">
-      <div className="text-gray-600 text-[10px] mb-0.5 truncate">{label}</div>
-      <div className={`text-xs font-bold ${highlight ? "text-green-400" : "text-gray-300"}`}>
-        {value || "—"}
-      </div>
-    </div>
+    <span>
+      <span className="t-label mr-1">{label}</span>
+      <span className="text-[#aaa]">{value || "—"}</span>
+    </span>
   );
 }
 
@@ -422,9 +419,9 @@ function CriteriaInput({
 }) {
   return (
     <div>
-      <label className="block text-xs text-gray-600 mb-1.5">{label}</label>
-      <div className="flex items-center border border-[#2a2a2a] bg-[#0f0f0f] focus-within:border-[#3a3a3a]">
-        {prefix && <span className="text-gray-500 text-xs pl-3">{prefix}</span>}
+      <label className="t-label block mb-2">{label}</label>
+      <div className="flex items-center border-b border-[#2a2a2a] focus-within:border-[#3a3a3a] transition-colors">
+        {prefix && <span className="text-[#555] text-xs pr-1">{prefix}</span>}
         <input
           type="number"
           value={value}
@@ -432,9 +429,9 @@ function CriteriaInput({
           min={min}
           max={max}
           onChange={e => onChange(Number(e.target.value))}
-          className="flex-1 bg-transparent px-2 py-2 text-sm text-green-400 focus:outline-none w-0"
+          className="flex-1 bg-transparent py-1 text-sm text-green-400 focus:outline-none w-0"
         />
-        {suffix && <span className="text-gray-500 text-xs pr-3">{suffix}</span>}
+        {suffix && <span className="text-[#555] text-xs pl-1">{suffix}</span>}
       </div>
     </div>
   );

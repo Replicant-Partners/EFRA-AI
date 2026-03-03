@@ -1,25 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+
 body {
-  background-color: #0f0f0f;
-  color: #e5e7eb;
+  background-color: #0d0d0d;
+  color: #d4d4d4;
   font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #1a1a1a; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+/* ── Tufte: prose / narrative text ───────────────────────────────────────── */
 
-/* SSE progress pulse */
+.prose-tufte {
+  font-family: 'Playfair Display', 'Georgia', 'Palatino Linotype', serif;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: #b8b8b8;
+}
+
+.prose-tufte em {
+  color: #888;
+  font-style: italic;
+}
+
+/* ── Tufte: section rule ─────────────────────────────────────────────────── */
+
+.t-rule {
+  border: none;
+  border-top: 1px solid #222;
+  margin: 0;
+}
+
+/* ── Tufte: data label ───────────────────────────────────────────────────── */
+
+.t-label {
+  font-size: 0.625rem;         /* 10px */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; }
+
+/* ── Running pulse (agent active) ───────────────────────────────────────── */
+
 @keyframes pulse-border {
-  0%, 100% { border-color: #22c55e; }
-  50% { border-color: #15803d; }
+  0%, 100% { border-color: rgba(34,197,94,0.4); }
+  50%       { border-color: rgba(34,197,94,0.1); }
 }
+
 .running-border {
-  animation: pulse-border 1.5s ease-in-out infinite;
+  animation: pulse-border 1.8s ease-in-out infinite;
 }
