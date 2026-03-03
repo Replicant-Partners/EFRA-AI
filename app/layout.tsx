@@ -20,9 +20,14 @@ export default function RootLayout({
             <span className="text-[#2a2a2a]">|</span>
             <span className="text-gray-500 text-sm">v2.2.0 · Investment Research Pipeline</span>
           </div>
-          <div className="text-gray-600 text-xs">
-            Flash Note $0.073 · ~3.3 min
-          </div>
+          <nav className="flex items-center gap-1">
+            <a href="/" className="text-xs px-3 py-1.5 border border-[#2a2a2a] text-gray-500 hover:border-green-500 hover:text-green-500 transition-colors">
+              Pipeline
+            </a>
+            <a href="/screener" className="text-xs px-3 py-1.5 border border-[#2a2a2a] text-gray-500 hover:border-green-500 hover:text-green-500 transition-colors">
+              Screener
+            </a>
+          </nav>
         </header>
         <main className="max-w-4xl mx-auto px-6 py-10">
           {children}
