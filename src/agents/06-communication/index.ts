@@ -62,13 +62,13 @@ conf_adj acumulado: ${valuation_model.conf_adj}
 FORENSIC:
 risk_score: ${forensic_profile.risk_score}
 recommendation: ${forensic_profile.recommendation}
-Flags SEV>=3: ${forensic_profile.flags.filter((f) => f.severity >= 3).length}
+Flags SEV>=3: ${(forensic_profile.flags ?? []).filter((f) => f.severity >= 3).length}
 
 SCENARIOS:
-${cf_output.scenarios.map((s) => `${s.type}: ${(s.probability * 100).toFixed(0)}% → PT $${s.implied_pt}`).join("\n")}
+${(cf_output.scenarios ?? []).map((s) => `${s.type}: ${(s.probability * 100).toFixed(0)}% → PT $${s.implied_pt}`).join("\n")}
 
 CRITICAL FACTORS:
-${cf_output.factors.map((f) => `• ${f.description} (eps_impact: ${f.eps_impact_pct}%)`).join("\n")}
+${(cf_output.factors ?? []).map((f) => `• ${f.description} (eps_impact: ${f.eps_impact_pct}%)`).join("\n")}
 
 Evalúa ENTER GATE, determina output_type y genera el reporte CASCADE completo.
 `.trim();
@@ -77,11 +77,11 @@ Evalúa ENTER GATE, determina output_type y genera el reporte CASCADE completo.
   process.stdout.write("\n[COMM] Generando reporte...\n");
 
   const gen = chatStream({
-    model:       MODELS.opus,
+    model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.4,
-    max_tokens:  4096,
+    max_tokens:  2048,
   });
 
   for await (const chunk of gen) {
