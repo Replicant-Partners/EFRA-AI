@@ -83,14 +83,23 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
   if (agentKey === "forensic_pre" || agentKey === "forensic") {
     const r = result as ForensicProfile;
     return (
-      <span className="text-[#A89E94]">
-        risk <span className="text-[#C89040]">{r.risk_score}</span>
-        {" · "}
-        <span className={r.recommendation === "BLOCK" ? "text-[#C84848]" : r.recommendation === "CLEAR" ? "text-[#C8804A]" : "text-[#C89040]"}>
-          {r.recommendation?.toLowerCase()}
+      <span>
+        {/* Risk stats row */}
+        <span className="text-[#A89E94]">
+          risk <span className="text-[#C89040]">{r.risk_score}</span>
+          {" · "}
+          <span className={r.recommendation === "BLOCK" ? "text-[#C84848]" : r.recommendation === "CLEAR" ? "text-[#C8804A]" : "text-[#C89040]"}>
+            {r.recommendation?.toLowerCase()}
+          </span>
+          {" · "}{(r.flags ?? []).length} flag{(r.flags ?? []).length !== 1 ? "s" : ""}
+          {" · "}haircut <span className="text-[#8C7E70]">{(r.eps_haircut_total ?? 0).toFixed(0)}%</span>
         </span>
-        {" · "}{(r.flags ?? []).length} flag{(r.flags ?? []).length !== 1 ? "s" : ""}
-        {" · "}haircut <span className="text-[#8C7E70]">{(r.eps_haircut_total ?? 0).toFixed(0)}%</span>
+        {/* Management summary — full scan only */}
+        {agentKey === "forensic" && r.management_profile?.management_summary && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
+            {r.management_profile.management_summary}
+          </span>
+        )}
       </span>
     );
   }

@@ -287,6 +287,33 @@ export async function POST(request: Request) {
           }
           await pause(60);  log(`Total EPS haircut: ${(result?.eps_haircut_total ?? 0).toFixed(0)}%  |  DR add: ${result?.dr_add_bps_total ?? 0}bps`);
 
+          // ── Management profile ────────────────────────────────────────
+          const mp = result?.management_profile;
+          if (mp) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Management analysis:`);
+            await pause(40); log(`Founder:     ${mp.founder_profile}`);
+            await pause(40); log(`CEO:         ${mp.ceo_profile}`);
+            await pause(40); log(`Team:        ${mp.team_stability}`);
+            await pause(40); log(`Incentives:  ${mp.incentive_alignment}`);
+            await pause(40); log(`Decisions:   ${mp.key_decisions}`);
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Management summary:`);
+            const words = mp.management_summary.split(" ");
+            let line = "";
+            for (const word of words) {
+              if ((line + " " + word).trim().length > 80) {
+                await pause(15); log(`  ${line.trim()}`);
+                line = word;
+              } else {
+                line = (line + " " + word).trim();
+              }
+            }
+            if (line) { await pause(15); log(`  ${line}`); }
+          }
+
           send({ type: "done", result });
 
         // ── 05 VALUATION ──────────────────────────────────────────────────

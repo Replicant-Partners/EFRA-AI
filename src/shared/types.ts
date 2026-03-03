@@ -144,6 +144,15 @@ export interface YellowFlag {
   dr_add_bps: number;
 }
 
+export interface ManagementProfile {
+  founder_profile: string;      // Step 1: founder + current control level
+  ceo_profile: string;          // Step 2: CEO + appointment origin
+  team_stability: string;       // Step 3: key execs + stability observation
+  incentive_alignment: string;  // Step 4: compensation structure + alignment judgment
+  key_decisions: string;        // Step 5: 3-5 key decisions + evaluation
+  management_summary: string;   // Final: 200-word investment memo paragraph
+}
+
 export interface ForensicProfile {
   risk_score: number;           // 0–100
   mgmt_trust_score: number;     // 0–100 (Shadow Test)
@@ -151,6 +160,7 @@ export interface ForensicProfile {
   eps_haircut_total: number;
   dr_add_bps_total: number;
   recommendation: Recommendation;
+  management_profile?: ManagementProfile; // only present in FULL SCAN
 }
 
 export interface ForensicInput {
