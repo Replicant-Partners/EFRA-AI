@@ -99,6 +99,7 @@ export async function runPipeline(
   // ── Agent 05: VALUATION ──────────────────────────────────────
   console.log("\n[05] VALUATION — Calculando price target...");
   state.valuation = await runValuation({
+    ticker: scoutInput.ticker,
     forensic_profile: state.forensic,
     cf_scenarios: state.cf.scenarios,
     intel_bundle: state.intel,

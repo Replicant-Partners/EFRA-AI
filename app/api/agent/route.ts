@@ -328,6 +328,7 @@ export async function POST(request: Request) {
           const scout = state.scout;
           const cf    = state.cf;
           const result = await runValuation({
+            ticker,
             forensic_profile:    state.forensic!,
             cf_scenarios:        cf?.scenarios        ?? [],
             intel_bundle:        state.intel!,
@@ -335,6 +336,7 @@ export async function POST(request: Request) {
             downstream_mode:     scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
           });
 
+          // ── Core outputs ──────────────────────────────────────────────
           await pause(80);  log(`Price target (12M): $${result?.pt_12m ?? "?"}`);
           if (result?.pt_5y) {
             await pause(60);
@@ -350,6 +352,58 @@ export async function POST(request: Request) {
           if (result?.ic_premium) {
             await pause(60);
             log(`IC premium:         ${result.ic_premium}`);
+          }
+
+          // ── 8-step analysis ───────────────────────────────────────────
+          if (result?.current_multiples) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Current multiples:`);
+            await pause(40); log(`  ${result.current_multiples}`);
+          }
+          if (result?.market_assumptions) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Market assumptions:`);
+            const words = result.market_assumptions.split(" ");
+            let line = "";
+            for (const word of words) {
+              if ((line + " " + word).trim().length > 80) {
+                await pause(15); log(`  ${line.trim()}`);
+                line = word;
+              } else {
+                line = (line + " " + word).trim();
+              }
+            }
+            if (line) { await pause(15); log(`  ${line}`); }
+          }
+          if (result?.peer_comparison) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Peer comparison:`);
+            await pause(40); log(`  ${result.peer_comparison}`);
+          }
+          if (result?.margin_of_safety) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Margin of safety:`);
+            await pause(40); log(`  ${result.margin_of_safety}`);
+          }
+          if (result?.valuation_summary) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Valuation summary:`);
+            const words = result.valuation_summary.split(" ");
+            let line = "";
+            for (const word of words) {
+              if ((line + " " + word).trim().length > 80) {
+                await pause(15); log(`  ${line.trim()}`);
+                line = word;
+              } else {
+                line = (line + " " + word).trim();
+              }
+            }
+            if (line) { await pause(15); log(`  ${line}`); }
           }
 
           send({ type: "done", result });

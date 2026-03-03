@@ -105,6 +105,7 @@ export async function POST(request: Request) {
         // ── 05 VALUATION ────────────────────────────────
         send({ agent: "valuation", status: "running" });
         state.valuation = await runValuation({
+          ticker,
           forensic_profile: state.forensic,
           cf_scenarios: state.cf.scenarios,
           intel_bundle: state.intel,

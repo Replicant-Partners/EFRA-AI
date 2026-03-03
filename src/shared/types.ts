@@ -188,9 +188,17 @@ export interface ValuationModel {
   faves_score: FaVeSScore;
   ic_premium?: number;         // 0–1.5, Gunn mode only
   conf_adj: number;            // cumulative confidence adjustment
+  // 8-step framework outputs
+  valuation_exec_summary?: string; // Step 0: how market values the company today
+  current_multiples?: string;      // Step 2: P/S, P/E, EV/EBITDA, P/FCF snapshot
+  market_assumptions?: string;     // Step 3: what the market is discounting
+  peer_comparison?: string;        // Step 4: comparable companies + relative value
+  margin_of_safety?: string;       // Step 8: margin of safety + re-rating catalyst
+  valuation_summary?: string;      // Final: 200-word investment memo paragraph
 }
 
 export interface ValuationInput {
+  ticker: string;
   forensic_profile: ForensicProfile;
   cf_scenarios: Scenario[];
   intel_bundle: IntelBundle;

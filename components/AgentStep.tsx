@@ -160,14 +160,63 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
   if (agentKey === "valuation") {
     const r = result as ValuationModel;
     return (
-      <span className="text-[#A89E94]">
-        PT <span className="text-[#C8804A]">${r.pt_12m}</span>
-        {" · "}
-        <span className={r.rating === "BUY" ? "text-[#C8804A]" : r.rating === "UNDERPERFORM" ? "text-[#C84848]" : "text-[#C89040]"}>
-          {r.rating?.toLowerCase()}
+      <span>
+        {/* ── Section 1: Core metrics row ── */}
+        <span className="text-[#A89E94]">
+          PT <span className="text-[#C8804A]">${r.pt_12m}</span>
+          {r.pt_5y != null && <>{" · "}5Y <span className="text-[#C8804A]">${r.pt_5y}</span></>}
+          {" · "}
+          <span className={r.rating === "BUY" ? "text-[#C8804A]" : r.rating === "UNDERPERFORM" ? "text-[#C84848]" : "text-[#C89040]"}>
+            {r.rating?.toLowerCase()}
+          </span>
+          {" · "}RR <span className="text-[#8C7E70]">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
+          {" · "}FaVeS <span className="text-[#8C7E70]">{r.faves_score?.total ?? "?"}/9</span>
+          {r.ic_premium != null && <>{" · "}IC <span className="text-[#8C7E70]">{r.ic_premium}</span></>}
         </span>
-        {" · "}RR <span className="text-[#8C7E70]">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
-        {" · "}FaVeS <span className="text-[#8C7E70]">{r.faves_score?.total ?? "?"}/9</span>
+
+        {/* ── Section 2: Exec summary ── */}
+        {r.valuation_exec_summary && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
+            {r.valuation_exec_summary}
+          </span>
+        )}
+
+        {/* ── Section 3: Multiples + market assumptions ── */}
+        {(r.current_multiples || r.market_assumptions) && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-1">
+            {r.current_multiples && (
+              <span className="block text-[11px] font-mono text-[#8C7E70]">
+                {r.current_multiples}
+              </span>
+            )}
+            {r.market_assumptions && (
+              <span className="block text-[11px] text-[#A89E94] leading-relaxed">
+                {r.market_assumptions}
+              </span>
+            )}
+          </span>
+        )}
+
+        {/* ── Section 4: Peer comparison ── */}
+        {r.peer_comparison && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[11px] text-[#6E6258] leading-relaxed">
+            {r.peer_comparison}
+          </span>
+        )}
+
+        {/* ── Section 5: Margin of safety ── */}
+        {r.margin_of_safety && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[11px] text-[#A89E94] leading-relaxed">
+            {r.margin_of_safety}
+          </span>
+        )}
+
+        {/* ── Section 6: Valuation summary ── */}
+        {r.valuation_summary && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
+            {r.valuation_summary}
+          </span>
+        )}
       </span>
     );
   }
@@ -227,8 +276,8 @@ export default function AgentStep({ agentKey, label, desc, event, logs, analystN
           </div>
         )}
 
-        {/* Compact log summary — visible after done (hidden for intel, which has a full structured summary) */}
-        {isDone && hasLogs && agentKey !== "intel" && (
+        {/* Compact log summary — visible after done (hidden for intel/valuation, which have full structured summaries) */}
+        {isDone && hasLogs && agentKey !== "intel" && agentKey !== "valuation" && (
           <div className="mt-1.5 space-y-0.5">
             {(logs ?? []).map((line, i) => (
               <div key={i} className="text-[11px] font-mono text-[#C0B8AC] leading-relaxed">
