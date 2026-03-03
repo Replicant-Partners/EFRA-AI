@@ -8,6 +8,8 @@ interface Props {
   label: string;
   desc: string;
   event?: AgentEvent;
+  logs?: string[];
+  analystNote?: string;
   pipelineRunning: boolean;
 }
 
@@ -108,13 +110,14 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
   return null;
 }
 
-export default function AgentStep({ agentKey, label, desc, event, pipelineRunning }: Props) {
+export default function AgentStep({ agentKey, label, desc, event, logs, analystNote, pipelineRunning }: Props) {
   const isActive  = event?.status === "running";
   const isDone    = event?.status === "done";
   const isWaiting = !event;
+  const hasLogs   = (logs ?? []).length > 0;
 
   return (
-    <div className={`border-b py-2.5 flex items-start gap-3 transition-colors ${
+    <div className={`border-b py-3 flex items-start gap-3 transition-colors ${
       isActive ? "border-[#C8804A]/30 running-border" :
       isDone   ? "border-[#E4DDD6]" :
                  "border-[#EDE7E0]"
@@ -131,9 +134,40 @@ export default function AgentStep({ agentKey, label, desc, event, pipelineRunnin
           {isActive  && <span className="text-[#C8804A] text-[11px]">running…</span>}
           {isWaiting && pipelineRunning && <span className="t-label">queued</span>}
         </div>
+
+        {/* Live calculation logs — visible while running */}
+        {isActive && hasLogs && (
+          <div className="mt-2 space-y-0.5">
+            {(logs ?? []).map((line, i) => (
+              <div key={i} className="text-[11px] font-mono text-[#8C7E70] leading-relaxed">
+                {line}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Compact log summary — visible after done */}
+        {isDone && hasLogs && (
+          <div className="mt-1.5 space-y-0.5">
+            {(logs ?? []).map((line, i) => (
+              <div key={i} className="text-[11px] font-mono text-[#C0B8AC] leading-relaxed">
+                {line}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Structured summary */}
         {isDone && event?.result != null && (
-          <div className="mt-0.5 text-[11px] leading-relaxed">
+          <div className="mt-1 text-[11px] leading-relaxed border-t border-[#EDE7E0] pt-1">
             <AgentSummary agentKey={agentKey} result={event.result} />
+          </div>
+        )}
+
+        {/* Analyst note */}
+        {isDone && analystNote && (
+          <div className="mt-1.5 text-[11px] text-[#A89E94] italic border-l-2 border-[#D8D0C8] pl-2">
+            analyst: {analystNote}
           </div>
         )}
       </div>
