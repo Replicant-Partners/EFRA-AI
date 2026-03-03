@@ -22,6 +22,14 @@ GUNN MODE: calcular build_to_last_score (management 0–33, tam 0–33, moat 0�
 
 PROBABILIDADES: deben sumar exactamente 1.0.
 
+PARA CADA ESCENARIO debes incluir:
+- price_derivation: la operación matemática que produce el implied_pt.
+  Ejemplo: "EPS $2.50 × P/E 74x = $185" o "FCF $3.2B × 18x EV/FCF − net debt $12B = $185"
+  Sé específico con los números y el múltiplo/método usado.
+- triggers: qué tiene que ocurrir en el mundo real para que ese escenario se materialice.
+  1-3 condiciones concretas y observables. Ejemplo:
+  "GPU exports no restringidos en China + capex hyperscaler +20% YoY + margen bruto >65%"
+
 Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales, no estos):
 {
   "factors": [
@@ -29,9 +37,27 @@ Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales,
     { "id": "cf-2", "description": "China export restrictions — ~15% of data center revenue at risk", "eps_impact_pct": 9 }
   ],
   "scenarios": [
-    { "type": "Bull", "probability": 0.30, "implied_pt": 185 },
-    { "type": "Base", "probability": 0.50, "implied_pt": 148 },
-    { "type": "Bear", "probability": 0.20, "implied_pt": 95 }
+    {
+      "type": "Bull",
+      "probability": 0.30,
+      "implied_pt": 185,
+      "price_derivation": "EPS $2.50 × P/E 74x = $185",
+      "triggers": "Sin restricciones de exportación a China + capex hyperscaler sube >20% YoY + margen bruto supera 65%"
+    },
+    {
+      "type": "Base",
+      "probability": 0.50,
+      "implied_pt": 148,
+      "price_derivation": "EPS $2.00 × P/E 74x = $148",
+      "triggers": "Restricciones parciales en China (−10% revenue) + capex hyperscaler plano + margen bruto estable en 62%"
+    },
+    {
+      "type": "Bear",
+      "probability": 0.20,
+      "implied_pt": 95,
+      "price_derivation": "EPS $1.50 × P/E 63x = $95",
+      "triggers": "Bloqueo total de exportaciones a China + competencia AMD gana cuota + capex hyperscaler cae >10%"
+    }
   ],
   "expected_value_pt": 148,
   "build_to_last_score": null,

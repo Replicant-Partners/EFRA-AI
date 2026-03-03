@@ -249,11 +249,16 @@ export async function POST(request: Request) {
           for (const s of scenarios) {
             await pause(50);
             log(`  ${(s.type ?? "?").padEnd(5)}: $${s.implied_pt ?? "?"}  (${s.probability != null ? (s.probability * 100).toFixed(0) : "?"}% probability)`);
+            if (s.price_derivation) { await pause(30); log(`         math:     ${s.price_derivation}`); }
+            if (s.triggers)         { await pause(30); log(`         triggers: ${s.triggers}`); }
           }
 
           if (result?.expected_value_pt != null) {
             await pause(60);
-            log(`Expected value: $${result.expected_value_pt}`);
+            const evFormula = scenarios
+              .map(s => `${(s.probability * 100).toFixed(0)}% × $${s.implied_pt}`)
+              .join(" + ");
+            log(`EV formula:  ${evFormula} = $${result.expected_value_pt}`);
           }
 
           if (result?.build_to_last_score) {

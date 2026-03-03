@@ -118,6 +118,8 @@ export interface Scenario {
   type: "Bull" | "Base" | "Bear";
   probability: number;           // 0–1, sum must = 1.0
   implied_pt: number;
+  price_derivation: string;      // math: how implied_pt was calculated (e.g. "EPS $2.50 × P/E 74x")
+  triggers: string;              // what must happen for this scenario to materialize
 }
 
 export interface BuildToLastScore {

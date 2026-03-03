@@ -106,11 +106,53 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "cf") {
     const r = result as CFOutput;
+    const scenarios = r.scenarios ?? [];
+    const evFormula = scenarios
+      .map(s => `${(s.probability * 100).toFixed(0)}% × $${s.implied_pt}`)
+      .join(" + ");
+    const scenarioColor = (type: string) =>
+      type === "Bull" ? "text-[#7A9E6A]" : type === "Bear" ? "text-[#C84848]" : "text-[#C8804A]";
     return (
-      <span className="text-[#A89E94]">
-        {(r.factors ?? []).length} factors
-        {" · "}EV <span className="text-[#C8804A]">${r.expected_value_pt}</span>
-        {" · "}{(r.scenarios ?? []).map(s => `${s.type} ${(s.probability * 100).toFixed(0)}%`).join(" · ")}
+      <span>
+        {/* ── Section 1: Factors + EV ── */}
+        <span className="text-[#A89E94]">
+          <span className="text-[#6E6258]">{(r.factors ?? []).length}</span> critical factors
+          {" · "}EV <span className="text-[#C8804A]">${r.expected_value_pt}</span>
+        </span>
+
+        {/* ── Section 2: Scenarios with math + triggers ── */}
+        {scenarios.length > 0 && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-2">
+            {scenarios.map((s, i) => (
+              <span key={i} className="block">
+                <span className={`text-[11px] font-semibold tracking-widest ${scenarioColor(s.type)}`}>
+                  {s.type?.toUpperCase()}
+                </span>
+                <span className="text-[#A89E94] text-[11px]">
+                  {" "}{(s.probability * 100).toFixed(0)}%{" → "}
+                </span>
+                <span className="text-[#1E1A14] text-[11px] font-semibold">${s.implied_pt}</span>
+                {s.price_derivation && (
+                  <span className="block mt-0.5 text-[11px] font-mono text-[#8C7E70] pl-1">
+                    {s.price_derivation}
+                  </span>
+                )}
+                {s.triggers && (
+                  <span className="block mt-0.5 text-[11px] text-[#A89E94] pl-1 italic">
+                    {s.triggers}
+                  </span>
+                )}
+              </span>
+            ))}
+          </span>
+        )}
+
+        {/* ── Section 3: EV formula ── */}
+        {scenarios.length > 0 && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[11px] font-mono text-[#8C7E70]">
+            EV = {evFormula} = <span className="text-[#C8804A]">${r.expected_value_pt}</span>
+          </span>
+        )}
       </span>
     );
   }
