@@ -71,7 +71,7 @@ export default function ResultPanel({ state }: Props) {
             <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
               <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">Scenarios</div>
               <div className="grid grid-cols-3 gap-3">
-                {cf.scenarios.map(s => (
+                {(cf.scenarios ?? []).map(s => (
                   <div key={s.type} className="text-center">
                     <div className="text-xs text-gray-500">{s.type}</div>
                     <div className="text-lg font-bold text-green-400">${s.implied_pt}</div>
@@ -83,13 +83,13 @@ export default function ResultPanel({ state }: Props) {
           )}
 
           {/* Forensic flags */}
-          {forensic && forensic.flags.length > 0 && (
+          {forensic && (forensic.flags ?? []).length > 0 && (
             <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
               <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">
-                Forensic Flags ({forensic.flags.length})
+                Forensic Flags ({(forensic.flags ?? []).length})
               </div>
               <div className="space-y-1">
-                {forensic.flags.map((f, i) => (
+                {(forensic.flags ?? []).map((f, i) => (
                   <div key={i} className="flex items-start gap-3 text-xs">
                     <span className={`font-bold ${f.severity >= 4 ? "text-red-400" : f.severity === 3 ? "text-yellow-400" : "text-gray-400"}`}>
                       SEV-{f.severity}
@@ -103,11 +103,11 @@ export default function ResultPanel({ state }: Props) {
           )}
 
           {/* Fallback flags */}
-          {comm.audit_trail.fallback_flags.length > 0 && (
+          {(comm.audit_trail?.fallback_flags ?? []).length > 0 && (
             <div className="border border-yellow-500/20 bg-yellow-500/5 p-3">
               <div className="text-xs text-yellow-500/70 uppercase tracking-widest mb-2">Fallback flags</div>
               <div className="flex flex-wrap gap-2">
-                {comm.audit_trail.fallback_flags.map(flag => (
+                {(comm.audit_trail?.fallback_flags ?? []).map(flag => (
                   <span key={flag} className="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-0.5 border border-yellow-500/20">
                     {flag}
                   </span>

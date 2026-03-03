@@ -53,8 +53,8 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         <span className={r.recommendation === "BLOCK" ? "text-red-400" : r.recommendation === "CLEAR" ? "text-green-400" : "text-yellow-400"}>
           {r.recommendation}
         </span>
-        {" · "}flags {r.flags.length}
-        {" · "}haircut <span className="text-yellow-400">{(r.eps_haircut_total * 100).toFixed(0)}%</span>
+        {" · "}flags {(r.flags ?? []).length}
+        {" · "}haircut <span className="text-yellow-400">{(r.eps_haircut_total ?? 0).toFixed(0)}%</span>
       </span>
     );
   }
@@ -63,10 +63,10 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
     const r = result as CFOutput;
     return (
       <span className="text-gray-400">
-        factors <span className="text-green-400">{r.factors.length}</span>
+        factors <span className="text-green-400">{(r.factors ?? []).length}</span>
         {" · "}EV PT <span className="text-green-400">${r.expected_value_pt}</span>
         {" · "}
-        {r.scenarios.map(s => `${s.type}(${(s.probability * 100).toFixed(0)}%)`).join(" ")}
+        {(r.scenarios ?? []).map(s => `${s.type}(${(s.probability * 100).toFixed(0)}%)`).join(" ")}
       </span>
     );
   }
