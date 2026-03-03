@@ -96,7 +96,7 @@ export async function POST(request: Request) {
         // ── 02 INTEL ──────────────────────────────────────────────────────
         } else if (agent === "intel") {
           const cnt = (news ?? []).length;
-          log(`Processing ${cnt} news item${cnt !== 1 ? "s" : ""} — building mosaic…`);
+          log(`Analyzing business + processing ${cnt} news item${cnt !== 1 ? "s" : ""}…`);
 
           const scout = state.scout;
           const result = await runIntel(
@@ -109,7 +109,36 @@ export async function POST(request: Request) {
             news ?? []
           );
 
-          await pause(80);  log(`Surfaced:     ${n(result?.surfaced_count)} relevant / ${n(result?.suppressed_count)} suppressed`);
+          // ── Business context ──────────────────────────────────────────
+          const bc = result?.business_context;
+          if (bc) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Business analysis:`);
+            // executive_summary — wrap at 80 chars
+            if (bc.executive_summary) {
+              await pause(40);
+              const words = bc.executive_summary.split(" ");
+              let line = "";
+              for (const word of words) {
+                if ((line + " " + word).trim().length > 80) {
+                  await pause(15); log(`  ${line.trim()}`);
+                  line = word;
+                } else {
+                  line = (line + " " + word).trim();
+                }
+              }
+              if (line) { await pause(15); log(`  ${line}`); }
+            }
+            await pause(60); log(`Moat:         ${bc.moat_type ?? "?"} — ${bc.moat_evidence ?? "?"}`);
+            await pause(40); log(`Growth:       ${bc.growth_trend ?? "?"}`);
+            await pause(40); log(`Catalyst:     ${bc.catalyst_assessment ?? "?"}`);
+            await pause(60);
+            log(`─────────────────────`);
+          }
+
+          // ── News mosaic ───────────────────────────────────────────────
+          await pause(60);  log(`Surfaced:     ${n(result?.surfaced_count)} relevant / ${n(result?.suppressed_count)} suppressed`);
           await pause(60);  log(`Mosaic:       ${result?.mosaic_clear ? "CLEAR — no MNPI concern" : "HALT — possible MNPI concern flagged"}`);
           await pause(60);  log(`Mgmt comms:   score ${n(result?.mgmt_comm_score)}`);
           await pause(60);  log(`Hypotheses:   ${result?.hypotheses?.length ?? 0} investment hypotheses generated`);

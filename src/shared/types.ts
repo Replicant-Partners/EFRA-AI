@@ -62,6 +62,15 @@ export interface ScoutOutput {
 
 // ─── Agent 02 — INTEL ────────────────────────
 
+export interface BusinessContext {
+  executive_summary: string; // Step 0: 3 plain-language paragraphs — what, how, why it matters
+  moat_type: string;         // Step 4: marca | costos | red | regulación | otra
+  moat_evidence: string;     // Step 4: concrete evidence for the moat
+  growth_trend: string;      // Step 7: organic/inorganic, consistent? 1 sentence
+  catalyst_assessment: string; // Step 8: catalyst + is it priced in?
+  business_memo: string;     // Final: 200-word investment memo paragraph
+}
+
 export interface NewsItem {
   id: string;
   headline: string;
@@ -80,6 +89,7 @@ export interface Hypothesis {
 }
 
 export interface IntelBundle {
+  business_context: BusinessContext;
   surfaced_count: number;
   suppressed_count: number;
   mosaic_clear: boolean;

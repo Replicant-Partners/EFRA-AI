@@ -44,8 +44,22 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
     const newsApiCount = (r.news_items ?? []).filter(i => (i.source ?? "news_api") === "news_api").length;
     const edgarCount   = (r.news_items ?? []).filter(i => i.source === "edgar_sec").length;
     const crmCount     = (r.news_items ?? []).filter(i => i.source === "crm").length;
+    const bc = r.business_context;
     return (
       <span>
+        {/* Business memo */}
+        {bc?.business_memo && (
+          <span className="block mb-2 prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
+            {bc.business_memo}
+          </span>
+        )}
+        {bc?.moat_type && (
+          <span className="block mb-2 text-[11px] text-[#A89E94]">
+            moat <span className="text-[#6E6258]">{bc.moat_type}</span>
+            {bc.growth_trend && <>{" · "}{bc.growth_trend}</>}
+          </span>
+        )}
+        {/* Mosaic row */}
         <span className="text-[#A89E94]">
           surfaced <span className="text-[#6E6258]">{r.surfaced_count}</span>
           {newsApiCount > 0 && <>{" · "}<span className="text-[#6E6258]">{newsApiCount}</span> news_api</>}
@@ -54,6 +68,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
           {" · "}mosaic {r.mosaic_clear ? <span className="text-[#C8804A]">clear</span> : <span className="text-[#C84848]">halt</span>}
           {" · "}mgmt <span className="text-[#6E6258]">{r.mgmt_comm_score}</span>
         </span>
+        {/* Analyst briefing */}
         {r.analyst_briefing && (
           <span className="block mt-1.5 prose-tufte text-[11px] text-[#6E6258] leading-relaxed border-l-2 border-[#D8D0C8] pl-2">
             {r.analyst_briefing}
