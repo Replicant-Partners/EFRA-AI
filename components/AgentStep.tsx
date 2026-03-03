@@ -83,8 +83,8 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         <span className={r.rating === "BUY" ? "text-green-400" : r.rating === "UNDERPERFORM" ? "text-red-400" : "text-yellow-400"}>
           {r.rating}
         </span>
-        {" · "}RR <span className="text-green-400">{r.rr_ratio.toFixed(1)}:1</span>
-        {" · "}FaVeS <span className="text-green-400">{r.faves_score.total}/9</span>
+        {" · "}RR <span className="text-green-400">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
+        {" · "}FaVeS <span className="text-green-400">{r.faves_score?.total ?? "?"}/9</span>
       </span>
     );
   }

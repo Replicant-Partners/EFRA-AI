@@ -32,8 +32,8 @@ export default function ResultPanel({ state }: Props) {
           <div className="grid grid-cols-4 gap-2">
             <Metric label="Rating" value={valuation.rating} color={valuation.rating === "BUY" ? "text-green-400" : valuation.rating === "UNDERPERFORM" ? "text-red-400" : "text-yellow-400"} />
             <Metric label="PT 12M" value={`$${valuation.pt_12m}`} color="text-green-400" />
-            <Metric label="RR Ratio" value={`${valuation.rr_ratio.toFixed(1)}:1`} color="text-green-400" />
-            <Metric label="Confidence" value={`${(comm.audit_trail.final_confidence * 100).toFixed(0)}%`} color="text-green-400" />
+            <Metric label="RR Ratio" value={`${(valuation.rr_ratio ?? 0).toFixed(1)}:1`} color="text-green-400" />
+            <Metric label="Confidence" value={`${((comm.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%`} color="text-green-400" />
           </div>
 
           {/* ENTER gate */}
