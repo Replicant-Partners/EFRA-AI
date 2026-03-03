@@ -5,31 +5,21 @@ import { useState } from "react";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ScreenerCriteria {
-  // S3 — Exchange exclusions
   exclude_china: boolean;
   exclude_india: boolean;
   exclude_saudi: boolean;
   exclude_russia: boolean;
   exclude_taiwan: boolean;
   exclude_korea: boolean;
-  // S4
   min_price: number;
-  // S5
   working_capital_revenue_max: number;
-  // S6
   debt_assets_max_pct: number;
-  // S7
   gm_stability_max: number;
-  // S8
   gm_min_pct: number;
   gm_max_pct: number;
-  // S9
   gross_profitability_min_pct: number;
-  // S10
   market_cap_min_usd_m: number;
-  // S11
   sales_growth_min_pct: number;
-  // Extra
   sector_focus: string;
   max_results: number;
 }
@@ -40,14 +30,12 @@ interface ScreenerCandidate {
   market_cap_estimate: string;
   sector: string;
   exchange: string;
-  // Financials
   revenue_ttm: string;
   gross_margin_pct: string;
   ps_ratio: string;
   pe_ratio: string;
   pb_ratio: string;
   debt_assets_pct: string;
-  // Narrative
   rationale: string;
   criteria_notes: string;
 }
@@ -129,12 +117,12 @@ export default function ExcellenceScreener() {
       {/* Header */}
       <div className="flex items-baseline justify-between">
         <div>
-          <h1 className="text-lg font-bold text-green-500 tracking-widest uppercase">Excellence Universe Screener</h1>
+          <h1 className="text-lg font-bold text-[#C8804A] tracking-widest uppercase">Excellence Universe Screener</h1>
           <p className="t-label mt-1">Ajusta los criterios S1–S11 y obtén ideas de compañías candidatas</p>
         </div>
         <button
           onClick={resetDefaults}
-          className="text-xs text-[#555] hover:text-[#888] transition-colors"
+          className="text-xs text-[#A89E94] hover:text-[#6E6258] transition-colors"
         >
           Reset defaults
         </button>
@@ -142,11 +130,11 @@ export default function ExcellenceScreener() {
 
       <hr className="t-rule" />
 
-      {/* S1 + S2 — Fixed */}
+      {/* S1 + S2 */}
       <Section label="S1–S2 · Fixed Criteria">
-        <div className="flex gap-6 text-xs text-[#555]">
-          <span className="text-green-600">S1 · Trading Status: Active</span>
-          <span className="text-green-600">S2 · Primary Security only</span>
+        <div className="flex gap-6 text-xs text-[#A89E94]">
+          <span className="text-[#A86030]">S1 · Trading Status: Active</span>
+          <span className="text-[#A86030]">S2 · Primary Security only</span>
         </div>
       </Section>
 
@@ -162,8 +150,8 @@ export default function ExcellenceScreener() {
               onClick={() => set(key, !criteria[key])}
               className={`text-xs transition-colors border-b pb-0.5 ${
                 criteria[key]
-                  ? "text-red-400 border-red-500/40"
-                  : "text-[#555] border-[#2a2a2a] hover:text-[#888]"
+                  ? "text-[#C84848] border-[#C84848]/40"
+                  : "text-[#A89E94] border-[#D8D0C8] hover:text-[#6E6258]"
               }`}
             >
               {label}
@@ -176,101 +164,33 @@ export default function ExcellenceScreener() {
       <hr className="t-rule" />
 
       {/* S4–S6 */}
-      <Section label="S4–S6 · Price, Capital &amp; Debt">
+      <Section label="S4–S6 · Price, Capital & Debt">
         <div className="grid grid-cols-3 gap-6 mt-2">
-          <CriteriaInput
-            label="S4 · Min Price (USD)"
-            value={criteria.min_price}
-            onChange={v => set("min_price", v)}
-            step={0.10}
-            min={0}
-            prefix="$"
-          />
-          <CriteriaInput
-            label="S5 · Working Capital / Revenue max"
-            value={criteria.working_capital_revenue_max}
-            onChange={v => set("working_capital_revenue_max", v)}
-            step={0.01}
-            min={0}
-            max={1}
-          />
-          <CriteriaInput
-            label="S6 · Debt / Assets max"
-            value={criteria.debt_assets_max_pct}
-            onChange={v => set("debt_assets_max_pct", v)}
-            step={1}
-            min={0}
-            max={100}
-            suffix="%"
-          />
+          <CriteriaInput label="S4 · Min Price (USD)" value={criteria.min_price} onChange={v => set("min_price", v)} step={0.10} min={0} prefix="$" />
+          <CriteriaInput label="S5 · Working Capital / Revenue max" value={criteria.working_capital_revenue_max} onChange={v => set("working_capital_revenue_max", v)} step={0.01} min={0} max={1} />
+          <CriteriaInput label="S6 · Debt / Assets max" value={criteria.debt_assets_max_pct} onChange={v => set("debt_assets_max_pct", v)} step={1} min={0} max={100} suffix="%" />
         </div>
       </Section>
 
       <hr className="t-rule" />
 
       {/* S7–S9 */}
-      <Section label="S7–S9 · Gross Margin &amp; Profitability">
+      <Section label="S7–S9 · Gross Margin & Profitability">
         <div className="grid grid-cols-4 gap-6 mt-2">
-          <CriteriaInput
-            label="S7 · GM Stability max (10Y)"
-            value={criteria.gm_stability_max}
-            onChange={v => set("gm_stability_max", v)}
-            step={0.5}
-            min={0}
-            max={20}
-          />
-          <CriteriaInput
-            label="S8 · GM min"
-            value={criteria.gm_min_pct}
-            onChange={v => set("gm_min_pct", v)}
-            step={1}
-            min={0}
-            max={100}
-            suffix="%"
-          />
-          <CriteriaInput
-            label="S8 · GM max"
-            value={criteria.gm_max_pct}
-            onChange={v => set("gm_max_pct", v)}
-            step={1}
-            min={0}
-            max={100}
-            suffix="%"
-          />
-          <CriteriaInput
-            label="S9 · Gross Profitability min"
-            value={criteria.gross_profitability_min_pct}
-            onChange={v => set("gross_profitability_min_pct", v)}
-            step={1}
-            min={0}
-            max={100}
-            suffix="%"
-          />
+          <CriteriaInput label="S7 · GM Stability max (10Y)" value={criteria.gm_stability_max} onChange={v => set("gm_stability_max", v)} step={0.5} min={0} max={20} />
+          <CriteriaInput label="S8 · GM min" value={criteria.gm_min_pct} onChange={v => set("gm_min_pct", v)} step={1} min={0} max={100} suffix="%" />
+          <CriteriaInput label="S8 · GM max" value={criteria.gm_max_pct} onChange={v => set("gm_max_pct", v)} step={1} min={0} max={100} suffix="%" />
+          <CriteriaInput label="S9 · Gross Profitability min" value={criteria.gross_profitability_min_pct} onChange={v => set("gross_profitability_min_pct", v)} step={1} min={0} max={100} suffix="%" />
         </div>
       </Section>
 
       <hr className="t-rule" />
 
       {/* S10–S11 */}
-      <Section label="S10–S11 · Market Cap &amp; Growth">
+      <Section label="S10–S11 · Market Cap & Growth">
         <div className="grid grid-cols-2 gap-6 mt-2">
-          <CriteriaInput
-            label="S10 · Market Cap min (USD)"
-            value={criteria.market_cap_min_usd_m}
-            onChange={v => set("market_cap_min_usd_m", v)}
-            step={50}
-            min={0}
-            prefix="$"
-            suffix="M"
-          />
-          <CriteriaInput
-            label="S11 · Sales Growth min (Q vs 5Y avg)"
-            value={criteria.sales_growth_min_pct}
-            onChange={v => set("sales_growth_min_pct", v)}
-            step={0.5}
-            min={0}
-            suffix="%"
-          />
+          <CriteriaInput label="S10 · Market Cap min (USD)" value={criteria.market_cap_min_usd_m} onChange={v => set("market_cap_min_usd_m", v)} step={50} min={0} prefix="$" suffix="M" />
+          <CriteriaInput label="S11 · Sales Growth min (Q vs 5Y avg)" value={criteria.sales_growth_min_pct} onChange={v => set("sales_growth_min_pct", v)} step={0.5} min={0} suffix="%" />
         </div>
       </Section>
 
@@ -286,7 +206,7 @@ export default function ExcellenceScreener() {
               value={criteria.sector_focus}
               onChange={e => set("sector_focus", e.target.value)}
               placeholder="Technology, Healthcare, Industrials…"
-              className="w-full bg-transparent border-b border-[#2a2a2a] pb-1 text-sm text-gray-300 placeholder-[#333] focus:outline-none focus:border-[#3a3a3a] transition-colors"
+              className="w-full bg-transparent border-b border-[#D8D0C8] pb-1 text-sm text-[#1E1A14] placeholder-[#D8D0C8] focus:outline-none focus:border-[#C8804A] transition-colors"
             />
           </div>
           <div>
@@ -294,10 +214,10 @@ export default function ExcellenceScreener() {
             <select
               value={criteria.max_results}
               onChange={e => set("max_results", Number(e.target.value))}
-              className="w-full bg-transparent border-b border-[#2a2a2a] pb-1 text-sm text-gray-300 focus:outline-none focus:border-[#3a3a3a] transition-colors"
+              className="w-full bg-transparent border-b border-[#D8D0C8] pb-1 text-sm text-[#1E1A14] focus:outline-none focus:border-[#C8804A] transition-colors"
             >
               {[5, 10, 15, 20].map(n => (
-                <option key={n} value={n} className="bg-[#0d0d0d]">{n} compañías</option>
+                <option key={n} value={n} className="bg-[#FAF8F4]">{n} compañías</option>
               ))}
             </select>
           </div>
@@ -310,14 +230,14 @@ export default function ExcellenceScreener() {
       <button
         onClick={handleScreen}
         disabled={phase === "running"}
-        className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-20 disabled:cursor-not-allowed text-green-500 hover:text-green-400 border-b border-green-500/30 hover:border-green-400 pb-0.5"
+        className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5"
       >
         {phase === "running" ? "Screening…" : "Screen Universe →"}
       </button>
 
       {/* Error */}
       {error && (
-        <p className="prose-tufte text-red-400 text-sm">Error: {error}</p>
+        <p className="prose-tufte text-[#C84848] text-sm">Error: {error}</p>
       )}
 
       {/* Results */}
@@ -328,17 +248,16 @@ export default function ExcellenceScreener() {
             {results.length} candidata{results.length !== 1 ? "s" : ""} encontrada{results.length !== 1 ? "s" : ""}
           </div>
           {results.map((c, i) => (
-            <div key={c.ticker} className="border-b border-[#1e1e1e] py-5">
-              {/* Header */}
+            <div key={c.ticker} className="border-b border-[#E4DDD6] py-5">
               <div className="flex items-baseline gap-3 mb-3">
-                <span className="text-[#444] text-xs">{i + 1}</span>
-                <span className="text-green-400 font-bold tracking-widest">{c.ticker}</span>
-                <span className="text-gray-300 text-sm">{c.company_name}</span>
+                <span className="text-[#D8D0C8] text-xs">{i + 1}</span>
+                <span className="text-[#C8804A] font-bold tracking-widest">{c.ticker}</span>
+                <span className="text-[#1E1A14] text-sm">{c.company_name}</span>
                 <span className="t-label">{c.sector}</span>
                 <span className="t-label">{c.exchange}</span>
               </div>
 
-              {/* Financial metrics — inline data row */}
+              {/* Financial metrics — inline */}
               <div className="flex gap-6 text-xs mb-3">
                 <FinMetric label="Mkt Cap"     value={c.market_cap_estimate} />
                 <FinMetric label="Revenue TTM" value={c.revenue_ttm} />
@@ -349,14 +268,13 @@ export default function ExcellenceScreener() {
                 <FinMetric label="Debt/Assets" value={c.debt_assets_pct} />
               </div>
 
-              {/* Narrative */}
               <p className="prose-tufte text-sm leading-relaxed">{c.rationale}</p>
               {c.criteria_notes && (
-                <p className="text-xs text-[#555] mt-1 italic">{c.criteria_notes}</p>
+                <p className="text-xs text-[#A89E94] mt-1 italic">{c.criteria_notes}</p>
               )}
               <button
                 onClick={() => { window.location.href = `/?ticker=${c.ticker}`; }}
-                className="mt-2 text-xs text-[#555] hover:text-green-500 transition-colors"
+                className="mt-2 text-xs text-[#A89E94] hover:text-[#C8804A] transition-colors"
               >
                 → Send to Pipeline
               </button>
@@ -391,7 +309,7 @@ function FinMetric({ label, value }: { label: string; value: string }) {
   return (
     <span>
       <span className="t-label mr-1">{label}</span>
-      <span className="text-[#aaa]">{value || "—"}</span>
+      <span className="text-[#6E6258]">{value || "—"}</span>
     </span>
   );
 }
@@ -399,29 +317,16 @@ function FinMetric({ label, value }: { label: string; value: string }) {
 // ─── CriteriaInput ────────────────────────────────────────────────────────────
 
 function CriteriaInput({
-  label,
-  value,
-  onChange,
-  step = 1,
-  min,
-  max,
-  prefix,
-  suffix,
+  label, value, onChange, step = 1, min, max, prefix, suffix,
 }: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  step?: number;
-  min?: number;
-  max?: number;
-  prefix?: string;
-  suffix?: string;
+  label: string; value: number; onChange: (v: number) => void;
+  step?: number; min?: number; max?: number; prefix?: string; suffix?: string;
 }) {
   return (
     <div>
       <label className="t-label block mb-2">{label}</label>
-      <div className="flex items-center border-b border-[#2a2a2a] focus-within:border-[#3a3a3a] transition-colors">
-        {prefix && <span className="text-[#555] text-xs pr-1">{prefix}</span>}
+      <div className="flex items-center border-b border-[#D8D0C8] focus-within:border-[#C8804A] transition-colors">
+        {prefix && <span className="text-[#A89E94] text-xs pr-1">{prefix}</span>}
         <input
           type="number"
           value={value}
@@ -429,9 +334,9 @@ function CriteriaInput({
           min={min}
           max={max}
           onChange={e => onChange(Number(e.target.value))}
-          className="flex-1 bg-transparent py-1 text-sm text-green-400 focus:outline-none w-0"
+          className="flex-1 bg-transparent py-1 text-sm text-[#C8804A] focus:outline-none w-0"
         />
-        {suffix && <span className="text-[#555] text-xs pl-1">{suffix}</span>}
+        {suffix && <span className="text-[#A89E94] text-xs pl-1">{suffix}</span>}
       </div>
     </div>
   );

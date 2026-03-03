@@ -104,17 +104,17 @@ export default function Home() {
           {/* Pipeline header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-green-500 font-bold text-xl">
+              <h2 className="text-[#C8804A] font-bold text-xl">
                 {finalState?.ticker ?? "RUNNING PIPELINE"}
               </h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-[#A89E94] text-sm mt-1">
                 {phase === "running" ? "Pipeline executing…" : `Pipeline ${finalState?.status ?? "DONE"}`}
               </p>
             </div>
             {phase === "done" && (
               <button
                 onClick={handleReset}
-                className="text-xs text-gray-500 border border-[#2a2a2a] px-3 py-1.5 hover:border-green-500 hover:text-green-500 transition-colors"
+                className="text-xs text-[#A89E94] border border-[#D8D0C8] px-3 py-1.5 hover:border-[#C8804A] hover:text-[#C8804A] transition-colors"
               >
                 ← New idea
               </button>
@@ -137,7 +137,7 @@ export default function Home() {
 
           {/* Error */}
           {error && (
-            <div className="border border-red-500 bg-red-500/10 p-4 text-red-400 text-sm">
+            <div className="border border-[#C84848] bg-[#C84848]/5 p-4 text-[#C84848] text-sm">
               ERROR: {error}
             </div>
           )}

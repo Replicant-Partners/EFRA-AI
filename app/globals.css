@@ -7,8 +7,8 @@
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 
 body {
-  background-color: #0d0d0d;
-  color: #d4d4d4;
+  background-color: #FAF8F4;
+  color: #1E1A14;
   font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -21,11 +21,11 @@ body {
   font-family: 'Playfair Display', 'Georgia', 'Palatino Linotype', serif;
   font-size: 0.875rem;
   line-height: 1.75;
-  color: #b8b8b8;
+  color: #6E6258;
 }
 
 .prose-tufte em {
-  color: #888;
+  color: #8C7E70;
   font-style: italic;
 }
 
@@ -33,7 +33,7 @@ body {
 
 .t-rule {
   border: none;
-  border-top: 1px solid #222;
+  border-top: 1px solid #E4DDD6;
   margin: 0;
 }
 
@@ -43,20 +43,20 @@ body {
   font-size: 0.625rem;         /* 10px */
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #555;
+  color: #A89E94;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2a2a; }
+::-webkit-scrollbar-thumb { background: #D8D0C8; }
 
 /* ── Running pulse (agent active) ───────────────────────────────────────── */
 
 @keyframes pulse-border {
-  0%, 100% { border-color: rgba(34,197,94,0.4); }
-  50%       { border-color: rgba(34,197,94,0.1); }
+  0%, 100% { border-color: rgba(200,128,74,0.35); }
+  50%       { border-color: rgba(200,128,74,0.08); }
 }
 
 .running-border {
