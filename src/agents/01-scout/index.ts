@@ -135,10 +135,11 @@ export async function runScout(input: ScoutInput): Promise<ScoutOutput> {
   const userMessage = `
 Evaluate this investment idea:
 
-Ticker:          ${input.ticker}
-Analyst ID:      ${input.analyst_id}
-Catalyst:        ${input.catalyst}
-Idea source tag: ${input.idea_source_tag ?? "N/A"}
+Ticker:                  ${input.ticker}
+Analyst ID:              ${input.analyst_id}
+Catalyst:                ${input.catalyst}
+Idea source tag:         ${input.idea_source_tag ?? "N/A"}
+Excellence Universe:     ${input.in_excellence_universe ? "YES — analyst confirms S1–S11 all pass" : "NOT CONFIRMED — assess independently"}
 
 Calculate the Alpha Score using the formula, apply gate rules, assign horizon_tag and
 downstream_mode, assess forensic_pre_result if alpha_score >= 65, and emit the full JSON.

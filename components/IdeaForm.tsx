@@ -11,6 +11,7 @@ interface Props {
     catalyst: string;
     mode: Mode;
     news: string[];
+    in_excellence_universe: boolean;
   }) => void;
 }
 
@@ -26,6 +27,7 @@ export default function IdeaForm({ onSubmit }: Props) {
   const [catalyst, setCatalyst] = useState("");
   const [mode, setMode] = useState<Mode>("valentine");
   const [news, setNews] = useState<string[]>([""]);
+  const [excellenceUniverse, setExcellenceUniverse] = useState(false);
 
   function addNews() {
     if (news.length < 10) setNews([...news, ""]);
@@ -44,7 +46,7 @@ export default function IdeaForm({ onSubmit }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanNews = news.filter(n => n.trim().length > 0);
-    onSubmit({ ticker: ticker.toUpperCase().trim(), analyst_id: analystId, catalyst, mode, news: cleanNews });
+    onSubmit({ ticker: ticker.toUpperCase().trim(), analyst_id: analystId, catalyst, mode, news: cleanNews, in_excellence_universe: excellenceUniverse });
   }
 
   const valid = ticker.trim().length > 0 && catalyst.trim().length > 10;
@@ -56,6 +58,31 @@ export default function IdeaForm({ onSubmit }: Props) {
         <h1 className="text-2xl font-bold text-green-500 tracking-tight">New Idea</h1>
         <p className="text-gray-500 text-sm mt-1">Submit an investment idea to the pipeline</p>
       </div>
+
+      {/* Excellence Universe */}
+      <button
+        type="button"
+        onClick={() => setExcellenceUniverse(v => !v)}
+        className={`w-full border px-4 py-3 flex items-start gap-4 text-left transition-colors ${
+          excellenceUniverse
+            ? "border-green-500 bg-green-500/10"
+            : "border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]"
+        }`}
+      >
+        <div className={`mt-0.5 w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-colors ${
+          excellenceUniverse ? "border-green-500 bg-green-500" : "border-[#3a3a3a]"
+        }`}>
+          {excellenceUniverse && <span className="text-black text-xs font-bold leading-none">✓</span>}
+        </div>
+        <div>
+          <div className={`text-xs font-bold tracking-widest ${excellenceUniverse ? "text-green-400" : "text-gray-500"}`}>
+            EXCELLENCE UNIVERSE
+          </div>
+          <div className="text-xs text-gray-600 mt-0.5">
+            S1 Active · S2 Primary · S3 Exchange · S4 Price &gt;$0.50 · S5 Working Capital · S6 Debt/Assets &lt;30% · S7 GM Stability · S8 GM 20–80% · S9 Gross Profitability &gt;20% · S10 Mkt Cap &gt;$200M · S11 Sales Growth &gt;7%
+          </div>
+        </div>
+      </button>
 
       {/* Ticker + Analyst */}
       <div className="grid grid-cols-2 gap-4">

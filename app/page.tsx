@@ -37,6 +37,7 @@ export default function Home() {
     catalyst: string;
     mode: "valentine" | "gunn" | "dual";
     news: string[];
+    in_excellence_universe: boolean;
   }) {
     setPhase("running");
     setEvents({});

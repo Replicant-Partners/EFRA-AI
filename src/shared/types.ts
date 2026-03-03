@@ -22,6 +22,7 @@ export interface ScoutInput {
   analyst_id: string;
   catalyst: string;
   idea_source_tag?: string;
+  in_excellence_universe?: boolean;  // analyst pre-confirmed S1-S11 pass
 }
 
 export interface AlphaScore {

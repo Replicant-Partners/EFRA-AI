@@ -10,12 +10,13 @@ export const maxDuration = 300; // 5 minutes — Railway/Vercel limit
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { ticker, analyst_id, catalyst, mode, news } = body as {
+  const { ticker, analyst_id, catalyst, mode, news, in_excellence_universe } = body as {
     ticker: string;
     analyst_id: string;
     catalyst: string;
     mode: "valentine" | "gunn" | "dual";
     news: string[];
+    in_excellence_universe: boolean;
   };
 
   const encoder = new TextEncoder();
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
         analyst_id,
         catalyst,
         idea_source_tag: `web_${mode}`,
+        in_excellence_universe,
       };
 
       try {
