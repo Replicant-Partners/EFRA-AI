@@ -115,11 +115,33 @@ export async function POST(request: Request) {
           await pause(60);  log(`Hypotheses:   ${result?.hypotheses?.length ?? 0} investment hypotheses generated`);
 
           if (result?.news_items?.length) {
-            await pause(60);
-            log(`Top news items:`);
-            for (const item of result.news_items.slice(0, 3)) {
-              await pause(40);
-              log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+            const newsApi  = result.news_items.filter(i => (i.source ?? "news_api") === "news_api");
+            const edgarSec = result.news_items.filter(i => i.source === "edgar_sec");
+            const crm      = result.news_items.filter(i => i.source === "crm");
+
+            if (newsApi.length) {
+              await pause(60);
+              log(`News API (${newsApi.length}):`);
+              for (const item of newsApi.slice(0, 3)) {
+                await pause(40);
+                log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+              }
+            }
+            if (edgarSec.length) {
+              await pause(60);
+              log(`EDGAR / SEC (${edgarSec.length}):`);
+              for (const item of edgarSec.slice(0, 3)) {
+                await pause(40);
+                log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+              }
+            }
+            if (crm.length) {
+              await pause(60);
+              log(`CRM signals (${crm.length}):`);
+              for (const item of crm.slice(0, 2)) {
+                await pause(40);
+                log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+              }
             }
           }
 

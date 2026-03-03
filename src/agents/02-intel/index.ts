@@ -17,12 +17,17 @@ Solo noticias con score >= 40 pasan al bundle (surfaced).
 
 MNPI: Si detectas información material no pública → mosaic_clear = false.
 
+Asigna el campo "source" a cada noticia según su origen:
+- "news_api"   → artículos de Bloomberg, Reuters, The Information, Axios, etc.
+- "edgar_sec"  → filings 8-K, 10-K, 10-Q, DEF 14A u otro documento SEC/EDGAR
+- "crm"        → señales de contactos CRM
+
 Devuelve SIEMPRE un JSON válido con esta estructura exacta:
 {
   "surfaced_count": 0,
   "suppressed_count": 0,
   "mosaic_clear": true,
-  "news_items": [{ "id": "", "headline": "", "source_tier": 1, "score": 0, "published_at": "" }],
+  "news_items": [{ "id": "", "headline": "", "source": "news_api", "source_tier": 1, "score": 0, "published_at": "" }],
   "hypotheses": [{ "id": "", "statement": "", "lifecycle": "PENDING", "crm_contact_id": null }],
   "mgmt_comm_score": 0
 }
@@ -41,11 +46,12 @@ const JSON_SCHEMA = {
         properties: {
           id:          { type: "string" },
           headline:    { type: "string" },
+          source:      { type: "string", enum: ["news_api", "edgar_sec", "crm"] },
           source_tier: { type: "number", enum: [1, 2] },
           score:       { type: "number" },
           published_at:{ type: "string" },
         },
-        required: ["id","headline","source_tier","score","published_at"],
+        required: ["id","headline","source","source_tier","score","published_at"],
         additionalProperties: false,
       },
     },

@@ -41,9 +41,15 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "intel") {
     const r = result as IntelBundle;
+    const newsApiCount = (r.news_items ?? []).filter(i => (i.source ?? "news_api") === "news_api").length;
+    const edgarCount   = (r.news_items ?? []).filter(i => i.source === "edgar_sec").length;
+    const crmCount     = (r.news_items ?? []).filter(i => i.source === "crm").length;
     return (
       <span className="text-[#A89E94]">
         surfaced <span className="text-[#6E6258]">{r.surfaced_count}</span>
+        {newsApiCount > 0 && <>{" · "}<span className="text-[#6E6258]">{newsApiCount}</span> news_api</>}
+        {edgarCount   > 0 && <>{" · "}<span className="text-[#6E6258]">{edgarCount}</span> edgar</>}
+        {crmCount     > 0 && <>{" · "}<span className="text-[#6E6258]">{crmCount}</span> crm</>}
         {" · "}mosaic {r.mosaic_clear ? <span className="text-[#C8804A]">clear</span> : <span className="text-[#C84848]">halt</span>}
         {" · "}mgmt <span className="text-[#6E6258]">{r.mgmt_comm_score}</span>
       </span>

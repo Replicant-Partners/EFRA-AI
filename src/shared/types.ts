@@ -65,6 +65,7 @@ export interface ScoutOutput {
 export interface NewsItem {
   id: string;
   headline: string;
+  source: "news_api" | "edgar_sec" | "crm";
   source_tier: 1 | 2;
   score: number;
   published_at: string;
