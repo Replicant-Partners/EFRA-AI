@@ -69,6 +69,7 @@ export interface NewsItem {
   source_tier: 1 | 2;
   score: number;
   published_at: string;
+  summary: string;   // 1-sentence: why this matters for the thesis
 }
 
 export interface Hypothesis {
@@ -84,7 +85,8 @@ export interface IntelBundle {
   mosaic_clear: boolean;
   news_items: NewsItem[];
   hypotheses: Hypothesis[];
-  mgmt_comm_score: number; // 0–100
+  mgmt_comm_score: number;    // 0–100
+  analyst_briefing: string;   // 3-4 sentence synthesis of what the analyst must know
 }
 
 export interface IntelInput {

@@ -125,6 +125,7 @@ export async function POST(request: Request) {
               for (const item of newsApi.slice(0, 3)) {
                 await pause(40);
                 log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+                if (item.summary) { await pause(20); log(`       → ${item.summary}`); }
               }
             }
             if (edgarSec.length) {
@@ -133,6 +134,7 @@ export async function POST(request: Request) {
               for (const item of edgarSec.slice(0, 3)) {
                 await pause(40);
                 log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+                if (item.summary) { await pause(20); log(`       → ${item.summary}`); }
               }
             }
             if (crm.length) {
@@ -141,8 +143,27 @@ export async function POST(request: Request) {
               for (const item of crm.slice(0, 2)) {
                 await pause(40);
                 log(`  [${item.score ?? "?"}] ${item.headline ?? "—"}`);
+                if (item.summary) { await pause(20); log(`       → ${item.summary}`); }
               }
             }
+          }
+
+          if (result?.analyst_briefing) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Analyst briefing:`);
+            // wrap at ~80 chars so it reads cleanly in the monospace log
+            const words = result.analyst_briefing.split(" ");
+            let line = "";
+            for (const word of words) {
+              if ((line + " " + word).trim().length > 80) {
+                await pause(20); log(`  ${line.trim()}`);
+                line = word;
+              } else {
+                line = (line + " " + word).trim();
+              }
+            }
+            if (line) { await pause(20); log(`  ${line}`); }
           }
 
           send({ type: "done", result });

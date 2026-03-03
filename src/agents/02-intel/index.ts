@@ -22,14 +22,22 @@ Asigna el campo "source" a cada noticia según su origen:
 - "edgar_sec"  → filings 8-K, 10-K, 10-Q, DEF 14A u otro documento SEC/EDGAR
 - "crm"        → señales de contactos CRM
 
+Para cada noticia surfaced, escribe un "summary" de 1 oración explicando por qué
+importa para la tesis de inversión (qué cambia, qué confirma o qué contradice).
+
+Al final, escribe un "analyst_briefing" de 3-4 oraciones con la síntesis más
+importante que el analista debe conocer: catalizadores clave, riesgos emergentes
+y qué hipótesis quedan validadas o abiertas.
+
 Devuelve SIEMPRE un JSON válido con esta estructura exacta:
 {
   "surfaced_count": 0,
   "suppressed_count": 0,
   "mosaic_clear": true,
-  "news_items": [{ "id": "", "headline": "", "source": "news_api", "source_tier": 1, "score": 0, "published_at": "" }],
+  "news_items": [{ "id": "", "headline": "", "source": "news_api", "source_tier": 1, "score": 0, "published_at": "", "summary": "" }],
   "hypotheses": [{ "id": "", "statement": "", "lifecycle": "PENDING", "crm_contact_id": null }],
-  "mgmt_comm_score": 0
+  "mgmt_comm_score": 0,
+  "analyst_briefing": ""
 }
 `.trim();
 
@@ -50,8 +58,9 @@ const JSON_SCHEMA = {
           source_tier: { type: "number", enum: [1, 2] },
           score:       { type: "number" },
           published_at:{ type: "string" },
+          summary:     { type: "string" },
         },
-        required: ["id","headline","source","source_tier","score","published_at"],
+        required: ["id","headline","source","source_tier","score","published_at","summary"],
         additionalProperties: false,
       },
     },
@@ -69,9 +78,10 @@ const JSON_SCHEMA = {
         additionalProperties: false,
       },
     },
-    mgmt_comm_score: { type: "number" },
+    mgmt_comm_score:  { type: "number" },
+    analyst_briefing: { type: "string" },
   },
-  required: ["surfaced_count","suppressed_count","mosaic_clear","news_items","hypotheses","mgmt_comm_score"],
+  required: ["surfaced_count","suppressed_count","mosaic_clear","news_items","hypotheses","mgmt_comm_score","analyst_briefing"],
   additionalProperties: false,
 };
 
