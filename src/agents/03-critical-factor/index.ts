@@ -22,12 +22,19 @@ GUNN MODE: calcular build_to_last_score (management 0–33, tam 0–33, moat 0�
 
 PROBABILIDADES: deben sumar exactamente 1.0.
 
-Devuelve SIEMPRE un JSON válido con esta estructura:
+Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales, no estos):
 {
-  "factors": [{ "id": "", "description": "", "eps_impact_pct": 0 }],
-  "scenarios": [{ "type": "Bull", "probability": 0.25, "implied_pt": 0 }],
-  "expected_value_pt": 0,
-  "build_to_last_score": { "management": 0, "tam": 0, "moat": 0, "total": 0 } | null,
+  "factors": [
+    { "id": "cf-1", "description": "H100 GPU shipment cadence vs. hyperscaler capex plans", "eps_impact_pct": 18 },
+    { "id": "cf-2", "description": "China export restrictions — ~15% of data center revenue at risk", "eps_impact_pct": 9 }
+  ],
+  "scenarios": [
+    { "type": "Bull", "probability": 0.30, "implied_pt": 185 },
+    { "type": "Base", "probability": 0.50, "implied_pt": 148 },
+    { "type": "Bear", "probability": 0.20, "implied_pt": 95 }
+  ],
+  "expected_value_pt": 148,
+  "build_to_last_score": null,
   "hypotheses": []
 }
 `.trim();

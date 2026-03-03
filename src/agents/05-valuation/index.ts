@@ -28,15 +28,15 @@ Si RR < 2:1 o gap < 5%: rating = "UNDERPERFORM", rr_ratio < 2.
 
 IC PREMIUM (Gunn, 0–1.5): basado en mgmt_trust + build_to_last + moat.
 
-Devuelve SIEMPRE JSON válido:
+Devuelve SIEMPRE JSON válido con esta estructura exacta (usa valores reales, no estos):
 {
-  "pt_12m": 0,
-  "pt_5y": 0 | null,
-  "rating": "BUY" | "HOLD" | "UNDERPERFORM",
-  "rr_ratio": 0,
-  "faves_score": { "frequency": 0, "visibility": 0, "significance": 0, "total": 0 },
-  "ic_premium": 0 | null,
-  "conf_adj": 0
+  "pt_12m": 148,
+  "pt_5y": null,
+  "rating": "BUY",
+  "rr_ratio": 2.4,
+  "faves_score": { "frequency": 2, "visibility": 2, "significance": 3, "total": 7 },
+  "ic_premium": null,
+  "conf_adj": -0.05
 }
 `.trim();
 
@@ -92,7 +92,7 @@ Calcula pt_12m, rating, rr_ratio y FaVeS. Aplica ajustes Forensic.
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  2048,
-    json_schema: JSON_SCHEMA,
+    json_mode:   true,
   });
 
   return JSON.parse(text) as ValuationModel;

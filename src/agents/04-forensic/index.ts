@@ -22,14 +22,16 @@ RESULTADO:
 - risk_score > 75 sin SEV-5 → "CONDITIONAL"
 - risk_score <= 75          → "CLEAR"
 
-Devuelve SIEMPRE JSON válido:
+Devuelve SIEMPRE JSON válido con esta estructura exacta (usa valores reales, no estos):
 {
-  "risk_score": 0,
-  "mgmt_trust_score": 0,
-  "flags": [{ "severity": 1, "description": "", "eps_haircut_pct": 0, "dr_add_bps": 0 }],
-  "eps_haircut_total": 0,
-  "dr_add_bps_total": 0,
-  "recommendation": "CLEAR" | "CONDITIONAL" | "BLOCK"
+  "risk_score": 32,
+  "mgmt_trust_score": 71,
+  "flags": [
+    { "severity": 2, "description": "DSO expansion 15 days YoY — possible revenue pull-forward", "eps_haircut_pct": 0.05, "dr_add_bps": 75 }
+  ],
+  "eps_haircut_total": 0.05,
+  "dr_add_bps_total": 75,
+  "recommendation": "CLEAR"
 }
 `.trim();
 
@@ -81,7 +83,7 @@ Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
     user:        userMessage,
     temperature: 0.1,
     max_tokens:  1024,
-    json_schema: JSON_SCHEMA,
+    json_mode:   true,
   });
 
   const profile = JSON.parse(text) as ForensicProfile;

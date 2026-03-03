@@ -183,7 +183,7 @@ downstream_mode, assess forensic_pre_result if alpha_score >= 65, and emit the f
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  1500,
-    json_schema: JSON_SCHEMA,
+    json_mode:   true,
   });
 
   return JSON.parse(text) as ScoutOutput;
