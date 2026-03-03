@@ -23,7 +23,7 @@ export default function ResultPanel({ state }: Props) {
       {/* Status line */}
       <div className="flex items-baseline gap-4 mb-6">
         <span className={`text-xs font-bold tracking-widest ${statusColor}`}>{status}</span>
-        {comm && <span className="t-label">{comm.output_type.toLowerCase().replace(/_/g, " ")}</span>}
+        {comm && <span className="t-label">{comm.output_type?.toLowerCase().replace(/_/g, " ")}</span>}
       </div>
 
       {comm && valuation && (
@@ -76,7 +76,7 @@ export default function ResultPanel({ state }: Props) {
               <div className="flex gap-8 text-xs">
                 {(cf.scenarios ?? []).map(s => (
                   <div key={s.type}>
-                    <span className="text-[#A89E94]">{s.type.toLowerCase()}</span>
+                    <span className="text-[#A89E94]">{s.type?.toLowerCase()}</span>
                     {" "}
                     <span className="text-[#C8804A]">${s.implied_pt}</span>
                     {" "}

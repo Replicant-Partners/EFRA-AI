@@ -57,7 +57,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         risk <span className="text-[#C89040]">{r.risk_score}</span>
         {" · "}
         <span className={r.recommendation === "BLOCK" ? "text-[#C84848]" : r.recommendation === "CLEAR" ? "text-[#C8804A]" : "text-[#C89040]"}>
-          {r.recommendation.toLowerCase()}
+          {r.recommendation?.toLowerCase()}
         </span>
         {" · "}{(r.flags ?? []).length} flag{(r.flags ?? []).length !== 1 ? "s" : ""}
         {" · "}haircut <span className="text-[#8C7E70]">{(r.eps_haircut_total ?? 0).toFixed(0)}%</span>
@@ -83,7 +83,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         PT <span className="text-[#C8804A]">${r.pt_12m}</span>
         {" · "}
         <span className={r.rating === "BUY" ? "text-[#C8804A]" : r.rating === "UNDERPERFORM" ? "text-[#C84848]" : "text-[#C89040]"}>
-          {r.rating.toLowerCase()}
+          {r.rating?.toLowerCase()}
         </span>
         {" · "}RR <span className="text-[#8C7E70]">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
         {" · "}FaVeS <span className="text-[#8C7E70]">{r.faves_score?.total ?? "?"}/9</span>
@@ -100,7 +100,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         </span>
         {" · "}
         <span className={r.publication_possible ? "text-[#C8804A]" : "text-[#C84848]"}>
-          {r.publication_possible ? r.output_type.toLowerCase().replace("_", " ") : "drop"}
+          {r.publication_possible ? r.output_type?.toLowerCase().replace("_", " ") : "drop"}
         </span>
         {" · "}conf <span className="text-[#8C7E70]">{((r.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%</span>
       </span>
