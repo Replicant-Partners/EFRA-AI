@@ -121,7 +121,7 @@ export default function ResultPanel({ state }: Props) {
           <hr className="t-rule mb-4" />
 
           {/* Alpha score breakdown */}
-          {scout && (
+          {scout && scout.alpha_score && (
             <div className="mb-6">
               <div className="flex items-baseline gap-3 mb-3">
                 <span className="t-label">Alpha Score</span>
@@ -137,7 +137,7 @@ export default function ResultPanel({ state }: Props) {
                 <ScorePair label="Valuation" value={scout.alpha_score.valuation_anomaly}  max={30} />
                 <ScorePair label="Gunn +"    value={scout.alpha_score.gunn_bonus}         max={25} />
               </div>
-              {scout.alpha_score.gunn_bonus > 0 && (
+              {(scout.alpha_score.gunn_bonus ?? 0) > 0 && (
                 <div className="flex gap-3 text-xs text-[#A89E94] mt-2">
                   {scout.alpha_score.em_gdp_bonus > 0 && <span className="text-[#A86030]">+{scout.alpha_score.em_gdp_bonus} EM GDP</span>}
                   {scout.alpha_score.bessembinder_bonus > 0 && <span className="text-[#A86030]">+{scout.alpha_score.bessembinder_bonus} Bessembinder</span>}

@@ -28,8 +28,8 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
     const dc = r.decision === "MUST_COVER" ? "text-[#C8804A]" : r.decision === "REVIEW_ZONE" ? "text-[#C89040]" : "text-[#C84848]";
     return (
       <span className="text-[#A89E94]">
-        score <span className="text-[#C8804A]">{r.alpha_score.total}</span>
-        {" · "}<span className={dc}>{r.decision}</span>
+        {r.alpha_score && <>score <span className="text-[#C8804A]">{r.alpha_score.total}</span>{" · "}</>}
+        <span className={dc}>{r.decision}</span>
         {" · "}{r.downstream_mode} {" · "}{r.horizon_tag}
         {r.confidence != null && <>{" · "}conf <span className="text-[#8C7E70]">{(r.confidence * 100).toFixed(0)}%</span></>}
         {r.decision_rationale && (
