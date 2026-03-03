@@ -38,6 +38,22 @@ export async function POST(request: Request) {
         if (agent === "scout") {
           log(`Evaluating ${ticker} — scoring alpha across 4 dimensions…`);
 
+          // Stream dimension work-in-progress logs while the LLM runs
+          let abortWaiting = false;
+          (async () => {
+            const steps = [
+              { delay: 2500, msg: `Dim 1/4 · Coverage gap — querying analyst density…` },
+              { delay: 3500, msg: `Dim 2/4 · Market cap fit — sizing ${ticker} to universe…` },
+              { delay: 3500, msg: `Dim 3/4 · Sector relevance — mapping exposure…` },
+              { delay: 4000, msg: `Dim 4/4 · Valuation anomaly — screening multiples…` },
+            ];
+            for (const { delay, msg } of steps) {
+              await pause(delay);
+              if (abortWaiting) break;
+              log(msg);
+            }
+          })();
+
           const scoutInput: ScoutInput = {
             ticker,
             analyst_id,
@@ -45,7 +61,9 @@ export async function POST(request: Request) {
             idea_source_tag: `web_${mode}`,
           };
           const result = await runScout(scoutInput);
+          abortWaiting = true;
 
+          log(`─────────────────────`);
           const a = result.alpha_score;
           await pause(80);  log(`Coverage gap:       ${a.coverage_gap_score}/25`);
           await pause(60);  log(`Market cap fit:     ${a.market_cap_fit}/20`);
