@@ -28,11 +28,11 @@ type FormData = {
 const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "scout",         label: "01 · SCOUT",           desc: "Alpha Score" },
   { key: "intel",         label: "02 · INTEL",           desc: "News + Mosaic" },
-  { key: "forensic_pre",  label: "04 · FORENSIC",        desc: "Pre-screen" },
-  { key: "cf",            label: "03 · CRITICAL FACTOR", desc: "Thesis + Scenarios" },
-  { key: "forensic",      label: "04 · FORENSIC",        desc: "Full Scan" },
-  { key: "valuation",     label: "05 · VALUATION",       desc: "Price Target" },
-  { key: "communication", label: "06 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
+  { key: "forensic_pre",  label: "03 · FORENSIC",        desc: "Pre-screen" },
+  { key: "cf",            label: "04 · CRITICAL FACTOR", desc: "Thesis + Scenarios" },
+  { key: "forensic",      label: "05 · FORENSIC",        desc: "Full Scan" },
+  { key: "valuation",     label: "06 · VALUATION",       desc: "Price Target" },
+  { key: "communication", label: "07 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
 ];
 
 // maps agent key → which key in PipelineState to store result
