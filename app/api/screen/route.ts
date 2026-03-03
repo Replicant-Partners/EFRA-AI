@@ -26,11 +26,26 @@ Respond ONLY with valid JSON in this exact format:
       "market_cap_estimate": "$2.8T",
       "sector": "Technology",
       "exchange": "NASDAQ",
+      "revenue_ttm": "$60B",
+      "gross_margin_pct": "75%",
+      "ps_ratio": "46x",
+      "pe_ratio": "52x",
+      "pb_ratio": "38x",
+      "debt_assets_pct": "14%",
       "rationale": "2-3 sentence explanation of why this company fits the criteria",
       "criteria_notes": "Any caveats about criteria not perfectly met, or empty string"
     }
   ]
 }
+
+FIELD NOTES:
+- revenue_ttm: trailing 12-month revenue with unit (e.g. "$4.2B", "$800M")
+- gross_margin_pct: latest FY or TTM gross margin (e.g. "68%")
+- ps_ratio: price-to-sales using current market cap / TTM revenue (e.g. "8.2x")
+- pe_ratio: trailing P/E ratio (e.g. "24x"); use "N/M" if negative earnings
+- pb_ratio: price-to-book value (e.g. "5.1x")
+- debt_assets_pct: total debt / total assets as percentage (e.g. "18%")
+Use your best knowledge estimate. Mark obviously uncertain values with "~" prefix (e.g. "~$2B").
 `.trim();
 
 export async function POST(request: Request) {
@@ -72,7 +87,7 @@ TARGET: Return ${criteria.max_results} best-fit candidates. Quality over quantit
       system:      SYSTEM_PROMPT,
       user:        userMessage,
       temperature: 0.3,
-      max_tokens:  2048,
+      max_tokens:  3500,
       json_mode:   true,
     });
 

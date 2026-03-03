@@ -40,6 +40,14 @@ interface ScreenerCandidate {
   market_cap_estimate: string;
   sector: string;
   exchange: string;
+  // Financials
+  revenue_ttm: string;        // e.g. "$4.2B"
+  gross_margin_pct: string;   // e.g. "72%"
+  ps_ratio: string;           // e.g. "8.2x"
+  pe_ratio: string;           // e.g. "24x" or "N/M"
+  pb_ratio: string;           // e.g. "5.1x"
+  debt_assets_pct: string;    // e.g. "18%"
+  // Narrative
   rationale: string;
   criteria_notes: string;
 }
@@ -322,19 +330,32 @@ export default function ExcellenceScreener() {
             {results.length} candidata{results.length !== 1 ? "s" : ""} encontrada{results.length !== 1 ? "s" : ""}
           </div>
           {results.map((c, i) => (
-            <div key={c.ticker} className="border border-[#2a2a2a] bg-[#1a1a1a] p-4 space-y-2">
+            <div key={c.ticker} className="border border-[#2a2a2a] bg-[#1a1a1a] p-4 space-y-3">
+              {/* Header row */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-gray-600 text-xs">#{i + 1}</span>
                   <span className="text-green-400 font-bold text-lg tracking-widest">{c.ticker}</span>
                   <span className="text-gray-300 text-sm">{c.company_name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-right flex-shrink-0">
+                <div className="flex items-center gap-2 text-xs flex-shrink-0">
                   <span className="text-gray-500 border border-[#2a2a2a] px-2 py-0.5">{c.sector}</span>
                   <span className="text-gray-600 border border-[#2a2a2a] px-2 py-0.5">{c.exchange}</span>
-                  <span className="text-green-400 font-bold">{c.market_cap_estimate}</span>
                 </div>
               </div>
+
+              {/* Financial metrics grid */}
+              <div className="grid grid-cols-7 gap-2 border border-[#222] bg-[#141414] px-3 py-2">
+                <FinMetric label="Mkt Cap"      value={c.market_cap_estimate} highlight />
+                <FinMetric label="Revenue TTM"  value={c.revenue_ttm} />
+                <FinMetric label="Gross Margin" value={c.gross_margin_pct} />
+                <FinMetric label="P/Sales"      value={c.ps_ratio} />
+                <FinMetric label="P/Earnings"   value={c.pe_ratio} />
+                <FinMetric label="P/Book"       value={c.pb_ratio} />
+                <FinMetric label="Debt/Assets"  value={c.debt_assets_pct} />
+              </div>
+
+              {/* Narrative */}
               <p className="text-xs text-gray-400 leading-relaxed">{c.rationale}</p>
               {c.criteria_notes && (
                 <p className="text-xs text-gray-600 italic">{c.criteria_notes}</p>
@@ -361,6 +382,19 @@ export default function ExcellenceScreener() {
           No se encontraron candidatas con los criterios actuales. Intenta relajar algún umbral.
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── FinMetric ────────────────────────────────────────────────────────────────
+
+function FinMetric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="text-center">
+      <div className="text-gray-600 text-[10px] mb-0.5 truncate">{label}</div>
+      <div className={`text-xs font-bold ${highlight ? "text-green-400" : "text-gray-300"}`}>
+        {value || "—"}
+      </div>
     </div>
   );
 }
