@@ -63,23 +63,27 @@ export async function POST(request: Request) {
           const result = await runScout(scoutInput);
           abortWaiting = true;
 
-          log(`─────────────────────`);
-          const a = result.alpha_score;
-          await pause(80);  log(`Coverage gap:       ${a.coverage_gap_score}/25`);
-          await pause(60);  log(`Market cap fit:     ${a.market_cap_fit}/20`);
-          await pause(60);  log(`Sector relevance:   ${a.sector_relevance}/25`);
-          await pause(60);  log(`Valuation anomaly:  ${a.valuation_anomaly}/30`);
-          if (a.gunn_bonus > 0) {
-            await pause(60);
-            log(`Gunn bonus:         +${a.gunn_bonus}${a.bessembinder_bonus ? " (Bessembinder)" : ""}${a.em_gdp_bonus ? " (EM GDP)" : ""}${a.low_coverage_bonus ? " (Low Coverage)" : ""}`);
+          const a = result?.alpha_score;
+          if (a) {
+            log(`─────────────────────`);
+            await pause(80);  log(`Coverage gap:       ${a.coverage_gap_score}/25`);
+            await pause(60);  log(`Market cap fit:     ${a.market_cap_fit}/20`);
+            await pause(60);  log(`Sector relevance:   ${a.sector_relevance}/25`);
+            await pause(60);  log(`Valuation anomaly:  ${a.valuation_anomaly}/30`);
+            if ((a.gunn_bonus ?? 0) > 0) {
+              await pause(60);
+              log(`Gunn bonus:         +${a.gunn_bonus}${a.bessembinder_bonus ? " (Bessembinder)" : ""}${a.em_gdp_bonus ? " (EM GDP)" : ""}${a.low_coverage_bonus ? " (Low Coverage)" : ""}`);
+            }
+            await pause(60);  log(`Total alpha score:  ${a.total}/100`);
           }
-          await pause(60);  log(`Total alpha score:  ${a.total}/100`);
-          await pause(60);  log(`Decision:           ${result.decision} — ${result.horizon_tag} horizon`);
-          if (result.score_reasoning?.coverage_gap_rationale) {
+          if (result?.decision) {
+            await pause(60);  log(`Decision:           ${result.decision} — ${result.horizon_tag} horizon`);
+          }
+          if (result?.score_reasoning?.coverage_gap_rationale) {
             await pause(60);
             log(`Coverage rationale: ${result.score_reasoning.coverage_gap_rationale}`);
           }
-          if (result.decision_rationale) {
+          if (result?.decision_rationale) {
             await pause(60);
             log(`Decision rationale: ${result.decision_rationale}`);
           }
