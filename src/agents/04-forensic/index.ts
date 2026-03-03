@@ -81,7 +81,7 @@ Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
     user:        userMessage,
     temperature: 0.1,
     max_tokens:  1024,
-    json_mode:   true,
+    json_schema: JSON_SCHEMA,
   });
 
   const profile = JSON.parse(text) as ForensicProfile;

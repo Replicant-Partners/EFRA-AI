@@ -92,7 +92,7 @@ Calcula pt_12m, rating, rr_ratio y FaVeS. Aplica ajustes Forensic.
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  2048,
-    json_mode:   true,
+    json_schema: JSON_SCHEMA,
   });
 
   return JSON.parse(text) as ValuationModel;

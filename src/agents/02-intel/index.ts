@@ -109,7 +109,7 @@ Filtra, puntúa y construye el IntelBundle. Genera hipótesis si hay señales.
     user:        userMessage,
     temperature: 0.1,
     max_tokens:  2048,
-    json_mode:   true,
+    json_schema: JSON_SCHEMA,
   });
 
   const bundle = JSON.parse(text) as IntelBundle;

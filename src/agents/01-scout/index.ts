@@ -73,6 +73,38 @@ Since you operate without live MCP data in this context:
 ## OUTPUT FORMAT
 Respond ONLY with valid JSON — no markdown, no prose.
 decision_rationale must be ≤ 200 characters.
+
+Example structure (use real numbers, not these placeholders):
+{
+  "alpha_score": {
+    "coverage_gap_score": 18,
+    "market_cap_fit": 15,
+    "sector_relevance": 20,
+    "valuation_anomaly": 22,
+    "em_gdp_bonus": 0,
+    "bessembinder_bonus": 0,
+    "low_coverage_bonus": 5,
+    "gunn_bonus": 5,
+    "total": 80
+  },
+  "score_reasoning": {
+    "coverage_gap_rationale": "...",
+    "market_cap_fit_rationale": "...",
+    "sector_relevance_rationale": "...",
+    "valuation_anomaly_rationale": "...",
+    "gunn_bonus_rationale": null
+  },
+  "horizon_tag": "SHORT",
+  "downstream_mode": "valentine",
+  "decision": "MUST_COVER",
+  "decision_rationale": "Strong alpha score driven by valuation anomaly and sector tailwinds.",
+  "confidence": 0.82,
+  "fallback_level": "L1_cache",
+  "conf_adjustment": -0.05,
+  "rescreen_eligible_after": null,
+  "forensic_pre_result": "pass",
+  "forensic_reorientation": null
+}
 `.trim();
 
 const JSON_SCHEMA = {
@@ -151,7 +183,7 @@ downstream_mode, assess forensic_pre_result if alpha_score >= 65, and emit the f
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  1500,
-    json_mode:   true,
+    json_schema: JSON_SCHEMA,
   });
 
   return JSON.parse(text) as ScoutOutput;
