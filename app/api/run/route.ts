@@ -61,6 +61,9 @@ export async function POST(request: Request) {
           return;
         }
 
+        // REVIEW_ZONE: proceed but tag pipeline — no auto-block
+        // (human approval workflow is a future feature; web app proceeds with flag)
+
         // ── 02 INTEL ────────────────────────────────────
         send({ agent: "intel", status: "running" });
         state.intel = await runIntel(

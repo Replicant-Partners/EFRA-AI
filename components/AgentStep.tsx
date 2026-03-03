@@ -23,12 +23,15 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "scout") {
     const r = result as ScoutOutput;
+    const decisionColor = r.decision === "MUST_COVER" ? "text-green-400" : r.decision === "REVIEW_ZONE" ? "text-yellow-400" : "text-red-400";
     return (
       <span className="text-gray-400">
         score <span className="text-green-400 font-bold">{r.alpha_score.total}</span>
-        {" · "}{r.decision}
+        {" · "}<span className={`font-bold ${decisionColor}`}>{r.decision}</span>
         {" · "}{r.downstream_mode}
         {" · "}{r.horizon_tag}
+        {r.confidence != null && <>{" · "}conf <span className="text-green-400">{(r.confidence * 100).toFixed(0)}%</span></>}
+        {r.decision_rationale && <><br /><span className="text-gray-600 text-xs italic">{r.decision_rationale}</span></>}
       </span>
     );
   }

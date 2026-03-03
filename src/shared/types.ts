@@ -29,17 +29,34 @@ export interface AlphaScore {
   market_cap_fit: number;       // 0–20
   sector_relevance: number;     // 0–25
   valuation_anomaly: number;    // 0–30
-  gunn_bonus: number;
-  total: number;
+  em_gdp_bonus: number;         // 0 or 10
+  bessembinder_bonus: number;   // 0 or 10
+  low_coverage_bonus: number;   // 0 or 5
+  gunn_bonus: number;           // sum of three bonuses above
+  total: number;                // min(base + gunn_bonus, 100)
+}
+
+export interface ScoreReasoning {
+  coverage_gap_rationale: string;
+  market_cap_fit_rationale: string;
+  sector_relevance_rationale: string;
+  valuation_anomaly_rationale: string;
+  gunn_bonus_rationale?: string;
 }
 
 export interface ScoutOutput {
   alpha_score: AlphaScore;
+  score_reasoning: ScoreReasoning;
   horizon_tag: HorizonTag;
   downstream_mode: DownstreamMode;
   decision: Decision;
-  rescreen_eligible_after?: string; // ISO date
-  forensic_pre_result?: "PASS" | "CONDITIONAL" | "BLOCK";
+  decision_rationale: string;        // max 200 chars
+  confidence: number;                // 0.0–1.0
+  fallback_level: "none" | "L1_cache" | "L2_edgar" | "L_manual";
+  conf_adjustment: number;           // 0 | -0.05 | -0.15 | -0.25
+  rescreen_eligible_after?: string;  // ISO date, set when DROP
+  forensic_pre_result?: "pass" | "conditional" | "block" | "skipped";
+  forensic_reorientation?: string;   // set when conditional
 }
 
 // ─── Agent 02 — INTEL ────────────────────────

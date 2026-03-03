@@ -121,14 +121,24 @@ export default function ResultPanel({ state }: Props) {
             <div className="border border-[#2a2a2a] bg-[#1a1a1a] p-4">
               <div className="text-xs text-gray-500 uppercase tracking-widest mb-3">
                 Alpha Score · <span className="text-green-400 font-bold">{scout.alpha_score.total}</span>/100
+                {scout.confidence != null && (
+                  <span className="ml-3 text-gray-600">conf {(scout.confidence * 100).toFixed(0)}%</span>
+                )}
               </div>
-              <div className="grid grid-cols-5 gap-2 text-xs text-center">
+              <div className="grid grid-cols-5 gap-2 text-xs text-center mb-3">
                 <ScoreBar label="Coverage" value={scout.alpha_score.coverage_gap_score} max={25} />
                 <ScoreBar label="Mkt Cap" value={scout.alpha_score.market_cap_fit} max={20} />
                 <ScoreBar label="Sector" value={scout.alpha_score.sector_relevance} max={25} />
                 <ScoreBar label="Valuation" value={scout.alpha_score.valuation_anomaly} max={30} />
-                <ScoreBar label="Gunn" value={scout.alpha_score.gunn_bonus} max={25} />
+                <ScoreBar label="Gunn +" value={scout.alpha_score.gunn_bonus} max={25} />
               </div>
+              {scout.alpha_score.gunn_bonus > 0 && (
+                <div className="flex gap-3 text-xs text-gray-600 mt-1">
+                  {scout.alpha_score.em_gdp_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.em_gdp_bonus} EM GDP</span>}
+                  {scout.alpha_score.bessembinder_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.bessembinder_bonus} Bessembinder</span>}
+                  {scout.alpha_score.low_coverage_bonus > 0 && <span className="text-green-600">+{scout.alpha_score.low_coverage_bonus} Low Coverage</span>}
+                </div>
+              )}
             </div>
           )}
         </>
