@@ -1,4 +1,4 @@
-import { chat, MODELS } from "../../shared/client.js";
+import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { IntelInput, IntelBundle } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -189,7 +189,7 @@ y devuelve el JSON completo.
     json_mode:   true,
   });
 
-  const bundle = JSON.parse(text) as IntelBundle;
+  const bundle = JSON.parse(extractJSON(text)) as IntelBundle;
 
   if (!bundle.mosaic_clear) {
     console.error("[INTEL] COMPLIANCE HALT — MNPI detectado.");

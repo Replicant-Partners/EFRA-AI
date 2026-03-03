@@ -1,4 +1,4 @@
-import { chatStream, MODELS } from "../../shared/client.js";
+import { chatStream, MODELS, extractJSON } from "../../shared/client.js";
 import type { CommInput, CommOutput, AuditTrail } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -90,12 +90,8 @@ Evalúa ENTER GATE, determina output_type y genera el reporte CASCADE completo.
   }
   process.stdout.write("\n");
 
-  // Extract JSON
-  const jsonMatch = fullText.match(/```json\n?([\s\S]*?)\n?```/) ?? [null, fullText];
-  const raw = jsonMatch[1] ?? fullText;
-
   try {
-    return JSON.parse(raw) as CommOutput;
+    return JSON.parse(extractJSON(fullText)) as CommOutput;
   } catch {
     // Fallback: build minimal output
     return {

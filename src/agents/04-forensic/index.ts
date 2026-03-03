@@ -1,4 +1,4 @@
-import { chat, MODELS } from "../../shared/client.js";
+import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ForensicInput, ForensicProfile } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -163,7 +163,7 @@ Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
     json_mode:   true,
   });
 
-  const profile = JSON.parse(text) as ForensicProfile;
+  const profile = JSON.parse(extractJSON(text)) as ForensicProfile;
 
   if (profile.recommendation === "BLOCK") {
     console.error(`[FORENSIC] BLOCK — risk_score: ${profile.risk_score}`);

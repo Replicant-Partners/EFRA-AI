@@ -1,4 +1,4 @@
-import { chat, MODELS } from "../../shared/client.js";
+import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type {
   IntelBundle,
   ForensicProfile,
@@ -100,9 +100,7 @@ ${isGunn ? "Incluye build_to_last_score (Gunn mode)." : "build_to_last_score deb
     json_mode:   true,
   });
 
-  // Extract JSON from possible markdown wrapping
-  const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) ?? [null, text];
-  const output = JSON.parse(jsonMatch[1] ?? text) as CFOutput;
+  const output = JSON.parse(extractJSON(text)) as CFOutput;
 
   // Auto-normalize probabilities if needed
   const probSum = output.scenarios.reduce((s, sc) => s + sc.probability, 0);

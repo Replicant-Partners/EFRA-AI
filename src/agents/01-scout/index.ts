@@ -1,4 +1,4 @@
-import { chat, MODELS } from "../../shared/client.js";
+import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ScoutInput, ScoutOutput } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -186,5 +186,5 @@ downstream_mode, assess forensic_pre_result if alpha_score >= 65, and emit the f
     json_mode:   true,
   });
 
-  return JSON.parse(text) as ScoutOutput;
+  return JSON.parse(extractJSON(text)) as ScoutOutput;
 }

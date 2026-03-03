@@ -71,6 +71,23 @@ export async function chat(params: {
 }
 
 /**
+ * Extracts a JSON object from LLM output that may contain markdown fences,
+ * headings, or other surrounding prose. Finds the first '{' and last '}'.
+ */
+export function extractJSON(text: string): string {
+  // Strip ```json ... ``` fences first
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenced) return fenced[1];
+  // Fall back: slice from first '{' to last '}'
+  const start = text.indexOf("{");
+  const end   = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error(`No JSON object found in LLM response. Raw: ${text.slice(0, 200)}`);
+  }
+  return text.slice(start, end + 1);
+}
+
+/**
  * Streaming variant — yields text chunks, returns full text when done.
  */
 export async function* chatStream(params: {

@@ -1,4 +1,4 @@
-import { chat, MODELS } from "../../shared/client.js";
+import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ValuationInput, ValuationModel } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -95,5 +95,5 @@ Calcula pt_12m, rating, rr_ratio y FaVeS. Aplica ajustes Forensic.
     json_mode:   true,
   });
 
-  return JSON.parse(text) as ValuationModel;
+  return JSON.parse(extractJSON(text)) as ValuationModel;
 }
