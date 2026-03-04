@@ -258,3 +258,14 @@ export interface PipelineState {
   valuation?: ValuationModel;
   communication?: CommOutput;
 }
+
+// ─── UI Event ─────────────────────────────────────────────
+
+export type AgentEvent = {
+  agent: string;
+  status: "running" | "done" | "dropped" | "halted" | "error";
+  result?: unknown;
+  reason?: string;
+  final?: boolean;
+  error?: string;
+};

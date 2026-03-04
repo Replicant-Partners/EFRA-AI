@@ -4,16 +4,9 @@ import { useState, useRef } from "react";
 import IdeaForm from "@/components/IdeaForm";
 import AgentStep from "@/components/AgentStep";
 import ResultPanel from "@/components/ResultPanel";
-import type { PipelineState } from "@/src/shared/types";
+import type { PipelineState, AgentEvent } from "@/src/shared/types";
 
-export type AgentEvent = {
-  agent: string;
-  status: "running" | "done" | "dropped" | "halted" | "error";
-  result?: unknown;
-  reason?: string;
-  final?: boolean;
-  error?: string;
-};
+export type { AgentEvent };
 
 type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "communication";
 
@@ -57,6 +50,8 @@ export default function Home() {
   const [finalState, setFinalState] = useState<PipelineState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
+  const [savedAnalysisId, setSavedAnalysisId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Refs avoid stale closures in async SSE consumer
   const formDataRef = useRef<FormData | null>(null);
@@ -143,6 +138,7 @@ export default function Home() {
               setFinalState(finalPipeState);
               setIsDone(true);
               setStepPhase("idle");
+              saveToLibrary(finalPipeState);
             } else {
               setStepPhase("approval");
             }
@@ -193,6 +189,30 @@ export default function Home() {
     runStep(0);
   }
 
+  async function saveToLibrary(state: PipelineState) {
+    if (!formDataRef.current) return;
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/analyses", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:     formDataRef.current.ticker,
+          analyst_id: formDataRef.current.analyst_id,
+          catalyst:   formDataRef.current.catalyst,
+          mode:       formDataRef.current.mode,
+          state,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { id: string };
+      setSavedAnalysisId(data.id);
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    }
+  }
+
   function handleReset() {
     setPhase("form");
     setStepIdx(0);
@@ -204,6 +224,8 @@ export default function Home() {
     setFinalState(null);
     setError(null);
     setIsDone(false);
+    setSavedAnalysisId(null);
+    setSaveStatus("idle");
     formDataRef.current = null;
     pipeStateRef.current = {};
   }
@@ -297,6 +319,25 @@ export default function Home() {
           {/* Error */}
           {error && (
             <p className="text-sm text-[#C84848]">Error: {error}</p>
+          )}
+
+          {/* Save status */}
+          {isDone && !error && saveStatus === "saving" && (
+            <p className="t-label text-[#A89E94]">saving to library…</p>
+          )}
+          {isDone && !error && saveStatus === "saved" && savedAnalysisId && (
+            <div className="flex items-center gap-4">
+              <span className="t-label text-[#7A9E6A]">saved to library</span>
+              <a
+                href={`/library/${savedAnalysisId}`}
+                className="text-xs text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+              >
+                View in Library →
+              </a>
+            </div>
+          )}
+          {isDone && !error && saveStatus === "error" && (
+            <p className="t-label text-[#C84848]">save failed — results still visible above</p>
           )}
 
           {/* Final result */}

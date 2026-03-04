@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Analysis {
+  id          String      @id @default(cuid())
+  ticker      String
+  analyst_id  String
+  catalyst    String
+  mode        String
+  status      String
+  full_state  Json
+  rating      String?
+  pt_12m      Float?
+  sector      String?
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  intel_items IntelItem[]
+
+  @@index([ticker])
+  @@index([created_at])
+  @@index([rating])
+  @@index([status])
+}
+
+model IntelItem {
+  id                String   @id @default(cuid())
+  analysis_id       String
+  analysis          Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+  content           String
+  impact_area       String?
+  sector            String?
+  severity          String?
+  summary           String?
+  include_in_report Boolean  @default(false)
+  created_at        DateTime @default(now())
+
+  @@index([analysis_id])
+}

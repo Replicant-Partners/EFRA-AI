@@ -1,7 +1,6 @@
 "use client";
 
-import type { AgentEvent } from "@/app/page";
-import type { ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput } from "@/src/shared/types";
+import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput } from "@/src/shared/types";
 
 interface Props {
   agentKey: string;
