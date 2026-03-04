@@ -71,6 +71,15 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
             {bc?.moat_type && (
               <span className="block mt-1 text-[11px] text-[#A89E94]">
                 moat <span className="text-[#6E6258]">{bc.moat_type}</span>
+                <span className="text-[#C0B8AC]">
+                  {" "}({
+                    bc.moat_type === "marca"      ? "brand loyalty & pricing power" :
+                    bc.moat_type === "costos"     ? "lower cost structure than peers" :
+                    bc.moat_type === "red"        ? "network effects" :
+                    bc.moat_type === "regulación" ? "regulatory barriers & licensing" :
+                    "other competitive advantage"
+                  })
+                </span>
                 {bc.growth_trend && <>{" · "}{bc.growth_trend}</>}
               </span>
             )}
