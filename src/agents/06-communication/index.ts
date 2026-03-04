@@ -2,6 +2,8 @@ import { chatStream, MODELS, extractJSON } from "../../shared/client.js";
 import type { CommInput, CommOutput, AuditTrail } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+
 Eres COMMUNICATION, el Agente 06 del sistema Efrain AI.
 Rol: publication_gate
 

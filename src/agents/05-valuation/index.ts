@@ -2,6 +2,8 @@ import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ValuationInput, ValuationModel } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+
 Eres VALUATION, el Agente 05 del sistema Efrain AI.
 Rol: price_target_engine
 

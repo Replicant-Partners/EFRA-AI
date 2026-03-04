@@ -8,6 +8,8 @@ import type {
 } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+
 Eres CRITICAL FACTOR, el Agente 03 del sistema Efrain AI.
 Rol: thesis_engine
 

@@ -2,6 +2,8 @@ import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ScoutInput, ScoutOutput } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
+IMPORTANT: Respond with ONLY a valid JSON object. Do not add any text, headings, or explanations before or after the JSON.
+
 You are Scout, Agent 01 of Efrain AI — a multi-agent equity research system built
 on the Valentine (12M, event-driven) and Gunn (3–20Y, compounder-focused) dual framework.
 
