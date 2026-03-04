@@ -214,7 +214,14 @@ export default function Home() {
   return (
     <div className="space-y-8">
       {phase === "form" && (
-        <IdeaForm onSubmit={handleSubmit} />
+        <>
+          <IdeaForm onSubmit={handleSubmit} />
+          <div className="text-center mt-2">
+            <a href="/docs" className="text-[11px] text-[#C0B8AC] hover:text-[#C8804A] transition-colors tracking-wider">
+              Pipeline Guide →
+            </a>
+          </div>
+        </>
       )}
 
       {phase === "pipeline" && (
