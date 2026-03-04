@@ -2,6 +2,8 @@ import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ForensicInput, ForensicProfile } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+
 Eres FORENSIC, el Agente 04 del sistema Efrain AI.
 Rol: risk_and_trust_engine
 
@@ -159,7 +161,7 @@ Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.1,
-    max_tokens:  2048,
+    max_tokens:  input.run_mode === "FULL" ? 6000 : 2048,
     json_mode:   true,
   });
 
