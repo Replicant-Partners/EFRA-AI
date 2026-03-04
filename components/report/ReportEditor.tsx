@@ -4,14 +4,16 @@ import { useState } from "react";
 import SectionEditor from "./SectionEditor";
 import ScenariosTable from "./ScenariosTable";
 import CascadePanel from "./CascadePanel";
-import type { ReportContent } from "@/src/shared/types";
+import PipelineData from "./PipelineData";
+import type { ReportContent, PipelineState } from "@/src/shared/types";
 
 interface Props {
   analysisId:    string;
   initialReport: ReportContent;
+  pipelineState: PipelineState;
 }
 
-export default function ReportEditor({ analysisId, initialReport }: Props) {
+export default function ReportEditor({ analysisId, initialReport, pipelineState }: Props) {
   const [report, setReport] = useState(initialReport);
 
   function handleSectionSaved(key: string, content: string) {
@@ -90,6 +92,15 @@ export default function ReportEditor({ analysisId, initialReport }: Props) {
         cascadeUpdatedAt={report.cascade_updated_at}
         onRegenerated={handleCascadeRegenerated}
       />
+
+      <hr className="border-[#EDE7E0]" />
+
+      <div className="space-y-3">
+        <div className="text-[9px] font-semibold tracking-[0.14em] text-[#C0B8AC] uppercase">
+          Pipeline Data
+        </div>
+        <PipelineData state={pipelineState} />
+      </div>
 
     </div>
   );

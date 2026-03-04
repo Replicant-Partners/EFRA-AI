@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import ReportEditor from "@/components/report/ReportEditor";
-import type { ReportContent } from "@/src/shared/types";
+import type { ReportContent, PipelineState } from "@/src/shared/types";
 
 type Analysis = {
   id:             string;
@@ -14,6 +14,7 @@ type Analysis = {
   pt_12m:         number | null;
   mode:           string;
   created_at:     string;
+  full_state:     PipelineState;
   report_content: ReportContent | null;
 };
 
@@ -110,6 +111,7 @@ export default function ReportPage() {
       <ReportEditor
         analysisId={id}
         initialReport={analysis.report_content}
+        pipelineState={analysis.full_state}
       />
     </div>
   );
