@@ -41,39 +41,83 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "intel") {
     const r = result as IntelBundle;
-    const newsApiCount = (r.news_items ?? []).filter(i => (i.source ?? "news_api") === "news_api").length;
-    const edgarCount   = (r.news_items ?? []).filter(i => i.source === "edgar_sec").length;
-    const crmCount     = (r.news_items ?? []).filter(i => i.source === "crm").length;
     const bc = r.business_context;
+    const newsItems = r.news_items ?? [];
+
+    const sourceLabel = (src: string) => {
+      if (src === "edgar_sec") return "SEC";
+      if (src === "crm")       return "CRM";
+      return "API";
+    };
+    const sourceDot = (src: string) => {
+      if (src === "edgar_sec") return "text-[#C89040]";
+      if (src === "crm")       return "text-[#7A9E6A]";
+      return "text-[#8CA8C8]";
+    };
+
     return (
       <span>
-        {/* ── Section 1: Business context ── */}
-        {bc?.business_memo && (
-          <span className="block prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
-            {bc.business_memo}
-          </span>
-        )}
-        {bc?.moat_type && (
-          <span className="block mt-1 text-[11px] text-[#A89E94]">
-            moat <span className="text-[#6E6258]">{bc.moat_type}</span>
-            {bc.growth_trend && <>{" · "}{bc.growth_trend}</>}
+        {/* ── Section 1: Company overview ── */}
+        {(bc?.business_memo || bc?.moat_type) && (
+          <span className="block">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
+              Company
+            </span>
+            {bc?.business_memo && (
+              <span className="block prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
+                {bc.business_memo}
+              </span>
+            )}
+            {bc?.moat_type && (
+              <span className="block mt-1 text-[11px] text-[#A89E94]">
+                moat <span className="text-[#6E6258]">{bc.moat_type}</span>
+                {bc.growth_trend && <>{" · "}{bc.growth_trend}</>}
+              </span>
+            )}
           </span>
         )}
 
-        {/* ── Section 2: News mosaic ── */}
-        <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[#A89E94]">
-          surfaced <span className="text-[#6E6258]">{r.surfaced_count}</span>
-          {newsApiCount > 0 && <>{" · "}<span className="text-[#6E6258]">{newsApiCount}</span> news_api</>}
-          {edgarCount   > 0 && <>{" · "}<span className="text-[#6E6258]">{edgarCount}</span> edgar</>}
-          {crmCount     > 0 && <>{" · "}<span className="text-[#6E6258]">{crmCount}</span> crm</>}
-          {" · "}mosaic {r.mosaic_clear ? <span className="text-[#C8804A]">clear</span> : <span className="text-[#C84848]">halt</span>}
-          {" · "}mgmt <span className="text-[#6E6258]">{r.mgmt_comm_score}</span>
+        {/* ── Section 2: News ── */}
+        <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+          <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1.5">
+            News
+            <span className="normal-case font-normal tracking-normal text-[#C0B8AC] ml-1.5">
+              {r.surfaced_count} surfaced
+              {" · "}mosaic{" "}
+              {r.mosaic_clear
+                ? <span className="text-[#C8804A]">clear</span>
+                : <span className="text-[#C84848]">halt</span>}
+              {" · "}mgmt <span className="text-[#6E6258]">{r.mgmt_comm_score}</span>
+            </span>
+          </span>
+          {newsItems.length > 0 && (
+            <span className="block space-y-1.5">
+              {newsItems.map((item, i) => (
+                <span key={i} className="block">
+                  <span className={`inline-block text-[9px] font-mono font-semibold tracking-wider mr-1.5 ${sourceDot(item.source ?? "news_api")}`}>
+                    [{sourceLabel(item.source ?? "news_api")}]
+                  </span>
+                  <span className="text-[11px] text-[#1E1A14]">{item.headline}</span>
+                  {item.summary && (
+                    <span className="block text-[11px] text-[#A89E94] leading-relaxed pl-5 mt-0.5">
+                      {item.summary}
+                    </span>
+                  )}
+                </span>
+              ))}
+            </span>
+          )}
         </span>
 
         {/* ── Section 3: Analyst briefing ── */}
         {r.analyst_briefing && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
-            {r.analyst_briefing}
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
+              Analyst Briefing
+            </span>
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
+              {r.analyst_briefing}
+            </span>
           </span>
         )}
       </span>
