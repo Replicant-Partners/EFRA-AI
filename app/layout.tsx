@@ -23,6 +23,7 @@ export default function RootLayout({
             <a href="/" className="t-label hover:text-[#C8804A] transition-colors">Pipeline</a>
             <a href="/screener" className="t-label hover:text-[#C8804A] transition-colors">Screener</a>
             <a href="/library" className="t-label hover:text-[#C8804A] transition-colors">Library</a>
+            <a href="/docs" className="t-label hover:text-[#C8804A] transition-colors">Guide</a>
           </nav>
         </header>
         <main className="max-w-3xl mx-auto px-8 py-10">
