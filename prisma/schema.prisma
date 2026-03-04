@@ -15,8 +15,9 @@ model Analysis {
   catalyst    String
   mode        String
   status      String
-  full_state  Json
-  rating      String?
+  full_state     Json
+  report_content Json?
+  rating         String?
   pt_12m      Float?
   sector      String?
   created_at  DateTime    @default(now())

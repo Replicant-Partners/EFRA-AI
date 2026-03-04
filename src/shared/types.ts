@@ -269,3 +269,30 @@ export type AgentEvent = {
   final?: boolean;
   error?: string;
 };
+
+// ─── Report Document ──────────────────────────────────────
+
+export interface ReportSection {
+  key:         string;
+  label:       string;
+  content:     string;
+  source:      string;
+  updated_at?: string;
+}
+
+export interface ReportScenario {
+  type:             "Bull" | "Base" | "Bear";
+  probability:      number;
+  implied_pt:       number;
+  price_derivation: string;
+  triggers:         string;
+}
+
+export interface ReportContent {
+  version:            1;
+  generated_at:       string;
+  sections:           ReportSection[];
+  scenarios:          ReportScenario[];
+  cascade_text:       string;
+  cascade_updated_at: string;
+}

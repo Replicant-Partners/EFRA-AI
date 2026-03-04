@@ -146,9 +146,14 @@ export default function LibraryDetailPage() {
             {analysis.catalyst}
           </p>
         </div>
-        <a href="/library" className="text-xs text-[#A89E94] hover:text-[#C8804A] transition-colors flex-shrink-0 ml-4">
-          ← Library
-        </a>
+        <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+          <a href={`/library/${id}/report`} className="text-xs font-semibold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] transition-colors">
+            Report →
+          </a>
+          <a href="/library" className="text-xs text-[#A89E94] hover:text-[#C8804A] transition-colors">
+            ← Library
+          </a>
+        </div>
       </div>
 
       <hr className="t-rule" />

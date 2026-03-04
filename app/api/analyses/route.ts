@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import type { PipelineState } from "@/src/shared/types";
+import { buildReportContent } from "@/src/lib/report-builder";
 
 export async function POST(request: Request) {
   try {
@@ -18,14 +19,17 @@ export async function POST(request: Request) {
     const pt_12m  = state.valuation?.pt_12m  ?? null;
     const sector  = state.intel?.business_context?.moat_type ?? null;
 
+    const report_content = buildReportContent(state);
+
     const analysis = await prisma.analysis.create({
       data: {
-        ticker:     ticker.toUpperCase(),
+        ticker:         ticker.toUpperCase(),
         analyst_id,
         catalyst,
         mode,
-        status:     state.status,
-        full_state: state as object,
+        status:         state.status,
+        full_state:     state as object,
+        report_content: report_content as object,
         rating,
         pt_12m,
         sector,

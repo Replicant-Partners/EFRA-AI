@@ -61,7 +61,7 @@ function AnalysisCard({ a }: { a: AnalysisSummary }) {
           {a.catalyst}
         </p>
 
-        <div className="flex gap-4 mt-1.5 flex-wrap">
+        <div className="flex gap-4 mt-1.5 flex-wrap items-center">
           {a.sector && (
             <span className="t-label">{a.sector}</span>
           )}
@@ -69,6 +69,13 @@ function AnalysisCard({ a }: { a: AnalysisSummary }) {
           {a._count.intel_items > 0 && (
             <span className="t-label text-[#C8804A]">{a._count.intel_items} intel</span>
           )}
+          <a
+            href={`/library/${a.id}/report`}
+            onClick={(e) => e.stopPropagation()}
+            className="t-label hover:text-[#C8804A] transition-colors ml-auto"
+          >
+            Report →
+          </a>
         </div>
       </div>
     </Link>
