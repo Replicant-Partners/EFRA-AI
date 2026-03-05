@@ -19,6 +19,38 @@ function statusDot(status?: AgentEvent["status"]) {
   return                           <span className="w-1.5 h-1.5 rounded-full bg-[#C84848] inline-block mt-0.5" />;
 }
 
+function PeerComparisonTable({ text }: { text: string }) {
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+  const rows = lines.map(line => {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx < 0) return null;
+    const company = line.slice(0, colonIdx).trim();
+    const metrics  = line.slice(colonIdx + 1).trim();
+    if (!company || !metrics) return null;
+    return { company, metrics };
+  }).filter((r): r is { company: string; metrics: string } => r !== null);
+
+  if (rows.length < 2) {
+    return <span className="block text-[11px] text-[#6E6258] leading-relaxed">{text}</span>;
+  }
+
+  return (
+    <div className="border border-[#EDE7E0] rounded-sm overflow-hidden text-[11px]">
+      {rows.map((row, i) => (
+        <div key={i} className={`flex ${i % 2 !== 0 ? "bg-[#F5F1EB]" : ""}`}>
+          <div className="w-[38%] shrink-0 px-2.5 py-1.5 font-medium text-[#1E1A14] border-r border-[#EDE7E0]">
+            {row.company}
+          </div>
+          <div className="flex-1 px-2.5 py-1.5 text-[#6E6258]">
+            {row.metrics}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown }) {
   if (!result) return null;
 
@@ -325,7 +357,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
         {r.peer_comparison && (
           <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
             {label("Peer Comparison")}
-            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.peer_comparison}</span>
+            <PeerComparisonTable text={r.peer_comparison} />
           </span>
         )}
 
