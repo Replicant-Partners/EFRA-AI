@@ -20,14 +20,18 @@ function statusDot(status?: AgentEvent["status"]) {
 }
 
 function PeerComparisonTable({ text }: { text: string }) {
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  // Support both newline-separated and · / • separated formats
+  const segments = text.includes("\n")
+    ? text.split("\n").map(s => s.trim()).filter(Boolean)
+    : text.split(/\s*[·•]\s*/).map(s => s.trim()).filter(Boolean);
 
-  const rows = lines.map(line => {
-    const colonIdx = line.indexOf(":");
+  const rows = segments.map(seg => {
+    const colonIdx = seg.indexOf(":");
     if (colonIdx < 0) return null;
-    const company = line.slice(0, colonIdx).trim();
-    const metrics  = line.slice(colonIdx + 1).trim();
-    if (!company || !metrics) return null;
+    const company = seg.slice(0, colonIdx).trim();
+    const metrics  = seg.slice(colonIdx + 1).trim();
+    // Skip if company looks like a sentence (> 4 words) rather than a name/ticker
+    if (!company || !metrics || company.split(/\s+/).length > 4) return null;
     return { company, metrics };
   }).filter((r): r is { company: string; metrics: string } => r !== null);
 
