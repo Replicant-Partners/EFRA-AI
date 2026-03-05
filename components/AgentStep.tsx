@@ -146,18 +146,38 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "forensic_pre" || agentKey === "forensic") {
     const r = result as ForensicProfile;
+    const flags = r.flags ?? [];
+    const recColor = r.recommendation === "BLOCK" ? "text-[#C84848]" : r.recommendation === "CLEAR" ? "text-[#C8804A]" : "text-[#C89040]";
     return (
       <span>
         {/* Risk stats row */}
         <span className="text-[#A89E94]">
           risk <span className="text-[#C89040]">{r.risk_score}</span>
+          {" · "}trust <span className="text-[#8C7E70]">{r.mgmt_trust_score}</span>
           {" · "}
-          <span className={r.recommendation === "BLOCK" ? "text-[#C84848]" : r.recommendation === "CLEAR" ? "text-[#C8804A]" : "text-[#C89040]"}>
-            {r.recommendation?.toLowerCase()}
-          </span>
-          {" · "}{(r.flags ?? []).length} flag{(r.flags ?? []).length !== 1 ? "s" : ""}
+          <span className={recColor}>{r.recommendation?.toLowerCase()}</span>
+          {" · "}{flags.length} flag{flags.length !== 1 ? "s" : ""}
           {" · "}haircut <span className="text-[#8C7E70]">{(r.eps_haircut_total ?? 0).toFixed(0)}%</span>
+          {r.dr_add_bps_total > 0 && <>{" · "}DR <span className="text-[#8C7E70]">+{r.dr_add_bps_total}bps</span></>}
         </span>
+
+        {/* Yellow flags with descriptions */}
+        {flags.length > 0 && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-1.5">
+            {flags.map((flag, i) => (
+              <span key={i} className="block">
+                <span className={`text-[9px] font-bold mr-1.5 ${flag.severity >= 4 ? "text-[#C84848]" : flag.severity >= 3 ? "text-[#C89040]" : "text-[#A89E94]"}`}>
+                  S{flag.severity}
+                </span>
+                <span className="text-[11px] text-[#1E1A14]">{flag.description}</span>
+                <span className="block text-[10px] text-[#A89E94] mt-0.5 pl-4">
+                  haircut {flag.eps_haircut_pct}% · DR +{flag.dr_add_bps}bps
+                </span>
+              </span>
+            ))}
+          </span>
+        )}
+
         {/* Management summary — full scan only */}
         {agentKey === "forensic" && r.management_profile?.management_summary && (
           <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
