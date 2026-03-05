@@ -20,9 +20,59 @@ function statusDot(status?: AgentEvent["status"]) {
 }
 
 function PeerComparisonTable({ text }: { text: string }) {
-  // Support both newline-separated and · / • separated formats
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+  // ── Format 1: Markdown pipe table ─────────────────────────────────────
+  const tableLines = lines.filter(l => l.startsWith("|"));
+  if (tableLines.length >= 2) {
+    const isSeparator = (l: string) => /^\|[\s\-|:]+\|$/.test(l);
+    const parseRow    = (l: string) =>
+      l.replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+
+    const headerLine = tableLines[0];
+    const dataLines  = tableLines.slice(1).filter(l => !isSeparator(l));
+    const headers    = parseRow(headerLine);
+    const dataRows   = dataLines.map(parseRow);
+
+    // Non-table lines = conclusion text below the table
+    const prose = lines.filter(l => !l.startsWith("|")).join(" ").trim();
+
+    return (
+      <span className="block space-y-2">
+        <div className="border border-[#EDE7E0] rounded-sm overflow-x-auto text-[11px]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#F5F1EB]">
+                {headers.map((h, i) => (
+                  <th key={i} className="px-2.5 py-1.5 text-left text-[9px] font-semibold tracking-[0.1em] text-[#8C7E70] uppercase border-b border-[#EDE7E0] whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dataRows.map((row, ri) => (
+                <tr key={ri} className={ri % 2 !== 0 ? "bg-[#FAF8F4]" : ""}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} className={`px-2.5 py-1.5 border-b border-[#EDE7E0] ${ci === 0 ? "font-medium text-[#1E1A14]" : "text-[#6E6258]"} whitespace-nowrap`}>
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {prose && (
+          <span className="block text-[11px] text-[#6E6258] leading-relaxed">{prose}</span>
+        )}
+      </span>
+    );
+  }
+
+  // ── Format 2: "Company: metrics" lines or · separated ─────────────────
   const segments = text.includes("\n")
-    ? text.split("\n").map(s => s.trim()).filter(Boolean)
+    ? lines
     : text.split(/\s*[·•]\s*/).map(s => s.trim()).filter(Boolean);
 
   const rows = segments.map(seg => {
@@ -30,29 +80,29 @@ function PeerComparisonTable({ text }: { text: string }) {
     if (colonIdx < 0) return null;
     const company = seg.slice(0, colonIdx).trim();
     const metrics  = seg.slice(colonIdx + 1).trim();
-    // Skip if company looks like a sentence (> 4 words) rather than a name/ticker
     if (!company || !metrics || company.split(/\s+/).length > 4) return null;
     return { company, metrics };
   }).filter((r): r is { company: string; metrics: string } => r !== null);
 
-  if (rows.length < 2) {
-    return <span className="block text-[11px] text-[#6E6258] leading-relaxed">{text}</span>;
+  if (rows.length >= 2) {
+    return (
+      <div className="border border-[#EDE7E0] rounded-sm overflow-hidden text-[11px]">
+        {rows.map((row, i) => (
+          <div key={i} className={`flex ${i % 2 !== 0 ? "bg-[#F5F1EB]" : ""}`}>
+            <div className="w-[38%] shrink-0 px-2.5 py-1.5 font-medium text-[#1E1A14] border-r border-[#EDE7E0]">
+              {row.company}
+            </div>
+            <div className="flex-1 px-2.5 py-1.5 text-[#6E6258]">
+              {row.metrics}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
-  return (
-    <div className="border border-[#EDE7E0] rounded-sm overflow-hidden text-[11px]">
-      {rows.map((row, i) => (
-        <div key={i} className={`flex ${i % 2 !== 0 ? "bg-[#F5F1EB]" : ""}`}>
-          <div className="w-[38%] shrink-0 px-2.5 py-1.5 font-medium text-[#1E1A14] border-r border-[#EDE7E0]">
-            {row.company}
-          </div>
-          <div className="flex-1 px-2.5 py-1.5 text-[#6E6258]">
-            {row.metrics}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  // ── Fallback: plain text ───────────────────────────────────────────────
+  return <span className="block text-[11px] text-[#6E6258] leading-relaxed">{text}</span>;
 }
 
 function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown }) {
