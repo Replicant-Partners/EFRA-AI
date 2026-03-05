@@ -435,8 +435,8 @@ export default function AgentStep({ agentKey, label, desc, event, logs, analystN
           </div>
         )}
 
-        {/* Compact log summary — visible after done (hidden for intel/valuation, which have full structured summaries) */}
-        {isDone && hasLogs && agentKey !== "intel" && agentKey !== "valuation" && (
+        {/* Compact log summary — visible after done (hidden for agents with full structured summaries) */}
+        {isDone && hasLogs && agentKey !== "intel" && agentKey !== "valuation" && agentKey !== "cf" && (
           <div className="mt-1.5 space-y-0.5">
             {(logs ?? []).map((line, i) => (
               <div key={i} className="text-[11px] font-mono text-[#C0B8AC] leading-relaxed">
