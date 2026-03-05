@@ -54,38 +54,50 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
       return "text-[#8CA8C8]";
     };
 
+    const moatLabel = (type: string) =>
+      type === "marca"      ? "Brand — loyalty & pricing power" :
+      type === "costos"     ? "Cost — lower structure than peers" :
+      type === "red"        ? "Network — compounding effects" :
+      type === "regulación" ? "Regulatory — barriers & licensing" :
+      "Other competitive advantage";
+
     return (
       <span>
         {/* ── Section 1: Company overview ── */}
-        {(bc?.business_memo || bc?.moat_type) && (
+        {bc?.business_memo && (
           <span className="block">
             <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
               Company
             </span>
-            {bc?.business_memo && (
-              <span className="block prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
-                {bc.business_memo}
+            <span className="block prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
+              {bc.business_memo}
+            </span>
+          </span>
+        )}
+
+        {/* ── Section 2: Moat ── */}
+        {bc?.moat_type && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
+              Moat
+            </span>
+            <span className="block text-[11px] font-semibold text-[#C8804A] mb-1">
+              {moatLabel(bc.moat_type)}
+            </span>
+            {bc.moat_evidence && (
+              <span className="block text-[11px] text-[#6E6258] leading-relaxed mb-1">
+                {bc.moat_evidence}
               </span>
             )}
-            {bc?.moat_type && (
-              <span className="block mt-1 text-[11px] text-[#A89E94]">
-                moat <span className="text-[#6E6258]">{bc.moat_type}</span>
-                <span className="text-[#C0B8AC]">
-                  {" "}({
-                    bc.moat_type === "marca"      ? "brand loyalty & pricing power" :
-                    bc.moat_type === "costos"     ? "lower cost structure than peers" :
-                    bc.moat_type === "red"        ? "network effects" :
-                    bc.moat_type === "regulación" ? "regulatory barriers & licensing" :
-                    "other competitive advantage"
-                  })
-                </span>
-                {bc.growth_trend && <>{" · "}{bc.growth_trend}</>}
+            {bc.growth_trend && (
+              <span className="block text-[11px] text-[#A89E94] leading-relaxed italic">
+                {bc.growth_trend}
               </span>
             )}
           </span>
         )}
 
-        {/* ── Section 2: News ── */}
+        {/* ── Section 3: News ── */}
         <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
           <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1.5">
             News
@@ -117,7 +129,7 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
           )}
         </span>
 
-        {/* ── Section 3: Analyst briefing ── */}
+        {/* ── Section 4: Analyst briefing ── */}
         {r.analyst_briefing && (
           <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
             <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
