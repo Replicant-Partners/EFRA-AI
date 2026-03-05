@@ -31,6 +31,10 @@ PARA CADA ESCENARIO debes incluir:
 - triggers: qué tiene que ocurrir en el mundo real para que ese escenario se materialice.
   1-3 condiciones concretas y observables. Ejemplo:
   "GPU exports no restringidos en China + capex hyperscaler +20% YoY + margen bruto >65%"
+- narrative: 2-3 oraciones describiendo qué pasa en este escenario — cómo evoluciona el negocio,
+  qué impulsa o deteriora los fundamentales, y qué significa para el inversor.
+- key_assumption: el supuesto más crítico que subyace a este escenario (1 oración concisa).
+- invalidation: qué evento o dato haría colapsar este escenario y forzaría una revisión del PT.
 
 Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales, no estos):
 {
@@ -44,21 +48,30 @@ Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales,
       "probability": 0.30,
       "implied_pt": 185,
       "price_derivation": "EPS $2.50 × P/E 74x = $185",
-      "triggers": "Sin restricciones de exportación a China + capex hyperscaler sube >20% YoY + margen bruto supera 65%"
+      "triggers": "Sin restricciones de exportación a China + capex hyperscaler sube >20% YoY + margen bruto supera 65%",
+      "narrative": "Los hyperscalers aceleran el gasto en GPU de IA sin señales de moderación. NVDA expande márgenes brutos hacia 67% por mix favorable de H100/H200. El mercado re-califica el múltiplo al alza ante la visibilidad del backlog.",
+      "key_assumption": "El capex de los 4 grandes hyperscalers crece >20% YoY y NVDA mantiene >80% de cuota en aceleradores de IA.",
+      "invalidation": "Anuncio de restricciones de exportación adicionales a China, o señales de moderación de capex de Microsoft/Google/Amazon en earnings calls."
     },
     {
       "type": "Base",
       "probability": 0.50,
       "implied_pt": 148,
       "price_derivation": "EPS $2.00 × P/E 74x = $148",
-      "triggers": "Restricciones parciales en China (−10% revenue) + capex hyperscaler plano + margen bruto estable en 62%"
+      "triggers": "Restricciones parciales en China (−10% revenue) + capex hyperscaler plano + margen bruto estable en 62%",
+      "narrative": "Crecimiento sólido pero sin aceleración: China aporta menos por restricciones parciales y el ritmo de capex hyperscaler se normaliza. Los márgenes se mantienen pero no se expanden. El múltiplo permanece estable.",
+      "key_assumption": "Las restricciones a China se limitan a los chips actuales y no se amplían a nuevas arquitecturas.",
+      "invalidation": "Caída del margen bruto por debajo del 60% en dos trimestres consecutivos."
     },
     {
       "type": "Bear",
       "probability": 0.20,
       "implied_pt": 95,
       "price_derivation": "EPS $1.50 × P/E 63x = $95",
-      "triggers": "Bloqueo total de exportaciones a China + competencia AMD gana cuota + capex hyperscaler cae >10%"
+      "triggers": "Bloqueo total de exportaciones a China + competencia AMD gana cuota + capex hyperscaler cae >10%",
+      "narrative": "China queda bloqueada totalmente, AMD captura cuota relevante con MI300X, y los hyperscalers moderan capex. El ciclo de IA entra en fase de digestión. El mercado comprime múltiplos ante la incertidumbre regulatoria.",
+      "key_assumption": "La regulación de exportaciones se extiende a todos los chips NVDA con capacidad de cómputo >X TOPS.",
+      "invalidation": "AMD falla en escalar producción de MI300X o los hyperscalers reaceleran capex en Q3/Q4."
     }
   ],
   "expected_value_pt": 148,

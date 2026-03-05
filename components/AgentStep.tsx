@@ -226,40 +226,83 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "cf") {
     const r = result as CFOutput;
+    const factors   = r.factors ?? [];
     const scenarios = r.scenarios ?? [];
     const evFormula = scenarios
       .map(s => `${(s.probability * 100).toFixed(0)}% × $${s.implied_pt}`)
       .join(" + ");
     const scenarioColor = (type: string) =>
       type === "Bull" ? "text-[#7A9E6A]" : type === "Bear" ? "text-[#C84848]" : "text-[#C8804A]";
+    const scenarioBg = (type: string) =>
+      type === "Bull" ? "border-[#7A9E6A]/30 bg-[#F6FAF4]" : type === "Bear" ? "border-[#C84848]/30 bg-[#FDF5F5]" : "border-[#C8804A]/30 bg-[#FDF8F4]";
+
     return (
       <span>
-        {/* ── Section 1: Factors + EV ── */}
-        <span className="text-[#A89E94]">
-          <span className="text-[#6E6258]">{(r.factors ?? []).length}</span> critical factors
-          {" · "}EV <span className="text-[#C8804A]">${r.expected_value_pt}</span>
-        </span>
-
-        {/* ── Section 2: Scenarios with math + triggers ── */}
-        {scenarios.length > 0 && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-2">
-            {scenarios.map((s, i) => (
+        {/* ── Section 1: Factors list ── */}
+        {factors.length > 0 && (
+          <span className="block space-y-1">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
+              Critical Factors · EV <span className="text-[#C8804A] normal-case font-bold">${r.expected_value_pt}</span>
+            </span>
+            {factors.map((f, i) => (
               <span key={i} className="block">
-                <span className={`text-[11px] font-semibold tracking-widest ${scenarioColor(s.type)}`}>
-                  {s.type?.toUpperCase()}
+                <span className="text-[10px] font-mono text-[#C8804A] mr-1.5">CF{i + 1}</span>
+                <span className="text-[11px] text-[#1E1A14]">{f.description}</span>
+                <span className="text-[10px] text-[#A89E94] ml-1.5">EPS impact {f.eps_impact_pct}%</span>
+              </span>
+            ))}
+          </span>
+        )}
+
+        {/* ── Section 2: Scenarios — deep cards ── */}
+        {scenarios.length > 0 && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-3">
+            {scenarios.map((s, i) => (
+              <span key={i} className={`block border rounded-sm px-3 py-2.5 ${scenarioBg(s.type)}`}>
+                {/* Header row */}
+                <span className="flex items-baseline gap-2 mb-1.5">
+                  <span className={`text-[11px] font-bold tracking-widest ${scenarioColor(s.type)}`}>
+                    {s.type?.toUpperCase()}
+                  </span>
+                  <span className="text-[#A89E94] text-[10px]">{(s.probability * 100).toFixed(0)}% prob</span>
+                  <span className="text-[#1E1A14] text-[12px] font-bold ml-auto">${s.implied_pt}</span>
                 </span>
-                <span className="text-[#A89E94] text-[11px]">
-                  {" "}{(s.probability * 100).toFixed(0)}%{" → "}
-                </span>
-                <span className="text-[#1E1A14] text-[11px] font-semibold">${s.implied_pt}</span>
+
+                {/* Narrative */}
+                {s.narrative && (
+                  <span className="block text-[11px] text-[#1E1A14] leading-relaxed mb-1.5">
+                    {s.narrative}
+                  </span>
+                )}
+
+                {/* Price math */}
                 {s.price_derivation && (
-                  <span className="block mt-0.5 text-[11px] font-mono text-[#8C7E70] pl-1">
+                  <span className="block text-[11px] font-mono text-[#8C7E70] mb-1.5">
                     {s.price_derivation}
                   </span>
                 )}
+
+                {/* Key assumption */}
+                {s.key_assumption && (
+                  <span className="block text-[10px] text-[#A89E94] mb-1 leading-snug">
+                    <span className="font-semibold text-[#8C7E70]">Key assumption: </span>
+                    {s.key_assumption}
+                  </span>
+                )}
+
+                {/* Triggers */}
                 {s.triggers && (
-                  <span className="block mt-0.5 text-[11px] text-[#A89E94] pl-1 italic">
+                  <span className="block text-[10px] text-[#A89E94] mb-1 leading-snug">
+                    <span className="font-semibold text-[#8C7E70]">Triggers: </span>
                     {s.triggers}
+                  </span>
+                )}
+
+                {/* Invalidation */}
+                {s.invalidation && (
+                  <span className="block text-[10px] text-[#A89E94] leading-snug">
+                    <span className="font-semibold text-[#8C7E70]">Invalidation: </span>
+                    {s.invalidation}
                   </span>
                 )}
               </span>

@@ -120,6 +120,9 @@ export interface Scenario {
   implied_pt: number;
   price_derivation: string;      // math: how implied_pt was calculated (e.g. "EPS $2.50 × P/E 74x")
   triggers: string;              // what must happen for this scenario to materialize
+  narrative?: string;            // 2-3 sentences: what the world looks like in this scenario
+  key_assumption?: string;       // single most critical assumption underlying this scenario
+  invalidation?: string;         // what would invalidate / kill this scenario
 }
 
 export interface BuildToLastScore {
