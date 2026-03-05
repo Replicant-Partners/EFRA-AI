@@ -242,63 +242,106 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
   }
 
   if (agentKey === "valuation") {
-    const r = result as ValuationModel;
+    const r = result as ValuationModel & { _cf_scenarios?: Array<{ type: string; probability: number; implied_pt: number }> };
+    const cfScenarios = r._cf_scenarios ?? [];
+    const bull = cfScenarios.find(s => s.type === "Bull");
+    const bear = cfScenarios.find(s => s.type === "Bear");
+    const ratingColor = r.rating === "BUY" ? "text-[#C8804A]" : r.rating === "UNDERPERFORM" ? "text-[#C84848]" : "text-[#C89040]";
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+
     return (
       <span>
-        {/* ── Section 1: Core metrics row ── */}
-        <span className="text-[#A89E94]">
-          PT <span className="text-[#C8804A]">${r.pt_12m}</span>
-          {r.pt_5y != null && <>{" · "}5Y <span className="text-[#C8804A]">${r.pt_5y}</span></>}
-          {" · "}
-          <span className={r.rating === "BUY" ? "text-[#C8804A]" : r.rating === "UNDERPERFORM" ? "text-[#C84848]" : "text-[#C89040]"}>
-            {r.rating?.toLowerCase()}
+        {/* ── Section 1: Price target table ── */}
+        <span className="block">
+          {label("Price Targets")}
+          <span className="flex border border-[#EDE7E0] text-center overflow-hidden rounded-sm">
+            {/* Bear */}
+            <span className="flex-1 py-2.5 px-2 border-r border-[#EDE7E0]">
+              <span className="block text-[9px] font-semibold uppercase tracking-widest text-[#C84848] mb-1">Bear</span>
+              <span className="block text-[13px] font-bold text-[#C84848]">
+                {bear ? `$${bear.implied_pt}` : "—"}
+              </span>
+              {bear && (
+                <span className="block text-[10px] text-[#A89E94] mt-0.5">
+                  {(bear.probability * 100).toFixed(0)}%
+                </span>
+              )}
+            </span>
+            {/* Expected / PT 12M */}
+            <span className="flex-1 py-2.5 px-2 border-r border-[#EDE7E0] bg-[#FAF8F4]">
+              <span className="block text-[9px] font-semibold uppercase tracking-widest text-[#C8804A] mb-1">Expected</span>
+              <span className="block text-[13px] font-bold text-[#C8804A]">${r.pt_12m}</span>
+              <span className={`block text-[10px] font-semibold mt-0.5 ${ratingColor}`}>{r.rating}</span>
+            </span>
+            {/* Bull */}
+            <span className="flex-1 py-2.5 px-2">
+              <span className="block text-[9px] font-semibold uppercase tracking-widest text-[#7A9E6A] mb-1">Bull</span>
+              <span className="block text-[13px] font-bold text-[#7A9E6A]">
+                {bull ? `$${bull.implied_pt}` : "—"}
+              </span>
+              {bull && (
+                <span className="block text-[10px] text-[#A89E94] mt-0.5">
+                  {(bull.probability * 100).toFixed(0)}%
+                </span>
+              )}
+            </span>
           </span>
-          {" · "}RR <span className="text-[#8C7E70]">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
-          {" · "}FaVeS <span className="text-[#8C7E70]">{r.faves_score?.total ?? "?"}/9</span>
-          {r.ic_premium != null && <>{" · "}IC <span className="text-[#8C7E70]">{r.ic_premium}</span></>}
+          {/* Sub-row: RR · FaVeS · 5Y · IC */}
+          <span className="block text-[11px] text-[#A89E94] mt-1.5">
+            RR <span className="text-[#8C7E70]">{(r.rr_ratio ?? 0).toFixed(1)}:1</span>
+            {" · "}FaVeS <span className="text-[#8C7E70]">{r.faves_score?.total ?? "?"}/9</span>
+            {r.pt_5y != null && <>{" · "}5Y <span className="text-[#C8804A]">${r.pt_5y}</span></>}
+            {r.ic_premium != null && <>{" · "}IC <span className="text-[#8C7E70]">+{(r.ic_premium * 100).toFixed(0)}%</span></>}
+          </span>
         </span>
 
-        {/* ── Section 2: Exec summary ── */}
+        {/* ── Section 2: Market context (how market values it today) ── */}
         {r.valuation_exec_summary && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">
-            {r.valuation_exec_summary}
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Market Context")}
+            <span className="block text-[11px] text-[#1E1A14] leading-relaxed">{r.valuation_exec_summary}</span>
           </span>
         )}
 
-        {/* ── Section 3: Multiples + market assumptions ── */}
-        {(r.current_multiples || r.market_assumptions) && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 space-y-1">
-            {r.current_multiples && (
-              <span className="block text-[11px] font-mono text-[#8C7E70]">
-                {r.current_multiples}
-              </span>
-            )}
-            {r.market_assumptions && (
-              <span className="block text-[11px] text-[#A89E94] leading-relaxed">
-                {r.market_assumptions}
-              </span>
-            )}
+        {/* ── Section 3: Current multiples table ── */}
+        {r.current_multiples && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Current Multiples")}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.current_multiples}</span>
           </span>
         )}
 
-        {/* ── Section 4: Peer comparison ── */}
+        {/* ── Section 4: Market assumptions ── */}
+        {r.market_assumptions && (
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Market Assumptions")}
+            <span className="block text-[11px] text-[#A89E94] leading-relaxed">{r.market_assumptions}</span>
+          </span>
+        )}
+
+        {/* ── Section 5: Peer comparison ── */}
         {r.peer_comparison && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[11px] text-[#6E6258] leading-relaxed">
-            {r.peer_comparison}
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Peer Comparison")}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.peer_comparison}</span>
           </span>
         )}
 
-        {/* ── Section 5: Margin of safety ── */}
+        {/* ── Section 6: Margin of safety ── */}
         {r.margin_of_safety && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 text-[11px] text-[#A89E94] leading-relaxed">
-            {r.margin_of_safety}
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Margin of Safety")}
+            <span className="block text-[11px] text-[#A89E94] leading-relaxed">{r.margin_of_safety}</span>
           </span>
         )}
 
-        {/* ── Section 6: Valuation summary ── */}
+        {/* ── Section 7: Valuation conclusion ── */}
         {r.valuation_summary && (
-          <span className="block border-t border-[#EDE7E0] mt-2 pt-2 prose-tufte text-[11px] text-[#6E6258] leading-relaxed">
-            {r.valuation_summary}
+          <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
+            {label("Valuation Conclusion")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.valuation_summary}</span>
           </span>
         )}
       </span>

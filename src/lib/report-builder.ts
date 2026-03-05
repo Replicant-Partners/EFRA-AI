@@ -73,7 +73,7 @@ export function buildReportContent(state: PipelineState): ReportContent {
     },
     {
       key:     "valuation_exec_summary",
-      label:   "Valuation Overview",
+      label:   "Market Context",
       content: state.valuation?.valuation_exec_summary ?? "",
       source:  "valuation.valuation_exec_summary",
     },
@@ -91,7 +91,7 @@ export function buildReportContent(state: PipelineState): ReportContent {
     },
     {
       key:     "valuation_summary",
-      label:   "Valuation Summary",
+      label:   "Valuation Conclusion",
       content: state.valuation?.valuation_summary ?? "",
       source:  "valuation.valuation_summary",
     },

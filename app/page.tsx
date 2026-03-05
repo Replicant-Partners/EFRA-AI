@@ -276,18 +276,25 @@ export default function Home() {
 
           {/* Agent steps */}
           <div>
-            {AGENTS.map(agent => (
-              <AgentStep
-                key={agent.key}
-                agentKey={agent.key}
-                label={agent.label}
-                desc={agent.desc}
-                event={events[agent.key]}
-                logs={agentLogs[agent.key]}
-                analystNote={analystNotes[agent.key]}
-                pipelineRunning={!isDone}
-              />
-            ))}
+            {AGENTS.map(agent => {
+              // Inject CF scenarios into the valuation event so the price table populates
+              const cfScenarios = (events["cf"]?.result as { scenarios?: unknown[] })?.scenarios ?? [];
+              const event = agent.key === "valuation" && events["valuation"]
+                ? { ...events["valuation"], result: { ...(events["valuation"].result as Record<string, unknown> ?? {}), _cf_scenarios: cfScenarios } }
+                : events[agent.key];
+              return (
+                <AgentStep
+                  key={agent.key}
+                  agentKey={agent.key}
+                  label={agent.label}
+                  desc={agent.desc}
+                  event={event}
+                  logs={agentLogs[agent.key]}
+                  analystNote={analystNotes[agent.key]}
+                  pipelineRunning={!isDone}
+                />
+              );
+            })}
           </div>
 
           {/* Approval panel */}

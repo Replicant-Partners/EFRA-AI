@@ -48,7 +48,7 @@ function buildEvents(state: PipelineState): Record<string, AgentEvent> {
   if (state.forensic)      ev["forensic_pre"]  = { agent: "forensic_pre",  status: "done", result: state.forensic };
   if (state.cf)            ev["cf"]            = { agent: "cf",            status: "done", result: state.cf };
   if (state.forensic)      ev["forensic"]      = { agent: "forensic",      status: "done", result: state.forensic };
-  if (state.valuation)     ev["valuation"]     = { agent: "valuation",     status: "done", result: state.valuation };
+  if (state.valuation)     ev["valuation"]     = { agent: "valuation",     status: "done", result: { ...state.valuation, _cf_scenarios: state.cf?.scenarios ?? [] } };
   if (state.communication) ev["communication"] = { agent: "communication", status: "done", result: state.communication };
   return ev;
 }
