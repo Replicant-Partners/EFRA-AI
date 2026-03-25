@@ -442,10 +442,10 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
           </span>
         )}
 
-        {/* ── Section 4: Market assumptions ── */}
+        {/* ── Section 4: Implied discount (what current price discounts) ── */}
         {r.market_assumptions && (
           <span className="block border-t border-[#EDE7E0] mt-2 pt-2">
-            {label("Market Assumptions")}
+            {label("Implied Discount")}
             <span className="block text-[11px] text-[#A89E94] leading-relaxed">{r.market_assumptions}</span>
           </span>
         )}

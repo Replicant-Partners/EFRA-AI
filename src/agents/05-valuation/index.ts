@@ -35,13 +35,17 @@ Identify which multiple is most relevant for this sector and why.
 → Capture in: current_multiples (1–2 paragraphs with multiples and relevance judgment)
 
 ════════════════════════════════════════════
-STEP 3 — WHAT IS THE MARKET PRICING IN?
+STEP 3 — WHAT IS THE CURRENT PRICE DISCOUNTING?
 ════════════════════════════════════════════
-Work backwards from the current price to infer what the market assumes:
-- Implicit bearish case: what growth/margin does the current price assume if the thesis fails?
-- Implicit neutral case: what does it assume if everything goes as expected?
-- Implicit bullish case: what would need to happen to justify a re-rating?
-→ Capture in: market_assumptions (2–3 paragraphs covering the three cases)
+Work backwards from the current price to extract the single set of growth and margin
+assumptions the market is embedding right now — not scenarios, just the implied consensus.
+Answer: what revenue growth rate, EBITDA margin, and multiple expansion (or compression)
+does the stock price require to be "fair" at today's level?
+This is a 1-paragraph factual statement: "At $X, the market is pricing in ~Y% revenue
+growth, Z% margins, and a W× terminal multiple."
+Do NOT repeat or restate the Bull/Base/Bear scenarios from Critical Factor — those are
+already provided and will be shown separately.
+→ Capture in: market_assumptions (1 concise paragraph, current-price implied metrics only)
 
 ════════════════════════════════════════════
 STEP 4 — COMPARABLES & RELATIVE POSITIONING
@@ -110,7 +114,7 @@ Always return valid JSON with this exact structure (use real values, not these):
   "conf_adj": -0.05,
   "valuation_exec_summary": "The market values NVDA primarily by EV/EBITDA given the capital-intensive nature of its semiconductor business...",
   "current_multiples": "P/E NTM: 34x · EV/EBITDA: 28x · P/FCF: 38x · P/S: 18x. The most relevant multiple for this sector is EV/EBITDA because...",
-  "market_assumptions": "Implicit bearish case: the current price discounts ~12% YoY revenue growth with stable EBITDA margins at 55%... Implicit neutral case: assumes gross margin expansion toward 67%... Implicit bullish case: would require hyperscaler capex acceleration...",
+  "market_assumptions": "At $115, the market is pricing in ~18% revenue growth, EBITDA margins stable at 55%, and no multiple re-rating from current 28× EV/EBITDA — a consensus neutral scenario with no credit given to new architecture cycles.",
   "peer_comparison": "AMD: EV/EBITDA 22x, P/E 28x · Intel: EV/EBITDA 8x, P/E 15x · TSMC: EV/EBITDA 18x, P/E 22x. NVDA trades at a 35% premium vs peers, justified by its dominance in AI GPUs...",
   "margin_of_safety": "The pt_12m of $148 implies 28% upside from the current price of $115. The Bear scenario at $95 represents 17% downside, resulting in an RR of 2.4:1...",
   "valuation_summary": "NVDA trades at 34x P/E NTM and 28x EV/EBITDA, with a 35% premium vs peers reflecting its dominant position in AI accelerators. The current price of $115 discounts a neutral scenario with sustained growth but does not fully incorporate the upside from new architectures..."
