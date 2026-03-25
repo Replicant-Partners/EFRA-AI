@@ -227,12 +227,19 @@ export interface AuditTrail {
   final_confidence: number;
 }
 
+export interface FinalSummary {
+  business:   string;   // 1-2 sentences: what the company does and its moat
+  management: string;   // 1-2 sentences: management quality and trust score
+  valuation:  string;   // 1-2 sentences: PT, rating, and key valuation insight
+}
+
 export interface CommOutput {
   output_type: OutputType;
   enter_gate: EnterGateResult;
   audit_trail: AuditTrail;
   publication_possible: boolean;
-  content?: string;            // generated report/note text
+  content?: string;            // generated report/note text (CASCADE format)
+  summary?: FinalSummary;      // structured 3-part synthesis
 }
 
 export interface CommInput {

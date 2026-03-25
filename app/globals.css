@@ -52,6 +52,46 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #D8D0C8; }
 
+/* ── Print / PDF ─────────────────────────────────────────────────────────── */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 18mm 20mm;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10pt;
+  }
+
+  header, nav, .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Avoid page breaks inside sections */
+  .border, [class*="border-"] {
+    border-color: #ccc !important;
+  }
+
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  div, span {
+    page-break-inside: avoid;
+  }
+
+  a { color: inherit; text-decoration: none; }
+}
+
 /* ── Running pulse (agent active) ───────────────────────────────────────── */
 
 @keyframes pulse-border {

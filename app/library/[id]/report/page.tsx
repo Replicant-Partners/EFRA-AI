@@ -98,12 +98,20 @@ export default function ReportPage() {
             </span>
           </div>
         </div>
-        <a
-          href={`/library/${id}`}
-          className="text-[11px] text-[#A89E94] hover:text-[#C8804A] transition-colors flex-shrink-0"
-        >
-          ← Analysis
-        </a>
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <button
+            onClick={() => window.print()}
+            className="text-[11px] font-semibold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] transition-colors print:hidden"
+          >
+            ↓ PDF
+          </button>
+          <a
+            href={`/library/${id}`}
+            className="text-[11px] text-[#A89E94] hover:text-[#C8804A] transition-colors print:hidden"
+          >
+            ← Analysis
+          </a>
+        </div>
       </div>
 
       <hr className="border-[#EDE7E0]" />

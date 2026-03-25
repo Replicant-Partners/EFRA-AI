@@ -479,16 +479,46 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
 
   if (agentKey === "communication") {
     const r = result as CommOutput;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
     return (
-      <span className="text-[#A89E94]">
-        gate <span className={r.enter_gate.effective_score >= 5 ? "text-[#C8804A]" : "text-[#C84848]"}>
-          {r.enter_gate.effective_score}/5
+      <span className="block space-y-2">
+        {/* Gate status row */}
+        <span className="block text-[#A89E94] text-[11px]">
+          gate <span className={r.enter_gate.effective_score >= 5 ? "text-[#C8804A]" : "text-[#C84848]"}>
+            {r.enter_gate.effective_score}/5
+          </span>
+          {" · "}
+          <span className={r.publication_possible ? "text-[#C8804A]" : "text-[#C84848]"}>
+            {r.publication_possible ? r.output_type?.toLowerCase().replace("_", " ") : "drop"}
+          </span>
+          {" · "}conf <span className="text-[#8C7E70]">{((r.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%</span>
         </span>
-        {" · "}
-        <span className={r.publication_possible ? "text-[#C8804A]" : "text-[#C84848]"}>
-          {r.publication_possible ? r.output_type?.toLowerCase().replace("_", " ") : "drop"}
-        </span>
-        {" · "}conf <span className="text-[#8C7E70]">{((r.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%</span>
+
+        {/* Final summary — 3 cards */}
+        {r.summary && (
+          <span className="block border-t border-[#EDE7E0] pt-2 space-y-2">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase">
+              Final Summary
+            </span>
+            {/* Business */}
+            <span className="block border border-[#EDE7E0] rounded-sm px-2.5 py-2">
+              {label("Business")}
+              <span className="block text-[11px] text-[#1E1A14] leading-relaxed">{r.summary.business}</span>
+            </span>
+            {/* Management */}
+            <span className="block border border-[#EDE7E0] rounded-sm px-2.5 py-2">
+              {label("Management")}
+              <span className="block text-[11px] text-[#1E1A14] leading-relaxed">{r.summary.management}</span>
+            </span>
+            {/* Valuation */}
+            <span className="block border border-[#C8804A]/30 bg-[#FDF8F4] rounded-sm px-2.5 py-2">
+              {label("Valuation")}
+              <span className="block text-[11px] text-[#C8804A] font-medium leading-relaxed">{r.summary.valuation}</span>
+            </span>
+          </span>
+        )}
       </span>
     );
   }
