@@ -97,6 +97,7 @@ export default function DocsPage() {
           ["#communication",  "07 · Communication"],
           ["#modes",          "Modes: Valentine · Gunn · Dual"],
           ["#concepts",       "Key Concepts"],
+          ["#architecture",   "Architecture: Ports & Adapters"],
         ].map(([href, label]) => (
           <div key={href}>
             <a href={href} className="text-[#8C7E70] hover:text-[#C8804A] transition-colors">{label}</a>
@@ -602,6 +603,93 @@ export default function DocsPage() {
             reduces this number. Final confidence = base confidence + sum of all adjustments.
           </Field>
         </div>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <Section id="architecture">
+        <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Architecture: Ports &amp; Adapters</h2>
+
+        <p className="prose-tufte">
+          Efrain AI uses a Hexagonal Architecture (Ports &amp; Adapters) to decouple the
+          analysis pipeline from any specific AI model or provider. Think of it as a
+          roundabout: the analytical core sits at the center and never touches the road —
+          adapters (the cars) connect to it from outside through standardized entry points (the roads).
+        </p>
+
+        <Block label="The Port — ILanguageModel">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            A TypeScript interface defined in{" "}
+            <span className="font-mono text-[#6E6258]">src/core/ports/ILanguageModel.ts</span>.
+            Every agent calls only this interface — never a vendor SDK directly.
+          </p>
+          <Field name="chat(params)">
+            Sends a single-turn prompt and returns the full response as a string.
+            Used by agents that need a complete, non-streaming answer.
+          </Field>
+          <Field name="chatStream(params)">
+            Returns an async generator that yields text chunks as they arrive.
+            Used by the Communication agent for long-form report drafting.
+          </Field>
+          <Field name="MODELS constant">
+            Canonical model IDs exported from the port:{" "}
+            <span className="font-mono text-[#6E6258]">haiku</span>,{" "}
+            <span className="font-mono text-[#6E6258]">sonnet</span>,{" "}
+            <span className="font-mono text-[#6E6258]">opus</span>.
+            All agents reference <span className="font-mono text-[#6E6258]">MODELS.haiku</span> etc.
+            — switching a model means editing one file.
+          </Field>
+        </Block>
+
+        <Block label="The Adapters">
+          <Field name="OpenRouterAdapter">
+            Production adapter in{" "}
+            <span className="font-mono text-[#6E6258]">src/adapters/llm/OpenRouterAdapter.ts</span>.
+            Calls OpenRouter's API (OpenAI-compatible) using the official OpenAI SDK.
+            Handles streaming, temperature, max tokens, and JSON mode.
+            Requires <span className="font-mono text-[#6E6258]">OPENROUTER_API_KEY</span> in the environment.
+          </Field>
+          <Field name="MockLLMAdapter">
+            Test adapter in{" "}
+            <span className="font-mono text-[#6E6258]">src/adapters/llm/MockLLMAdapter.ts</span>.
+            Returns pre-canned JSON fixtures — zero API calls, zero cost.
+            Pass a <span className="font-mono text-[#6E6258]">Record&lt;string, string&gt;</span> of
+            system-prompt-keyed responses to control what each agent receives.
+          </Field>
+        </Block>
+
+        <Block label="The Configurator">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            <span className="font-mono text-[#6E6258]">src/configurator.ts</span> is the
+            composition root — the only place that decides which adapter to wire in.
+          </p>
+          <Field name="buildLLM()">
+            Returns <span className="font-mono text-[#6E6258]">OpenRouterAdapter</span> when{" "}
+            <span className="font-mono text-[#6E6258]">NODE_ENV !== "test"</span>,
+            and <span className="font-mono text-[#6E6258]">MockLLMAdapter</span> otherwise.
+            Called once per request at the API route level; the resulting{" "}
+            <span className="font-mono text-[#6E6258]">llm</span> object is passed down to every agent.
+          </Field>
+        </Block>
+
+        <Block label="Directory Layout">
+          <div className="font-mono text-[11px] text-[#6E6258] leading-relaxed bg-[#F5F0EB] rounded px-4 py-3">
+            <div className="text-[#C0B8AC]">src/</div>
+            <div className="pl-4 text-[#C0B8AC]">core/</div>
+            <div className="pl-8 text-[#C0B8AC]">ports/</div>
+            <div className="pl-12">ILanguageModel.ts <span className="text-[#A89E94]">← the contract</span></div>
+            <div className="pl-4 text-[#C0B8AC]">adapters/</div>
+            <div className="pl-8 text-[#C0B8AC]">llm/</div>
+            <div className="pl-12">OpenRouterAdapter.ts <span className="text-[#A89E94]">← production</span></div>
+            <div className="pl-12">MockLLMAdapter.ts <span className="text-[#A89E94]">← testing</span></div>
+            <div className="pl-4">configurator.ts <span className="text-[#A89E94]">← composition root</span></div>
+          </div>
+        </Block>
+
+        <Note>
+          To swap from OpenRouter to a direct Anthropic SDK, Bedrock, or a local model,
+          you only write a new adapter that implements <span className="font-mono">ILanguageModel</span> and
+          update <span className="font-mono">buildLLM()</span>. The 7 agents and the pipeline are unchanged.
+        </Note>
       </Section>
 
       {/* ── Footer ── */}

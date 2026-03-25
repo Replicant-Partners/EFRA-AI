@@ -44,11 +44,24 @@ export class OpenRouterAdapter implements ILanguageModel {
       body.thinking = { type: "adaptive" };
     }
 
-    const response = await this.client.chat.completions.create(
-      body as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
-    );
-
-    return (response as OpenAI.Chat.Completions.ChatCompletion).choices[0]?.message?.content ?? "";
+    const maxAttempts = 3;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await this.client.chat.completions.create(
+          body as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
+        );
+        return (response as OpenAI.Chat.Completions.ChatCompletion).choices[0]?.message?.content ?? "";
+      } catch (err) {
+        lastError = err;
+        const isNetworkError = err instanceof TypeError || (err instanceof Error && err.message.includes("network"));
+        if (!isNetworkError || attempt === maxAttempts) throw err;
+        const delay = attempt * 2000;
+        console.warn(`[OpenRouter] Network error on attempt ${attempt}, retrying in ${delay}ms…`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError;
   }
 
   async *chatStream(params: ChatParams): AsyncGenerator<string, string> {

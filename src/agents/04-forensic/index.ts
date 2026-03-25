@@ -164,7 +164,7 @@ Classify flags (SEV 1–5), calculate totals, and determine recommendation.
     user:        userMessage,
     temperature: 0.1,
     max_tokens:  input.run_mode === "FULL" ? 6000 : 2048,
-    json_mode:   true,
+    json_mode:   false,
   });
 
   const profile = JSON.parse(extractJSON(text)) as ForensicProfile;
