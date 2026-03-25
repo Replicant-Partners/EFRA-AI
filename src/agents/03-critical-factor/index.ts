@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type {
   IntelBundle,
   ForensicProfile,
@@ -81,6 +83,7 @@ Always return a valid JSON with this exact structure (use real values, not these
 `.trim();
 
 export async function runCriticalFactor(
+  llm: ILanguageModel,
   intel_bundle: IntelBundle,
   forensic_profile: ForensicProfile,
   downstream_mode: DownstreamMode,
@@ -106,7 +109,7 @@ Genera escenarios Bull/Base/Bear (probabilidades suman 1.0).
 ${isGunn ? "Incluye build_to_last_score (Gunn mode)." : "build_to_last_score debe ser null."}
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

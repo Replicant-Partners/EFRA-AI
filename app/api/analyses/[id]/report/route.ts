@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { buildReportContent } from "@/src/lib/report-builder";
 import { runCommunication } from "@/src/agents/06-communication/index.js";
+import { buildLLM } from "@/src/configurator";
 import type { PipelineState, ReportContent } from "@/src/shared/types";
 
 export const maxDuration = 60;
@@ -100,7 +101,7 @@ export async function PATCH(
       // Inject analyst-edited scenarios into the pipeline state
       const modifiedCf = { ...state.cf, scenarios: report.scenarios };
 
-      const commResult = await runCommunication({
+      const commResult = await runCommunication(buildLLM(), {
         valuation_model:  state.valuation,
         forensic_profile: state.forensic,
         cf_output:        modifiedCf,

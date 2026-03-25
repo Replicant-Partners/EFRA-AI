@@ -1,4 +1,6 @@
-import { chatStream, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type { CommInput, CommOutput, AuditTrail } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -38,7 +40,7 @@ Devuelve JSON:
 }
 `.trim();
 
-export async function runCommunication(input: CommInput): Promise<CommOutput> {
+export async function runCommunication(llm: ILanguageModel, input: CommInput): Promise<CommOutput> {
   const { valuation_model, forensic_profile, cf_output, intel_bundle, downstream_mode } = input;
 
   // Hard stop MNPI
@@ -78,7 +80,7 @@ Evaluate the ENTER GATE, determine output_type, and generate the full CASCADE re
   let fullText = "";
   process.stdout.write("\n[COMM] Generating report...\n");
 
-  const gen = chatStream({
+  const gen = llm.chatStream({
     model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

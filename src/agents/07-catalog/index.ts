@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 
 export interface CatalogInput {
   ticker:             string;
@@ -38,7 +40,7 @@ Rules:
 - summary: max 100 characters, present tense, investment-relevant. E.g.: "Margin compression risk from commodity input costs rising ~300bps YoY"
 `.trim();
 
-export async function runCatalog(input: CatalogInput): Promise<CatalogOutput> {
+export async function runCatalog(llm: ILanguageModel, input: CatalogInput): Promise<CatalogOutput> {
   const userMessage = `
 Ticker: ${input.ticker}
 
@@ -51,7 +53,7 @@ Analyst insight to classify:
 Classify this insight. Return only JSON.
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.haiku,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

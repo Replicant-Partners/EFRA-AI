@@ -4,6 +4,7 @@ import { runCriticalFactor } from "@/src/agents/03-critical-factor/index";
 import { runForensic } from "@/src/agents/04-forensic/index";
 import { runValuation } from "@/src/agents/05-valuation/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
+import { buildLLM } from "@/src/configurator";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
 
 export const maxDuration = 300; // 5 minutes — Railway/Vercel limit
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
         );
       };
 
+      const llm = buildLLM();
       const idea_id = `idea_${Date.now()}`;
       const state: PipelineState = {
         idea_id,
@@ -45,7 +47,7 @@ export async function POST(request: Request) {
       try {
         // ── 01 SCOUT ────────────────────────────────────
         send({ agent: "scout", status: "running" });
-        state.scout = await runScout(scoutInput);
+        state.scout = await runScout(llm, scoutInput);
         send({ agent: "scout", status: "done", result: state.scout });
 
         if (state.scout.decision === "DROP") {
@@ -67,6 +69,7 @@ export async function POST(request: Request) {
         // ── 02 INTEL ────────────────────────────────────
         send({ agent: "intel", status: "running" });
         state.intel = await runIntel(
+          llm,
           {
             idea_id,
             ticker,
@@ -82,12 +85,13 @@ export async function POST(request: Request) {
         // ── 04 FORENSIC PRE-SCREEN ───────────────────────
         // Informational only — no real financial data to base a block on
         send({ agent: "forensic_pre", status: "running" });
-        state.forensic = await runForensic({ idea_id, ticker, run_mode: "PRE-SCREEN" });
+        state.forensic = await runForensic(llm, { idea_id, ticker, run_mode: "PRE-SCREEN" });
         send({ agent: "forensic_pre", status: "done", result: state.forensic });
 
         // ── 03 CRITICAL FACTOR ──────────────────────────
         send({ agent: "cf", status: "running" });
         state.cf = await runCriticalFactor(
+          llm,
           state.intel,
           state.forensic,
           state.scout.downstream_mode,
@@ -99,12 +103,12 @@ export async function POST(request: Request) {
         // Full scan enriches flags/haircuts for Valuation — does NOT block
         // (blocking was already decided at PRE-SCREEN)
         send({ agent: "forensic", status: "running" });
-        state.forensic = await runForensic({ idea_id, ticker, run_mode: "FULL" });
+        state.forensic = await runForensic(llm, { idea_id, ticker, run_mode: "FULL" });
         send({ agent: "forensic", status: "done", result: state.forensic });
 
         // ── 05 VALUATION ────────────────────────────────
         send({ agent: "valuation", status: "running" });
-        state.valuation = await runValuation({
+        state.valuation = await runValuation(llm, {
           ticker,
           forensic_profile: state.forensic,
           cf_scenarios: state.cf.scenarios,
@@ -116,7 +120,7 @@ export async function POST(request: Request) {
 
         // ── 06 COMMUNICATION ────────────────────────────
         send({ agent: "communication", status: "running" });
-        state.communication = await runCommunication({
+        state.communication = await runCommunication(llm, {
           valuation_model: state.valuation,
           forensic_profile: state.forensic,
           cf_output: state.cf,

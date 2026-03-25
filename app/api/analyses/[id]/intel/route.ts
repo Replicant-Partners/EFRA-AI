@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { runCatalog } from "@/src/agents/07-catalog/index.js";
+import { buildLLM } from "@/src/configurator";
 import type { PipelineState } from "@/src/shared/types";
 
 export async function GET(
@@ -50,7 +51,7 @@ export async function POST(
     const state = analysis.full_state as unknown as PipelineState;
     const businessContext = state.intel?.business_context?.executive_summary ?? "";
 
-    runCatalog({
+    runCatalog(buildLLM(), {
       ticker:             analysis.ticker,
       intel_item_content: content,
       business_context:   businessContext,

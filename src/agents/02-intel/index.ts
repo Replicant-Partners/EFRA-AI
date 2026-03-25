@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type { IntelInput, IntelBundle } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -166,6 +168,7 @@ const JSON_SCHEMA = {
 };
 
 export async function runIntel(
+  llm: ILanguageModel,
   input: IntelInput,
   rawNewsPool: string[],
 ): Promise<IntelBundle> {
@@ -182,7 +185,7 @@ Execute both tasks (A: business analysis, B: news processing)
 and return the complete JSON.
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

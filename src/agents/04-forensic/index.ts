@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type { ForensicInput, ForensicProfile } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -141,7 +143,7 @@ const JSON_SCHEMA = {
   additionalProperties: false,
 };
 
-export async function runForensic(input: ForensicInput): Promise<ForensicProfile> {
+export async function runForensic(llm: ILanguageModel, input: ForensicInput): Promise<ForensicProfile> {
   const userMessage = `
 Ticker:   ${input.ticker}
 Idea ID:  ${input.idea_id}
@@ -156,7 +158,7 @@ ${
 Classify flags (SEV 1–5), calculate totals, and determine recommendation.
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

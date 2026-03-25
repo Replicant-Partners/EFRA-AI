@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type { ValuationInput, ValuationModel } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -150,7 +152,7 @@ const JSON_SCHEMA = {
   additionalProperties: false,
 };
 
-export async function runValuation(input: ValuationInput): Promise<ValuationModel> {
+export async function runValuation(llm: ILanguageModel, input: ValuationInput): Promise<ValuationModel> {
   const { ticker, forensic_profile, cf_scenarios, intel_bundle, build_to_last_score, downstream_mode } = input;
 
   const userMessage = `
@@ -175,7 +177,7 @@ Complete all JSON fields including valuation_exec_summary, current_multiples,
 market_assumptions, peer_comparison, margin_of_safety, and valuation_summary.
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.opus,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

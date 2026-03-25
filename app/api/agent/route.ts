@@ -4,6 +4,7 @@ import { runCriticalFactor } from "@/src/agents/03-critical-factor/index";
 import { runForensic } from "@/src/agents/04-forensic/index";
 import { runValuation } from "@/src/agents/05-valuation/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
+import { buildLLM } from "@/src/configurator";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
 
 export const maxDuration = 300;
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
       const pct = (v: unknown, d = 0) => v != null ? `${(Number(v) * 100).toFixed(d)}%` : "?";
 
       try {
+        const llm = buildLLM();
         const idea_id = state.idea_id ?? `idea_${Date.now()}`;
 
         // ── 01 SCOUT ──────────────────────────────────────────────────────
@@ -63,7 +65,7 @@ export async function POST(request: Request) {
             catalyst,
             idea_source_tag: `web_${mode}`,
           };
-          const result = await runScout(scoutInput);
+          const result = await runScout(llm, scoutInput);
           abortWaiting = true;
 
           const a = result?.alpha_score;
@@ -100,6 +102,7 @@ export async function POST(request: Request) {
 
           const scout = state.scout;
           const result = await runIntel(
+            llm,
             {
               idea_id,
               ticker,
@@ -201,7 +204,7 @@ export async function POST(request: Request) {
         } else if (agent === "forensic_pre") {
           log(`Pre-screening ${ticker} — checking 10-K filings, going concern, SEC actions…`);
 
-          const result = await runForensic({ idea_id, ticker, run_mode: "PRE-SCREEN" });
+          const result = await runForensic(llm, { idea_id, ticker, run_mode: "PRE-SCREEN" });
           const flags = result?.flags ?? [];
 
           await pause(80);  log(`Risk score:    ${n(result?.risk_score, 100)}`);
@@ -228,6 +231,7 @@ export async function POST(request: Request) {
 
           const scout = state.scout;
           const result = await runCriticalFactor(
+            llm,
             state.intel!,
             state.forensic!,
             scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
@@ -273,7 +277,7 @@ export async function POST(request: Request) {
         } else if (agent === "forensic") {
           log(`Full forensic scan — accruals, DSO, auditor quality, insider activity, governance…`);
 
-          const result = await runForensic({ idea_id, ticker, run_mode: "FULL" });
+          const result = await runForensic(llm, { idea_id, ticker, run_mode: "FULL" });
           const flags = result?.flags ?? [];
 
           await pause(80);  log(`Risk score:    ${n(result?.risk_score, 100)}`);
@@ -327,7 +331,7 @@ export async function POST(request: Request) {
 
           const scout = state.scout;
           const cf    = state.cf;
-          const result = await runValuation({
+          const result = await runValuation(llm, {
             ticker,
             forensic_profile:    state.forensic!,
             cf_scenarios:        cf?.scenarios        ?? [],
@@ -413,7 +417,7 @@ export async function POST(request: Request) {
           log(`Evaluating ENTER gate — drafting CASCADE research note…`);
 
           const scout = state.scout;
-          const result = await runCommunication({
+          const result = await runCommunication(llm, {
             valuation_model:  state.valuation!,
             forensic_profile: state.forensic!,
             cf_output:        state.cf!,

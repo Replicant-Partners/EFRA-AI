@@ -1,8 +1,10 @@
 import "dotenv/config";
+import { buildLLM } from "./configurator.js";
 import { runPipeline } from "./shared/pipeline.js";
 
 // Demo run — replace with real inputs or HTTP/CLI interface
 const result = await runPipeline(
+  buildLLM(),
   {
     ticker: "NVDA",
     analyst_id: "analyst_001",

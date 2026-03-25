@@ -1,4 +1,6 @@
-import { chat, MODELS, extractJSON } from "../../shared/client.js";
+import { MODELS } from "../../core/ports/ILanguageModel.js";
+import type { ILanguageModel } from "../../core/ports/ILanguageModel.js";
+import { extractJSON } from "../../shared/client.js";
 import type { ScoutInput, ScoutOutput } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
@@ -165,7 +167,7 @@ const JSON_SCHEMA = {
   additionalProperties: false,
 };
 
-export async function runScout(input: ScoutInput): Promise<ScoutOutput> {
+export async function runScout(llm: ILanguageModel, input: ScoutInput): Promise<ScoutOutput> {
   const userMessage = `
 Evaluate this investment idea:
 
@@ -179,7 +181,7 @@ Calculate the Alpha Score using the formula, apply gate rules, assign horizon_ta
 downstream_mode, assess forensic_pre_result if alpha_score >= 65, and emit the full JSON.
 `.trim();
 
-  const text = await chat({
+  const text = await llm.chat({
     model:       MODELS.sonnet,
     system:      SYSTEM_PROMPT,
     user:        userMessage,

@@ -4,9 +4,11 @@ import { runCriticalFactor } from "../agents/03-critical-factor/index.js";
 import { runForensic } from "../agents/04-forensic/index.js";
 import { runValuation } from "../agents/05-valuation/index.js";
 import { runCommunication } from "../agents/06-communication/index.js";
+import type { ILanguageModel } from "../core/ports/ILanguageModel.js";
 import type { PipelineState, ScoutInput } from "./types.js";
 
 export async function runPipeline(
+  llm: ILanguageModel,
   scoutInput: ScoutInput,
   rawNewsPool: string[] = [],
 ): Promise<PipelineState> {
@@ -22,15 +24,15 @@ export async function runPipeline(
   console.log(`${"═".repeat(60)}\n`);
 
   // ── Agent 01: SCOUT ──────────────────────────────────────────
-  console.log("[01] SCOUT — Calculando Alpha Score...");
-  state.scout = await runScout(scoutInput);
+  console.log("[01] SCOUT — Scoring alpha...");
+  state.scout = await runScout(llm, scoutInput);
   console.log(
     `     decision: ${state.scout.decision} | score: ${state.scout.alpha_score.total} | mode: ${state.scout.downstream_mode}`,
   );
 
   if (state.scout.decision === "DROP") {
     state.status = "DROPPED";
-    console.log(`     ⛔ DROP — rescreen en: ${state.scout.rescreen_eligible_after ?? "90d"}`);
+    console.log(`     ⛔ DROP — rescreen: ${state.scout.rescreen_eligible_after ?? "90d"}`);
     return state;
   }
 
@@ -39,8 +41,9 @@ export async function runPipeline(
   }
 
   // ── Agent 02: INTEL ──────────────────────────────────────────
-  console.log("\n[02] INTEL — Procesando news pool...");
+  console.log("\n[02] INTEL — Processing news pool...");
   state.intel = await runIntel(
+    llm,
     {
       idea_id,
       ticker: scoutInput.ticker,
@@ -61,7 +64,7 @@ export async function runPipeline(
 
   // ── Agent 04: FORENSIC (PRE-SCREEN) ─────────────────────────
   console.log("\n[04] FORENSIC — Quick Scan (pre-screen)...");
-  state.forensic = await runForensic({ idea_id, ticker: scoutInput.ticker, run_mode: "PRE-SCREEN" });
+  state.forensic = await runForensic(llm, { idea_id, ticker: scoutInput.ticker, run_mode: "PRE-SCREEN" });
   console.log(
     `     recommendation: ${state.forensic.recommendation} | risk_score: ${state.forensic.risk_score}`,
   );
@@ -75,6 +78,7 @@ export async function runPipeline(
   // ── Agent 03: CRITICAL FACTOR ────────────────────────────────
   console.log("\n[03] CRITICAL FACTOR — Generating thesis...");
   state.cf = await runCriticalFactor(
+    llm,
     state.intel,
     state.forensic,
     state.scout.downstream_mode,
@@ -86,7 +90,7 @@ export async function runPipeline(
 
   // ── Agent 04: FORENSIC (FULL) ────────────────────────────────
   console.log("\n[04] FORENSIC — Full Scan...");
-  state.forensic = await runForensic({ idea_id, ticker: scoutInput.ticker, run_mode: "FULL" });
+  state.forensic = await runForensic(llm, { idea_id, ticker: scoutInput.ticker, run_mode: "FULL" });
   console.log(
     `     eps_haircut: ${state.forensic.eps_haircut_total}% | dr_add: ${state.forensic.dr_add_bps_total}bps | flags: ${state.forensic.flags.length}`,
   );
@@ -97,8 +101,8 @@ export async function runPipeline(
   }
 
   // ── Agent 05: VALUATION ──────────────────────────────────────
-  console.log("\n[05] VALUATION — Calculando price target...");
-  state.valuation = await runValuation({
+  console.log("\n[05] VALUATION — Calculating price target...");
+  state.valuation = await runValuation(llm, {
     ticker: scoutInput.ticker,
     forensic_profile: state.forensic,
     cf_scenarios: state.cf.scenarios,
@@ -112,13 +116,13 @@ export async function runPipeline(
 
   if (state.valuation.rr_ratio < 2 && state.valuation.rating === "UNDERPERFORM") {
     state.status = "DROPPED";
-    console.log("     ⛔ DROP — RR < 2:1, sin edge diferencial");
+    console.log("     ⛔ DROP — RR < 2:1, no differential edge");
     return state;
   }
 
   // ── Agent 06: COMMUNICATION ──────────────────────────────────
-  console.log("\n[06] COMMUNICATION — Publicando...\n");
-  state.communication = await runCommunication({
+  console.log("\n[06] COMMUNICATION — Publishing...\n");
+  state.communication = await runCommunication(llm, {
     valuation_model: state.valuation,
     forensic_profile: state.forensic,
     cf_output: state.cf,
