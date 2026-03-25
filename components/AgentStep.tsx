@@ -486,12 +486,12 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
       <span className="block space-y-2">
         {/* Gate status row */}
         <span className="block text-[#A89E94] text-[11px]">
-          gate <span className={r.enter_gate.effective_score >= 5 ? "text-[#C8804A]" : "text-[#C84848]"}>
-            {r.enter_gate.effective_score}/5
+          gate <span className={( r.enter_gate?.effective_score ?? 0) >= 5 ? "text-[#C8804A]" : "text-[#C84848]"}>
+            {r.enter_gate?.effective_score ?? "?"}/5
           </span>
           {" · "}
           <span className={r.publication_possible ? "text-[#C8804A]" : "text-[#C84848]"}>
-            {r.publication_possible ? r.output_type?.toLowerCase().replace("_", " ") : "drop"}
+            {r.publication_possible ? (r.output_type ?? "").toLowerCase().replace("_", " ") || "published" : "drop"}
           </span>
           {" · "}conf <span className="text-[#8C7E70]">{((r.audit_trail?.final_confidence ?? 0) * 100).toFixed(0)}%</span>
         </span>
