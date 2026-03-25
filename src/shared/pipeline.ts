@@ -35,7 +35,7 @@ export async function runPipeline(
   }
 
   if (state.scout.decision === "REVIEW_ZONE") {
-    console.log("     ⚠️  REVIEW_ZONE — requiere decisión humana. Continuando para demo...");
+    console.log("     ⚠️  REVIEW_ZONE — requires human decision. Continuing for demo...");
   }
 
   // ── Agent 02: INTEL ──────────────────────────────────────────
@@ -73,7 +73,7 @@ export async function runPipeline(
   }
 
   // ── Agent 03: CRITICAL FACTOR ────────────────────────────────
-  console.log("\n[03] CRITICAL FACTOR — Generando tesis...");
+  console.log("\n[03] CRITICAL FACTOR — Generating thesis...");
   state.cf = await runCriticalFactor(
     state.intel,
     state.forensic,

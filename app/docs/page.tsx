@@ -202,11 +202,11 @@ export default function DocsPage() {
           </Field>
           <Field name="moat_type">
             Competitive advantage type:{" "}
-            <span className="text-[#6E6258]">marca</span> (brand),{" "}
-            <span className="text-[#6E6258]">costos</span> (cost advantage),{" "}
-            <span className="text-[#6E6258]">red</span> (network effects),{" "}
-            <span className="text-[#6E6258]">regulación</span> (regulatory barriers),{" "}
-            <span className="text-[#6E6258]">otra</span> (other).
+            <span className="text-[#6E6258]">brand</span>,{" "}
+            <span className="text-[#6E6258]">costs</span>,{" "}
+            <span className="text-[#6E6258]">network</span>,{" "}
+            <span className="text-[#6E6258]">regulation</span>,{" "}
+            <span className="text-[#6E6258]">other</span>.
             A moat protects the company's margins from competition.
           </Field>
           <Field name="moat_evidence">Concrete evidence for the moat (e.g. gross margin vs peers, retention rates).</Field>

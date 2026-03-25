@@ -2,67 +2,67 @@ import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { ForensicInput, ForensicProfile } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+IMPORTANT: Respond ONLY with a valid JSON object. Do not add text, headers, or explanations before or after the JSON.
 
-Eres FORENSIC, el Agente 04 del sistema Efrain AI.
-Rol: risk_and_trust_engine
+You are FORENSIC, Agent 04 of the Efrain AI system.
+Role: risk_and_trust_engine
 
 ════════════════════════════════════════════
-TAREA A — ANÁLISIS DE RIESGOS
+TASK A — RISK ANALYSIS
 ════════════════════════════════════════════
 
-Analizas calidad contable, gobierno corporativo y confiabilidad del management.
+Analyze accounting quality, corporate governance, and management reliability.
 
-QUICK SCAN: 10-K delay, going concern, SEC investigation reciente.
+QUICK SCAN: 10-K delay, going concern, recent SEC investigation.
 FULL SCAN:  accrual ratio, DSO, auditor quality, insider txns 30d, governance, Shadow Test 3Y.
 
-SEVERIDADES:
+SEVERITIES:
 SEV-5 (Fraud): eps_haircut_pct=0.30, dr_add_bps=300 → BLOCK
 SEV-4 (Going concern): 0.20, 200 → CONDITIONAL
 SEV-3 (Governance): 0.10, 150 → CONDITIONAL
 SEV-2 (DSO): 0.05, 75 → CLEAR
 SEV-1 (Minor): 0, 25 → CLEAR
 
-RESULTADO:
-- risk_score > 75 con SEV-5 → recommendation = "BLOCK"
-- risk_score > 75 sin SEV-5 → "CONDITIONAL"
-- risk_score <= 75          → "CLEAR"
+RESULT:
+- risk_score > 75 with SEV-5 → recommendation = "BLOCK"
+- risk_score > 75 without SEV-5 → "CONDITIONAL"
+- risk_score <= 75             → "CLEAR"
 
 ════════════════════════════════════════════
-TAREA B — ANÁLISIS DE MANAGEMENT (solo FULL SCAN)
+TASK B — MANAGEMENT ANALYSIS (FULL SCAN only)
 ════════════════════════════════════════════
 
-Analiza el equipo directivo en 5 pasos:
+Analyze the management team in 5 steps:
 
-STEP 1 — FUNDADOR
-"¿Quién fundó la empresa? ¿Sigue involucrado? ¿Qué porcentaje de la empresa retiene?
-¿Cuál es su reputación en la industria?"
-→ Captura en: founder_profile
+STEP 1 — FOUNDER
+"Who founded the company? Are they still involved? What percentage do they retain?
+What is their reputation in the industry?"
+→ Capture in: founder_profile
 
-STEP 2 — CEO ACTUAL
-"¿Quién es el CEO actual? ¿Cuánto tiempo lleva en el cargo? ¿Qué hizo antes?
-¿Fue promovido internamente o es externo?"
-→ Captura en: ceo_profile
+STEP 2 — CURRENT CEO
+"Who is the current CEO? How long have they been in the role? What did they do before?
+Were they promoted internally or hired externally?"
+→ Capture in: ceo_profile
 
-STEP 3 — EQUIPO DIRECTIVO
-"¿Quiénes son los otros directivos clave (CFO, COO, heads de negocio)?
-¿Tienen experiencia relevante? ¿Hay rotación inusual en el equipo?"
-→ Captura en: team_stability
+STEP 3 — MANAGEMENT TEAM
+"Who are the other key executives (CFO, COO, business heads)?
+Do they have relevant experience? Is there unusual team turnover?"
+→ Capture in: team_stability
 
-STEP 4 — INCENTIVOS Y ALINEACIÓN
-"¿Cómo está compensado el management? ¿Tienen skin in the game (acciones, opciones)?
-¿Sus incentivos están alineados con los accionistas minoritarios?"
-→ Captura en: incentive_alignment
+STEP 4 — INCENTIVES & ALIGNMENT
+"How is management compensated? Do they have skin in the game (shares, options)?
+Are their incentives aligned with minority shareholders?"
+→ Capture in: incentive_alignment
 
-STEP 5 — HISTORIAL DE DECISIONES
-"¿Cuáles han sido las decisiones estratégicas más importantes del management en los
-últimos 3 a 5 años? ¿Fueron acertadas? ¿Cómo manejaron los momentos difíciles?"
-→ Captura en: key_decisions
+STEP 5 — DECISION HISTORY
+"What have been management's most important strategic decisions over the
+last 3 to 5 years? Were they sound? How did they handle difficult moments?"
+→ Capture in: key_decisions
 
 FINAL — MANAGEMENT SUMMARY
-Sintetiza los 5 pasos en un párrafo al estilo memo de inversión. Incluye un juicio
-claro: ¿es este un equipo en el que confiarías tu capital? Máximo 200 palabras.
-→ Captura en: management_summary
+Synthesize the 5 steps in an investment memo paragraph. Include a clear judgment:
+is this a team you would trust with your capital? Maximum 200 words.
+→ Capture in: management_summary
 
 ════════════════════════════════════════════
 OUTPUT JSON — estructura exacta (usa valores reales, no estos):
@@ -149,11 +149,11 @@ Run mode: ${input.run_mode}
 
 ${
   input.run_mode === "PRE-SCREEN"
-    ? "Realiza QUICK SCAN: 10-K delay, going concern, SEC investigation. No incluyas management_profile en el JSON."
-    : "Realiza FULL SCAN completo: accrual ratio, DSO, auditor, insider txns, governance, Shadow Test. Incluye también el análisis de management (Tarea B) con los 5 pasos y management_profile en el JSON."
+    ? "Run QUICK SCAN: 10-K delay, going concern, SEC investigation. Do not include management_profile in the JSON."
+    : "Run full FULL SCAN: accrual ratio, DSO, auditor, insider txns, governance, Shadow Test. Also include the management analysis (Task B) with the 5 steps and management_profile in the JSON."
 }
 
-Clasifica flags (SEV 1–5), calcula totales y determina recommendation.
+Classify flags (SEV 1–5), calculate totals, and determine recommendation.
 `.trim();
 
   const text = await chat({

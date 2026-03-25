@@ -2,10 +2,10 @@ import { chatStream, MODELS, extractJSON } from "../../shared/client.js";
 import type { CommInput, CommOutput, AuditTrail } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+IMPORTANT: Respond ONLY with a valid JSON object. Do not add text, headers, or explanations before or after the JSON.
 
-Eres COMMUNICATION, el Agente 06 del sistema Efrain AI.
-Rol: publication_gate
+You are COMMUNICATION, Agent 06 of the Efrain AI system.
+Role: publication_gate
 
 Eres el gate final. Si mosaic_clear = false → COMPLIANCE HALT, publication_possible = false.
 
@@ -34,7 +34,7 @@ Devuelve JSON:
   "enter_gate": { "edge": true, "new_catalyst": true, "timely": true, "examples": true, "revealing": true, "effective_score": 5 },
   "audit_trail": { "agents_run": [], "confidence_adjustments": [], "fallback_flags": [], "final_confidence": 1.0 },
   "publication_possible": true,
-  "content": "texto del reporte en formato CASCADE"
+  "content": "report text in CASCADE format"
 }
 `.trim();
 
@@ -72,11 +72,11 @@ ${(cf_output.scenarios ?? []).map((s) => `${s.type}: ${(s.probability * 100).toF
 CRITICAL FACTORS:
 ${(cf_output.factors ?? []).map((f) => `• ${f.description} (eps_impact: ${f.eps_impact_pct}%)`).join("\n")}
 
-Evalúa ENTER GATE, determina output_type y genera el reporte CASCADE completo.
+Evaluate the ENTER GATE, determine output_type, and generate the full CASCADE report.
 `.trim();
 
   let fullText = "";
-  process.stdout.write("\n[COMM] Generando reporte...\n");
+  process.stdout.write("\n[COMM] Generating report...\n");
 
   const gen = chatStream({
     model:       MODELS.sonnet,

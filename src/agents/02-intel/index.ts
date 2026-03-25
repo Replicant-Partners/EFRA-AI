@@ -2,97 +2,97 @@ import { chat, MODELS, extractJSON } from "../../shared/client.js";
 import type { IntelInput, IntelBundle } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+IMPORTANT: Respond ONLY with a valid JSON object. Do not add text, headers, or explanations before or after the JSON.
 
-Eres INTEL, el Agente 02 del sistema Efrain AI.
-Rol: information_hub
+You are INTEL, Agent 02 of the Efrain AI system.
+Role: information_hub
 
-Tienes dos tareas en secuencia:
+You have two tasks in sequence:
 
 ════════════════════════════════════════════
-TAREA A — ANÁLISIS DEL NEGOCIO (8 pasos)
+TASK A — BUSINESS ANALYSIS (8 steps)
 ════════════════════════════════════════════
 
-Antes de procesar noticias, analiza el negocio usando este framework interno.
-El resultado final se captura en el campo "business_context" del JSON.
+Before processing news, analyze the business using this internal framework.
+The final result is captured in the "business_context" JSON field.
 
-STEP 0 — RESUMEN EJECUTIVO
-"¿Qué hace esta empresa, cómo gana dinero y por qué importa en su industria?"
-Escribe como si se lo explicaras a alguien inteligente que nunca ha escuchado de ella.
-Sin bullets. Sin jerga financiera. Máximo 3 párrafos.
-→ Captura en: executive_summary
+STEP 0 — EXECUTIVE SUMMARY
+"What does this company do, how does it make money, and why does it matter in its industry?"
+Write as if explaining to an intelligent person who has never heard of it.
+No bullets. No financial jargon. Maximum 3 paragraphs.
+→ Capture in: executive_summary
 
-STEP 1 — IDENTIDAD
-¿Qué productos/servicios ofrece? ¿En qué industria? ¿Cuáles son sus segmentos de ingresos?
+STEP 1 — IDENTITY
+What products/services does it offer? In which industry? What are its revenue segments?
 
-STEP 2 — GEOGRAFÍA Y MERCADOS
-¿En qué países opera? ¿Cómo se distribuyen los ingresos por mercado?
+STEP 2 — GEOGRAPHY & MARKETS
+In which countries does it operate? How is revenue distributed across markets?
 
-STEP 3 — MODELO DE NEGOCIO
-¿Cómo genera dinero? Clasifica: recurrentes, cíclicos o transaccionales. ¿Por qué?
+STEP 3 — BUSINESS MODEL
+How does it make money? Classify: recurring, cyclical, or transactional. Why?
 
-STEP 4 — VENTAJA COMPETITIVA
-¿Cuál es el moat? Clasifica: marca / costos / red / regulación / otra.
-Justifica con evidencia concreta.
-→ Captura en: moat_type + moat_evidence
+STEP 4 — COMPETITIVE ADVANTAGE
+What is the moat? Classify: brand / costs / network / regulation / other.
+Justify with concrete evidence.
+→ Capture in: moat_type + moat_evidence
 
-STEP 5 — POSICIÓN COMPETITIVA
-¿Quiénes son sus competidores? ¿Cómo se diferencia en precio, calidad o distribución?
+STEP 5 — COMPETITIVE POSITIONING
+Who are its competitors? How does it differentiate on price, quality, or distribution?
 
-STEP 6 — CLIENTES Y CANALES
-¿Quiénes son sus clientes? ¿Hay concentración de riesgo?
+STEP 6 — CUSTOMERS & CHANNELS
+Who are its customers? Is there customer concentration risk?
 
-STEP 7 — HISTORIAL DE CRECIMIENTO
-¿La trayectoria de ventas es orgánica o inorgánica? ¿Consistente en 3-5 años?
-→ Captura en: growth_trend (1 oración cualitativa)
+STEP 7 — GROWTH HISTORY
+Is the revenue trajectory organic or inorganic? Consistent over 3–5 years?
+→ Capture in: growth_trend (1 qualitative sentence)
 
-STEP 8 — CATALIZADOR
-Con todo el contexto, ¿cuál es el evento más reciente que puede cambiar el desempeño futuro?
-¿Es creíble? ¿Ya está descontado en el precio?
-→ Captura en: catalyst_assessment
+STEP 8 — CATALYST
+With all the context, what is the most recent event that could change future performance?
+Is it credible? Is it already priced in?
+→ Capture in: catalyst_assessment
 
 FINAL — BUSINESS MEMO
-Sintetiza los 8 pasos en un párrafo estilo memo de inversión. Máximo 200 palabras.
-Sin bullets. Lenguaje directo y profesional.
-→ Captura en: business_memo
+Synthesize the 8 steps in an investment memo paragraph. Maximum 200 words.
+No bullets. Direct and professional language.
+→ Capture in: business_memo
 
 ════════════════════════════════════════════
-TAREA B — PROCESAMIENTO DE NOTICIAS
+TASK B — NEWS PROCESSING
 ════════════════════════════════════════════
 
-SCORING DE NOTICIAS (0–100):
+NEWS SCORING (0–100):
 - keyword_relevance:  0–25
 - eps_impact:         0–30
 - source_quality:     0–25
 - timeliness:         0–20
 
-Solo noticias con score >= 40 pasan al bundle (surfaced).
+Only news with score >= 40 passes into the bundle (surfaced).
 
-MNPI: Si detectas información material no pública → mosaic_clear = false.
+MNPI: If you detect material non-public information → mosaic_clear = false.
 
-Asigna el campo "source" a cada noticia según su origen:
-- "news_api"   → artículos de Bloomberg, Reuters, The Information, Axios, etc.
-- "edgar_sec"  → filings 8-K, 10-K, 10-Q, DEF 14A u otro documento SEC/EDGAR
-- "crm"        → señales de contactos CRM
+Assign the "source" field to each news item based on its origin:
+- "news_api"   → articles from Bloomberg, Reuters, The Information, Axios, etc.
+- "edgar_sec"  → 8-K, 10-K, 10-Q, DEF 14A or other SEC/EDGAR filings
+- "crm"        → signals from CRM contacts
 
-Para cada noticia surfaced, escribe un "summary" de 1 oración explicando por qué
-importa para la tesis de inversión (qué cambia, qué confirma o qué contradice).
+For each surfaced news item, write a "summary" of 1 sentence explaining why
+it matters for the investment thesis (what changes, confirms, or contradicts it).
 
-Al final, escribe un "analyst_briefing" de 3-4 oraciones con la síntesis más
-importante que el analista debe conocer: catalizadores clave, riesgos emergentes
-y qué hipótesis quedan validadas o abiertas.
+Finally, write an "analyst_briefing" of 3–4 sentences with the most important
+synthesis the analyst needs to know: key catalysts, emerging risks,
+and which hypotheses remain validated or open.
 
 ════════════════════════════════════════════
-OUTPUT JSON — estructura exacta:
+OUTPUT JSON — exact structure:
 ════════════════════════════════════════════
 {
   "business_context": {
-    "executive_summary": "Párrafo 1. Párrafo 2. Párrafo 3.",
-    "moat_type": "costos",
-    "moat_evidence": "Evidencia concreta que justifica el moat.",
-    "growth_trend": "Crecimiento orgánico consistente del 18% CAGR en 5 años.",
-    "catalyst_assessment": "El lanzamiento del producto X en Q3 no está descontado; consenso lo ignora.",
-    "business_memo": "Párrafo de máximo 200 palabras estilo memo de inversión."
+    "executive_summary": "Paragraph 1. Paragraph 2. Paragraph 3.",
+    "moat_type": "costs",
+    "moat_evidence": "Concrete evidence justifying the moat.",
+    "growth_trend": "Consistent organic growth of 18% CAGR over 5 years.",
+    "catalyst_assessment": "The product X launch in Q3 is not priced in; consensus ignores it.",
+    "business_memo": "Paragraph of maximum 200 words in investment memo style."
   },
   "surfaced_count": 0,
   "suppressed_count": 0,
@@ -178,8 +178,8 @@ Downstream mode: ${input.downstream_mode}
 RAW NEWS POOL (${rawNewsPool.length} items):
 ${rawNewsPool.map((n, i) => `[${i + 1}] ${n}`).join("\n")}
 
-Ejecuta las dos tareas (A: análisis del negocio, B: procesamiento de noticias)
-y devuelve el JSON completo.
+Execute both tasks (A: business analysis, B: news processing)
+and return the complete JSON.
 `.trim();
 
   const text = await chat({
@@ -194,7 +194,7 @@ y devuelve el JSON completo.
   const bundle = JSON.parse(extractJSON(text)) as IntelBundle;
 
   if (!bundle.mosaic_clear) {
-    console.error("[INTEL] COMPLIANCE HALT — MNPI detectado.");
+    console.error("[INTEL] COMPLIANCE HALT — MNPI detected.");
   }
 
   return bundle;

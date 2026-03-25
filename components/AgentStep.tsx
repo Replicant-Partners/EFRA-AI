@@ -141,10 +141,10 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
     };
 
     const moatLabel = (type: string) =>
-      type === "marca"      ? "Brand — loyalty & pricing power" :
-      type === "costos"     ? "Cost — lower structure than peers" :
-      type === "red"        ? "Network — compounding effects" :
-      type === "regulación" ? "Regulatory — barriers & licensing" :
+      type === "brand"      ? "Brand — loyalty & pricing power" :
+      type === "costs"      ? "Cost — lower structure than peers" :
+      type === "network"    ? "Network — compounding effects" :
+      type === "regulation" ? "Regulatory — barriers & licensing" :
       "Other competitive advantage";
 
     return (

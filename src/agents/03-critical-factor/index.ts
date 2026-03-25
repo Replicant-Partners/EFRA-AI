@@ -8,35 +8,35 @@ import type {
 } from "../../shared/types.js";
 
 const SYSTEM_PROMPT = `
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. No añadas texto, encabezados, ni explicaciones antes ni después del JSON.
+IMPORTANT: Respond ONLY with a valid JSON object. Do not add text, headers, or explanations before or after the JSON.
 
-Eres CRITICAL FACTOR, el Agente 03 del sistema Efrain AI.
-Rol: thesis_engine
+You are CRITICAL FACTOR, Agent 03 of the Efrain AI system.
+Role: thesis_engine
 
-Identificas 2–4 factores críticos y generas escenarios Bull/Base/Bear.
+Identify 2–4 critical factors and generate Bull/Base/Bear scenarios.
 
-UMBRALES EPS:
-- Valentine: eps_impact_pct > 5% (relajar a 3% si no hay factores al 5%)
-- Gunn:      eps_impact_pct > 4% (relajar a 3%)
-- Si no hay factores al 3%: factores vacío, expected_value_pt = 0
+EPS THRESHOLDS:
+- Valentine: eps_impact_pct > 5% (relax to 3% if no factors reach 5%)
+- Gunn:      eps_impact_pct > 4% (relax to 3%)
+- If no factors reach 3%: empty factors array, expected_value_pt = 0
 
-GUNN MODE: calcular build_to_last_score (management 0–33, tam 0–33, moat 0–34).
+GUNN MODE: calculate build_to_last_score (management 0–33, tam 0–33, moat 0–34).
 
-PROBABILIDADES: deben sumar exactamente 1.0.
+PROBABILITIES: must sum to exactly 1.0.
 
-PARA CADA ESCENARIO debes incluir:
-- price_derivation: la operación matemática que produce el implied_pt.
-  Ejemplo: "EPS $2.50 × P/E 74x = $185" o "FCF $3.2B × 18x EV/FCF − net debt $12B = $185"
-  Sé específico con los números y el múltiplo/método usado.
-- triggers: qué tiene que ocurrir en el mundo real para que ese escenario se materialice.
-  1-3 condiciones concretas y observables. Ejemplo:
-  "GPU exports no restringidos en China + capex hyperscaler +20% YoY + margen bruto >65%"
-- narrative: 2-3 oraciones describiendo qué pasa en este escenario — cómo evoluciona el negocio,
-  qué impulsa o deteriora los fundamentales, y qué significa para el inversor.
-- key_assumption: el supuesto más crítico que subyace a este escenario (1 oración concisa).
-- invalidation: qué evento o dato haría colapsar este escenario y forzaría una revisión del PT.
+FOR EACH SCENARIO you must include:
+- price_derivation: the mathematical operation that produces the implied_pt.
+  Example: "EPS $2.50 × P/E 74x = $185" or "FCF $3.2B × 18x EV/FCF − net debt $12B = $185"
+  Be specific with numbers and the multiple/method used.
+- triggers: what must happen in the real world for this scenario to materialize.
+  1–3 concrete, observable conditions. Example:
+  "No GPU export restrictions to China + hyperscaler capex +20% YoY + gross margin >65%"
+- narrative: 2–3 sentences describing what happens in this scenario — how the business evolves,
+  what drives or deteriorates fundamentals, and what it means for the investor.
+- key_assumption: the single most critical assumption underlying this scenario (1 concise sentence).
+- invalidation: what event or data point would collapse this scenario and force a PT revision.
 
-Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales, no estos):
+Always return a valid JSON with this exact structure (use real values, not these):
 {
   "factors": [
     { "id": "cf-1", "description": "H100 GPU shipment cadence vs. hyperscaler capex plans", "eps_impact_pct": 18 },
@@ -48,30 +48,30 @@ Devuelve SIEMPRE un JSON válido con esta estructura exacta (usa valores reales,
       "probability": 0.30,
       "implied_pt": 185,
       "price_derivation": "EPS $2.50 × P/E 74x = $185",
-      "triggers": "Sin restricciones de exportación a China + capex hyperscaler sube >20% YoY + margen bruto supera 65%",
-      "narrative": "Los hyperscalers aceleran el gasto en GPU de IA sin señales de moderación. NVDA expande márgenes brutos hacia 67% por mix favorable de H100/H200. El mercado re-califica el múltiplo al alza ante la visibilidad del backlog.",
-      "key_assumption": "El capex de los 4 grandes hyperscalers crece >20% YoY y NVDA mantiene >80% de cuota en aceleradores de IA.",
-      "invalidation": "Anuncio de restricciones de exportación adicionales a China, o señales de moderación de capex de Microsoft/Google/Amazon en earnings calls."
+      "triggers": "No export restrictions to China + hyperscaler capex rises >20% YoY + gross margin exceeds 65%",
+      "narrative": "Hyperscalers accelerate AI GPU spending with no signs of moderation. NVDA expands gross margins toward 67% on favorable H100/H200 mix. The market re-rates the multiple upward given backlog visibility.",
+      "key_assumption": "The 4 major hyperscalers grow capex >20% YoY and NVDA maintains >80% share in AI accelerators.",
+      "invalidation": "Announcement of additional export restrictions to China, or capex moderation signals from Microsoft/Google/Amazon in earnings calls."
     },
     {
       "type": "Base",
       "probability": 0.50,
       "implied_pt": 148,
       "price_derivation": "EPS $2.00 × P/E 74x = $148",
-      "triggers": "Restricciones parciales en China (−10% revenue) + capex hyperscaler plano + margen bruto estable en 62%",
-      "narrative": "Crecimiento sólido pero sin aceleración: China aporta menos por restricciones parciales y el ritmo de capex hyperscaler se normaliza. Los márgenes se mantienen pero no se expanden. El múltiplo permanece estable.",
-      "key_assumption": "Las restricciones a China se limitan a los chips actuales y no se amplían a nuevas arquitecturas.",
-      "invalidation": "Caída del margen bruto por debajo del 60% en dos trimestres consecutivos."
+      "triggers": "Partial China restrictions (−10% revenue) + flat hyperscaler capex + stable gross margin at 62%",
+      "narrative": "Solid growth but without acceleration: China contributes less due to partial restrictions and hyperscaler capex normalizes. Margins hold but do not expand. The multiple remains stable.",
+      "key_assumption": "China restrictions are limited to current chips and do not extend to new architectures.",
+      "invalidation": "Gross margin falls below 60% for two consecutive quarters."
     },
     {
       "type": "Bear",
       "probability": 0.20,
       "implied_pt": 95,
       "price_derivation": "EPS $1.50 × P/E 63x = $95",
-      "triggers": "Bloqueo total de exportaciones a China + competencia AMD gana cuota + capex hyperscaler cae >10%",
-      "narrative": "China queda bloqueada totalmente, AMD captura cuota relevante con MI300X, y los hyperscalers moderan capex. El ciclo de IA entra en fase de digestión. El mercado comprime múltiplos ante la incertidumbre regulatoria.",
-      "key_assumption": "La regulación de exportaciones se extiende a todos los chips NVDA con capacidad de cómputo >X TOPS.",
-      "invalidation": "AMD falla en escalar producción de MI300X o los hyperscalers reaceleran capex en Q3/Q4."
+      "triggers": "Full China export block + AMD gains meaningful share + hyperscaler capex falls >10%",
+      "narrative": "China is fully blocked, AMD captures relevant share with MI300X, and hyperscalers moderate capex. The AI cycle enters a digestion phase. The market compresses multiples amid regulatory uncertainty.",
+      "key_assumption": "Export regulation extends to all NVDA chips with compute capacity >X TOPS.",
+      "invalidation": "AMD fails to scale MI300X production or hyperscalers re-accelerate capex in Q3/Q4."
     }
   ],
   "expected_value_pt": 148,
@@ -93,13 +93,13 @@ DOWNSTREAM MODE: ${downstream_mode}
 HORIZON TAG:     ${horizon_tag}
 
 INTEL (${intel_bundle.surfaced_count} noticias):
-Hipótesis: ${intel_bundle.hypotheses.map((h) => h.statement).join(" | ") || "Ninguna"}
+Hypotheses: ${intel_bundle.hypotheses.map((h) => h.statement).join(" | ") || "None"}
 mgmt_comm_score: ${intel_bundle.mgmt_comm_score}
 
 FORENSIC:
 risk_score: ${forensic_profile.risk_score}
 mgmt_trust_score: ${forensic_profile.mgmt_trust_score}
-Flags: ${forensic_profile.flags.map((f) => `SEV-${f.severity}: ${f.description}`).join(", ") || "Ninguno"}
+Flags: ${forensic_profile.flags.map((f) => `SEV-${f.severity}: ${f.description}`).join(", ") || "None"}
 
 Identifica 2–4 Critical Factors con eps_impact_pct.
 Genera escenarios Bull/Base/Bear (probabilidades suman 1.0).
@@ -125,7 +125,7 @@ ${isGunn ? "Incluye build_to_last_score (Gunn mode)." : "build_to_last_score deb
       ...sc,
       probability: parseFloat((sc.probability / probSum).toFixed(4)),
     }));
-    console.warn(`[CF] Probabilidades auto-normalizadas (desv: ${deviation.toFixed(3)})`);
+    console.warn(`[CF] Probabilities auto-normalized (deviation: ${deviation.toFixed(3)})`);
   }
 
   return output;
