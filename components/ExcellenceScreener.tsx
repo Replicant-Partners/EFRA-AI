@@ -118,7 +118,7 @@ export default function ExcellenceScreener() {
       <div className="flex items-baseline justify-between">
         <div>
           <h1 className="text-lg font-bold text-[#C8804A] tracking-widest uppercase">Excellence Universe Screener</h1>
-          <p className="t-label mt-1">Ajusta los criterios S1–S11 y obtén ideas de compañías candidatas</p>
+          <p className="t-label mt-1">Adjust S1–S11 criteria to surface candidate companies</p>
         </div>
         <button
           onClick={resetDefaults}
@@ -197,10 +197,10 @@ export default function ExcellenceScreener() {
       <hr className="t-rule" />
 
       {/* Optional filters */}
-      <Section label="Filtros Adicionales">
+      <Section label="Additional Filters">
         <div className="grid grid-cols-2 gap-6 mt-2">
           <div>
-            <label className="t-label block mb-2">Sector focus (opcional)</label>
+            <label className="t-label block mb-2">Sector focus (optional)</label>
             <input
               type="text"
               value={criteria.sector_focus}
@@ -210,14 +210,14 @@ export default function ExcellenceScreener() {
             />
           </div>
           <div>
-            <label className="t-label block mb-2">Número de candidatas</label>
+            <label className="t-label block mb-2">Number of candidates</label>
             <select
               value={criteria.max_results}
               onChange={e => set("max_results", Number(e.target.value))}
               className="w-full bg-transparent border-b border-[#D8D0C8] pb-1 text-sm text-[#1E1A14] focus:outline-none focus:border-[#C8804A] transition-colors"
             >
               {[5, 10, 15, 20].map(n => (
-                <option key={n} value={n} className="bg-[#FAF8F4]">{n} compañías</option>
+                <option key={n} value={n} className="bg-[#FAF8F4]">{n} companies</option>
               ))}
             </select>
           </div>
@@ -245,7 +245,7 @@ export default function ExcellenceScreener() {
         <div className="space-y-0 mt-6">
           <hr className="t-rule mb-4" />
           <div className="t-label mb-6">
-            {results.length} candidata{results.length !== 1 ? "s" : ""} encontrada{results.length !== 1 ? "s" : ""}
+            {results.length} candidate{results.length !== 1 ? "s" : ""} found
           </div>
           {results.map((c, i) => (
             <div key={c.ticker} className="border-b border-[#E4DDD6] py-5">
@@ -285,7 +285,7 @@ export default function ExcellenceScreener() {
 
       {phase === "done" && results.length === 0 && !error && (
         <p className="prose-tufte">
-          No se encontraron candidatas con los criterios actuales. Intenta relajar algún umbral.
+          No candidates found with the current criteria. Try relaxing one of the thresholds.
         </p>
       )}
     </div>
