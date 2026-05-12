@@ -96,6 +96,7 @@ export default function DocsPage() {
           ["#valuation",      "06 · Valuation"],
           ["#kata",           "07 · Kata"],
           ["#communication",  "08 · Communication"],
+          ["#lens",           "09 · Lens"],
           ["#modes",          "Modes: Valentine · Gunn · Dual"],
           ["#concepts",       "Key Concepts"],
           ["#architecture",   "Architecture: Ports & Adapters"],
@@ -110,7 +111,7 @@ export default function DocsPage() {
       <Section id="overview">
         <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Pipeline Overview</h2>
         <p className="prose-tufte">
-          Efrain AI is an 8-agent pipeline that takes a stock idea (ticker + catalyst) and
+          Efrain AI is a 9-agent pipeline that takes a stock idea (ticker + catalyst) and
           produces a research note with a price target, rating, and publication decision.
           Each agent runs sequentially — the output of one feeds the next.
         </p>
@@ -125,6 +126,7 @@ export default function DocsPage() {
             ["06", "VALUATION",      "8-step price target analysis. Applies forensic adjustments."],
             ["07", "KATA",           "Toyota Improvement Kata coach. Audits the research process before publication."],
             ["08", "COMMUNICATION",  "ENTER gate check. Drafts and publishes the research note."],
+            ["09", "LENS",           "Consistency auditor. Applies the firm's five intellectual frameworks to the analysis."],
           ].map(([num, name, desc]) => (
             <div key={num} className="flex gap-3 text-[11px]">
               <span className="text-[#C0B8AC] font-mono w-5 flex-shrink-0">{num}</span>
@@ -137,7 +139,7 @@ export default function DocsPage() {
         <Note>
           If Scout decides DROP, the pipeline stops immediately. If Forensic Pre-screen returns
           BLOCK, the pipeline drops the idea. If the ENTER gate scores below 3/5, publication
-          is dropped. Kata never blocks — it is a coaching step, not a gate.
+          is dropped. Kata and Lens never block — they are coaching and auditing steps, not gates.
         </Note>
       </Section>
 
@@ -605,6 +607,182 @@ export default function DocsPage() {
       </Section>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
+      <Section id="lens">
+        <AgentHeader num="Agent 09" name="Lens" role="Consistency Auditor — applies the firm's five intellectual frameworks to the full analysis" />
+
+        <p className="prose-tufte">
+          Lens is the final agent. It does not re-do the analysis or generate a new price target.
+          It audits whether the thinking behind the analysis is consistent with how the firm
+          believes the world works and how investments should be evaluated. It is the intellectual
+          conscience of the pipeline — direct, critical, and specific.
+        </p>
+
+        <p className="prose-tufte mt-3">
+          Lens receives the complete output of all prior agents — including the process gaps
+          identified by Kata — and applies five lenses from the firm's investment guidebook.
+          The output is a verdict for the portfolio manager, not another layer of analysis.
+        </p>
+
+        <Block label="The Five Lenses">
+          {[
+            ["01 · The Loop",          "Economic Potential + Technological Capability + Human Agency. The firm's core framework."],
+            ["02 · Superforecasting",  "Tetlock's 11 commandments for making calibrated, granular probability estimates."],
+            ["03 · Dunning-Kruger",    "Calibration of competence and ignorance — does the analyst know what they don't know?"],
+            ["04 · Hidden Champions",  "Simon's framework for exceptional niche companies — 8 defining characteristics."],
+            ["05 · Kauffman",          "The nonergodic universe — adjacent possible, Darwinian preadaptations, economic web dynamics."],
+          ].map(([lens, desc]) => (
+            <div key={lens} className="flex gap-3 py-2 border-b border-[#F0EBE4] text-[11px]">
+              <span className="text-[#C8804A] font-semibold w-44 flex-shrink-0 leading-snug">{lens}</span>
+              <span className="text-[#A89E94] leading-relaxed">{desc}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Block label="Lens 1 — The Loop">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            The firm invests based on where the world is going, not just where a company is today.
+            Long-term trends are broken into three domains — biological, physical, and digital —
+            and the portfolio is diversified across these forces of change.
+          </p>
+          <Field name="variant_expectations">
+            Is the thesis buying a gap between the firm's expectations and what is discounted in the
+            current price? Or is it a consensus thesis where everyone already agrees?
+            Profits come from rising expectations — buying consensus is buying what is already priced in.
+          </Field>
+          <Field name="distributes_future">
+            Does the business take something hard and make it easier? Does it distribute the future
+            and drive human progress? Businesses that do this create durable economic value.
+          </Field>
+          <Field name="valuation_anchor_consistent">
+            The firm's valuation anchor: <span className="font-mono text-[#6E6258]">Value = Profits / (r − g)</span>.
+            Target return always above 12%. Max long-term growth rate for steady-state: 8%.
+            Max long-term P/E: below 25×. Fair P/Sales = Net Margin / (r − g).
+          </Field>
+          <Field name="domain">
+            Which of the three domains drives the thesis: biological (biotech, health),
+            physical (advanced materials, manufacturing), or digital (distributed compute, networks)?
+          </Field>
+          <Field name="score" type="0–100">Loop consistency score.</Field>
+        </Block>
+
+        <Block label="Lens 2 — Superforecasting">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Drawn from Tetlock's research on forecasting accuracy. The best forecasters are
+            disciplined, granular, and update their beliefs incrementally based on evidence.
+          </p>
+          <Field name="probabilities_granular">
+            Are the Bull/Base/Bear probabilities the result of careful reasoning —
+            e.g. 0.35/0.45/0.20 — or are they suspiciously round — e.g. 0.30/0.50/0.20?
+            Round numbers without justification are a sign of vague thinking.
+          </Field>
+          <Field name="inside_outside_balanced">
+            Did the analysis balance company-specific reasoning (inside view) with
+            base rates from comparable situations (outside view)?
+          </Field>
+          <Field name="causal_forces_balanced">
+            Were the forces that could make the bull case wrong taken as seriously as
+            the forces that support it? Clashing causal forces produce synthesis, not bias.
+          </Field>
+          <Field name="invalidation_specific">
+            Are the invalidation conditions concrete and observable — e.g. "gross margin
+            falls below 60% for two consecutive quarters" — or vague — e.g. "if conditions worsen"?
+          </Field>
+          <Field name="score" type="0–100">Superforecasting quality score.</Field>
+        </Block>
+
+        <Block label="Lens 3 — Dunning-Kruger">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Poor performers don't know what they don't know. Applied to research: the analyst
+            may be most confident precisely where their knowledge is weakest. This lens
+            cross-references the pipeline's confidence scores against the process gaps
+            identified by Kata.
+          </p>
+          <Field name="flag">
+            <Tag color="green">low</Tag> Confidence is consistent with evidence quality.{" "}
+            <Tag color="amber">medium</Tag> Some tension between confidence and gaps.{" "}
+            <Tag color="red">high</Tag> High confidence with many unresolved gaps — likely overconfidence.
+          </Field>
+          <Field name="overconfidence_signals">
+            Specific signals detected: e.g. high final_confidence with multiple L1/L2 fallbacks,
+            high mgmt_trust_score without a full management profile, wide scenario spread with BUY rating.
+          </Field>
+          <Field name="confidence_gap">
+            Compares process_confidence (from Kata) with final_confidence (from Communication).
+            Large divergence — high final_confidence, low process_confidence — warrants scrutiny.
+          </Field>
+        </Block>
+
+        <Block label="Lens 4 — Hidden Champions">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Simon's research on world market leaders in narrow, little-known markets. These
+            companies share 8 defining characteristics that make them exceptionally durable.
+            The lens evaluates whether the company fits this profile.
+          </p>
+          <Field name="fit">
+            <Tag color="green">strong</Tag> Most of the 8 characteristics are present.{" "}
+            <Tag color="amber">partial</Tag> Some characteristics present, others unclear or absent.{" "}
+            <Tag color="gray">none</Tag> Large-cap generalist or does not fit the profile.
+          </Field>
+          <Field name="characteristics_present">
+            Which of the 8 are confirmed: ambitious goals, high-performance employees, depth,
+            decentralization, focus, globalization, innovation, closeness to customer.
+          </Field>
+          <Field name="characteristics_missing">
+            Which are absent or unclear — and whether the gap is material to the thesis.
+          </Field>
+        </Block>
+
+        <Block label="Lens 5 — Kauffman / Adjacent Possible">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            The economy is nonergodic — it never repeats the same state, and persistently
+            advances into its adjacent possible, creating ever-new economic niches.
+            Standard DCF models assume ergodic (mean-reverting) dynamics. This lens asks
+            whether the analyst is using the right model for this type of business.
+          </p>
+          <Field name="ergodic_assumption">
+            Is the valuation model treating a nonergodic business — one that is expanding
+            into new niches — as if it were a steady-state machine? If yes, the model
+            likely underestimates the long-term upside.
+          </Field>
+          <Field name="adjacent_possible">
+            What new economic niches does this company's product or capability make possible?
+            What can exist because this company exists?
+          </Field>
+          <Field name="preadaptations">
+            Darwinian preadaptations: capabilities in the business that were built for one
+            purpose but are being repurposed for a more valuable use. A source of
+            unmodeled upside that standard analysis misses.
+          </Field>
+          <Field name="complement_or_substitute">
+            Does the company create complements — expanding the economic web by making
+            other goods and services more valuable — or substitutes, competing for
+            existing niches? Complement-creators drive more durable growth.
+          </Field>
+        </Block>
+
+        <Block label="Output">
+          <Field name="overall_verdict">
+            <Tag color="green">CONSISTENT</Tag> Thesis is well-aligned across all five lenses.{" "}
+            <Tag color="amber">PARTIAL</Tag> Sound thesis with gaps in 1–2 lenses worth resolving before sizing.{" "}
+            <Tag color="red">INCONSISTENT</Tag> Thesis contradicts the firm's frameworks — revise before publishing.
+          </Field>
+          <Field name="key_tensions">2–3 specific contradictions between the thesis and the frameworks, with references to actual numbers.</Field>
+          <Field name="recommendations">2–3 concrete actions for the portfolio manager before making a sizing decision.</Field>
+          <Field name="pm_memo">
+            200-word memo to the portfolio manager. Direct, no hedging.
+            Written as a peer speaking to a peer — not a summary, but a judgment.
+          </Field>
+        </Block>
+
+        <Note>
+          Lens never blocks the pipeline. A verdict of INCONSISTENT means the analyst should
+          revise the thesis before publishing — but it does not force a DROP. The portfolio
+          manager reads the Lens output and decides. Like Kata, if Lens fails for any reason,
+          the pipeline completes without it.
+        </Note>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
       <Section id="modes">
         <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Modes</h2>
 
@@ -801,7 +979,7 @@ export default function DocsPage() {
         <Note>
           To swap from OpenRouter to a direct Anthropic SDK, Bedrock, or a local model,
           you only write a new adapter that implements <span className="font-mono">ILanguageModel</span> and
-          update <span className="font-mono">buildLLM()</span>. The 8 agents and the pipeline are unchanged.
+          update <span className="font-mono">buildLLM()</span>. The 9 agents and the pipeline are unchanged.
         </Note>
       </Section>
 
