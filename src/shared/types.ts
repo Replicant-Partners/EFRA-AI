@@ -267,6 +267,7 @@ export interface PipelineState {
   forensic?: ForensicProfile;
   valuation?: ValuationModel;
   communication?: CommOutput;
+  kata?: KataBoard;
 }
 
 // ─── UI Event ─────────────────────────────────────────────
@@ -297,6 +298,62 @@ export interface ReportScenario {
   price_derivation: string;
   triggers:         string;
 }
+
+// ─── Agent 08 — KATA ──────────────────────────
+
+export interface KnowledgeGap {
+  id:           string;
+  description:  string;
+  source_agent: string; // which agent produced (or missed) this information
+}
+
+export interface AssumptionRisk {
+  id:          string;
+  description: string;
+  impact:      "high" | "medium" | "low";
+}
+
+export interface KataObstacle {
+  id:              string;
+  description:     string;
+  addressing_now:  boolean; // exactly one must be true
+  next_step:       string;
+  checkpoint_date: string;  // ISO date
+}
+
+export interface PdcaCycle {
+  plan:  string; // what the analyst intends to do + expected learning
+  do:    string; // specific action: call IR, check EDGAR, run sensitivity
+  check: string; // signal that confirms or denies the hypothesis
+  act:   string; // "If confirmed: X. If denied: Y."
+}
+
+export interface KataBoard {
+  challenge:          string;
+  current_condition:  string;
+  knowledge_gaps:     KnowledgeGap[];
+  assumption_risks:   AssumptionRisk[];
+  target_condition:   string;
+  target_horizon:     string;         // e.g. "48h", "1 week", "next earnings"
+  obstacles:          KataObstacle[];
+  pdca_cycle:         PdcaCycle;
+  coaching_memo:      string;         // max 200 words, Socratic mentor voice
+  process_confidence: number;         // 0.0–1.0
+  next_review_date:   string;         // ISO date
+}
+
+export interface KataInput {
+  ticker:          string;
+  downstream_mode: DownstreamMode;
+  scout:           ScoutOutput;
+  intel:           IntelBundle;
+  forensic:        ForensicProfile;
+  cf:              CFOutput;
+  valuation:       ValuationModel;
+  communication:   CommOutput;
+}
+
+// ─── Report Document ──────────────────────────────────────
 
 export interface ReportContent {
   version:            1;

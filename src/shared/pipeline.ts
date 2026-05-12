@@ -4,6 +4,7 @@ import { runCriticalFactor } from "../agents/03-critical-factor/index.js";
 import { runForensic } from "../agents/04-forensic/index.js";
 import { runValuation } from "../agents/05-valuation/index.js";
 import { runCommunication } from "../agents/06-communication/index.js";
+import { runKata } from "../agents/08-kata/index.js";
 import type { ILanguageModel } from "../core/ports/ILanguageModel.js";
 import type { PipelineState, ScoutInput } from "./types.js";
 
@@ -131,6 +132,26 @@ export async function runPipeline(
   });
 
   state.status = state.communication.publication_possible ? "COMPLETED" : "DROPPED";
+
+  // ── Agent 08: KATA ───────────────────────────────────────────
+  if (state.communication.publication_possible) {
+    console.log("\n[08] KATA — Coaching the research process...");
+    try {
+      state.kata = await runKata(llm, {
+        ticker:          scoutInput.ticker,
+        downstream_mode: state.scout.downstream_mode,
+        scout:           state.scout,
+        intel:           state.intel,
+        forensic:        state.forensic,
+        cf:              state.cf,
+        valuation:       state.valuation,
+        communication:   state.communication,
+      });
+    } catch (err) {
+      // KATA es un agente de mejora continua — nunca bloquea el pipeline
+      console.warn("[KATA] Skipped:", (err as Error).message);
+    }
+  }
 
   console.log(`\n${"═".repeat(60)}`);
   console.log(
