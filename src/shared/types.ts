@@ -350,7 +350,7 @@ export interface KataInput {
   forensic:        ForensicProfile;
   cf:              CFOutput;
   valuation:       ValuationModel;
-  communication:   CommOutput;
+  communication?:  CommOutput;  // optional — KATA runs before COMMUNICATION in UI flow
 }
 
 // ─── Report Document ──────────────────────────────────────

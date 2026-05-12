@@ -233,11 +233,6 @@ export async function runKata(
 ): Promise<KataBoard> {
   const { ticker, downstream_mode, scout, intel, forensic, cf, valuation, communication } = input;
 
-  // Guard: only run after a successful publication
-  if (!communication.publication_possible) {
-    throw new Error("[KATA] Cannot run — publication_possible = false. No thesis to coach.");
-  }
-
   const pendingHypotheses = intel.hypotheses
     .filter((h) => h.lifecycle === "PENDING" || h.lifecycle === "PENDING_CONTACT_UNAVAILABLE")
     .map((h) => `• ${h.statement} [${h.lifecycle}]`)
@@ -290,9 +285,9 @@ VALUATION:
   market_assumptions: ${valuation.market_assumptions ?? "N/A"}
 
 COMMUNICATION:
-  output_type: ${communication.output_type}
-  enter_gate score: ${communication.enter_gate.effective_score}/5
-  final_confidence: ${communication.audit_trail.final_confidence}
+  output_type: ${communication?.output_type ?? "pending"}
+  enter_gate score: ${communication?.enter_gate?.effective_score ?? "N/A"}/5
+  final_confidence: ${communication?.audit_trail?.final_confidence ?? "N/A"}
 
 FALLBACK SUMMARY: ${fallbackWarnings}
 

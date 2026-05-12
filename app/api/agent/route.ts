@@ -453,7 +453,7 @@ export async function POST(request: Request) {
             forensic:        state.forensic!,
             cf:              state.cf!,
             valuation:       state.valuation!,
-            communication:   state.communication!,
+            communication:   state.communication,   // optional — may not exist yet
           });
 
           await pause(80);
