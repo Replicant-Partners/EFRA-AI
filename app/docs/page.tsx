@@ -94,7 +94,8 @@ export default function DocsPage() {
           ["#cf",             "04 · Critical Factor"],
           ["#forensic-full",  "05 · Forensic — Full Scan"],
           ["#valuation",      "06 · Valuation"],
-          ["#communication",  "07 · Communication"],
+          ["#kata",           "07 · Kata"],
+          ["#communication",  "08 · Communication"],
           ["#modes",          "Modes: Valentine · Gunn · Dual"],
           ["#concepts",       "Key Concepts"],
           ["#architecture",   "Architecture: Ports & Adapters"],
@@ -109,7 +110,7 @@ export default function DocsPage() {
       <Section id="overview">
         <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Pipeline Overview</h2>
         <p className="prose-tufte">
-          Efrain AI is a 7-agent pipeline that takes a stock idea (ticker + catalyst) and
+          Efrain AI is an 8-agent pipeline that takes a stock idea (ticker + catalyst) and
           produces a research note with a price target, rating, and publication decision.
           Each agent runs sequentially — the output of one feeds the next.
         </p>
@@ -122,7 +123,8 @@ export default function DocsPage() {
             ["04", "CRITICAL FACTOR","Identifies the 2–4 things that matter most. Builds Bull/Base/Bear scenarios."],
             ["05", "FORENSIC",       "Full audit: accruals, insider transactions, governance, management quality."],
             ["06", "VALUATION",      "8-step price target analysis. Applies forensic adjustments."],
-            ["07", "COMMUNICATION",  "ENTER gate check. Drafts and publishes the research note."],
+            ["07", "KATA",           "Toyota Improvement Kata coach. Audits the research process before publication."],
+            ["08", "COMMUNICATION",  "ENTER gate check. Drafts and publishes the research note."],
           ].map(([num, name, desc]) => (
             <div key={num} className="flex gap-3 text-[11px]">
               <span className="text-[#C0B8AC] font-mono w-5 flex-shrink-0">{num}</span>
@@ -133,9 +135,9 @@ export default function DocsPage() {
         </div>
 
         <Note>
-          If the Scout decides DROP, the pipeline stops. If Forensic Pre-screen returns BLOCK,
-          the valuation agent forces UNDERPERFORM. If the ENTER gate scores below 3/5,
-          publication is dropped.
+          If Scout decides DROP, the pipeline stops immediately. If Forensic Pre-screen returns
+          BLOCK, the pipeline drops the idea. If the ENTER gate scores below 3/5, publication
+          is dropped. Kata never blocks — it is a coaching step, not a gate.
         </Note>
       </Section>
 
@@ -451,8 +453,119 @@ export default function DocsPage() {
       </Section>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
+      <Section id="kata">
+        <AgentHeader num="Agent 07" name="Kata" role="Improvement Coach — audits the research process using the Toyota Improvement Kata" />
+
+        <p className="prose-tufte">
+          Kata does not judge whether the investment thesis is correct — the other agents already
+          did that. Its job is to coach the <em>process</em> by which the thesis was built.
+          It applies the Toyota Improvement Kata: a 4-step scientific thinking pattern used at
+          Toyota to move an organization from its current state toward a target state through
+          small, observable experiments.
+        </p>
+
+        <p className="prose-tufte mt-3">
+          Kata runs after Valuation and before Communication, so the analyst can see gaps in
+          the research process before deciding to publish. It never blocks publication —
+          it surfaces information the analyst may want to act on.
+        </p>
+
+        <Block label="The Toyota Improvement Kata — 4 Steps">
+          {[
+            ["1 · Challenge",         "What is the overall direction? What are we ultimately trying to achieve with this research?"],
+            ["2 · Current Condition", "What does the pipeline actually know right now, vs. what is it assuming? Where were fallbacks used?"],
+            ["3 · Target Condition",  "What specific knowledge or validated hypothesis would move research to a higher confidence state?"],
+            ["4 · PDCA Toward Target","Design the next small, fast experiment: Plan → Do → Check → Act."],
+          ].map(([step, desc]) => (
+            <div key={step} className="flex gap-3 py-2 border-b border-[#F0EBE4] text-[11px]">
+              <span className="text-[#C8804A] font-semibold w-36 flex-shrink-0">{step}</span>
+              <span className="text-[#A89E94] leading-relaxed">{desc}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Block label="The Five Questions">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Applied to each obstacle the agent identifies. They build on each other — the better
+            you define the target condition, the more clearly you can see the obstacles.
+          </p>
+          {[
+            ["Q1", "What is the target condition?"],
+            ["Q2", "What is the actual condition now?"],
+            ["Q3", "What obstacles are preventing you from reaching the target condition? Which one are you addressing?"],
+            ["Q4", "What is your next step? (Start of next PDCA cycle)"],
+            ["Q5", "When can we go and see what we have learned from that step?"],
+          ].map(([q, text]) => (
+            <div key={q} className="flex gap-3 py-1.5 border-b border-[#F0EBE4] text-[11px]">
+              <span className="font-mono text-[#C8804A] w-6 flex-shrink-0">{q}</span>
+              <span className="text-[#6E6258]">{text}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Block label="What Kata Analyzes">
+          <Field name="knowledge_gaps">
+            Things the pipeline does not actually know — it assumed them. Each gap is tagged to
+            the agent that produced (or failed to validate) the information.
+          </Field>
+          <Field name="assumption_risks">
+            Untested assumptions embedded in the thesis. Rated{" "}
+            <Tag color="red">high</Tag>{" "}
+            <Tag color="amber">medium</Tag>{" "}
+            <Tag color="gray">low</Tag>{" "}
+            by potential impact on the investment decision.
+          </Field>
+          <Field name="obstacles">
+            2–4 concrete things blocking better research quality. Exactly one is marked as
+            the active obstacle — the one to address first in the next PDCA cycle.
+          </Field>
+          <Field name="pdca_cycle">
+            The next experiment:{" "}
+            <span className="text-[#6E6258]">Plan</span> (what to do and what to learn),{" "}
+            <span className="text-[#6E6258]">Do</span> (the specific action — call IR, check EDGAR footnotes, run a sensitivity),{" "}
+            <span className="text-[#6E6258]">Check</span> (what signal confirms or denies the hypothesis),{" "}
+            <span className="text-[#6E6258]">Act</span> (how to adjust research if confirmed or denied).
+          </Field>
+          <Field name="process_confidence" type="0.0–1.0">
+            How complete and well-validated the research process is — independent of whether
+            the thesis is correct. Low process_confidence does not mean the thesis is wrong;
+            it means the thesis rests on assumptions that have not been tested.
+          </Field>
+          <Field name="coaching_memo">
+            A short memo written in Socratic mentor voice. Asks questions rather than giving
+            answers — designed to keep the analyst thinking independently. Maximum 200 words.
+          </Field>
+          <Field name="next_review_date">
+            The date by which the analyst should review the result of the active PDCA step.
+            Derived from the checkpoint_date of the active obstacle.
+          </Field>
+        </Block>
+
+        <Block label="Core Principles Applied">
+          {[
+            ["Focus on process, not blame",    "Problems are system problems. The pipeline is never blamed for gaps — the system is examined."],
+            ["You are the benchmark",          "Do not ask how Toyota does it. Ask: where are we now, where do we want to be, what is in the way?"],
+            ["Adaptive persistence",           "Move toward a vision along an unpredictable path. The next target condition is defined based on what was learned."],
+            ["Small experiments over big plans","One obstacle, one PDCA cycle, one checkpoint. No large research projects."],
+            ["Learn most from failures",        "The mentor expects small mistakes. That is when learning happens."],
+          ].map(([principle, desc]) => (
+            <div key={principle} className="flex gap-3 py-2 border-b border-[#F0EBE4] text-[11px]">
+              <span className="text-[#6E6258] font-semibold w-48 flex-shrink-0 leading-snug">{principle}</span>
+              <span className="text-[#A89E94] leading-relaxed">{desc}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Note>
+          Kata is the only agent that cannot drop or block the pipeline. Its role is coaching,
+          not gating. If Kata fails for any reason (network error, timeout), the pipeline
+          continues to Communication without interruption.
+        </Note>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
       <Section id="communication">
-        <AgentHeader num="Agent 07" name="Communication" role="Publication Gate — ENTER check and note drafting" />
+        <AgentHeader num="Agent 08" name="Communication" role="Publication Gate — ENTER check and note drafting" />
 
         <p className="prose-tufte">
           The final gate before publication. Communication evaluates whether the analysis
@@ -688,7 +801,7 @@ export default function DocsPage() {
         <Note>
           To swap from OpenRouter to a direct Anthropic SDK, Bedrock, or a local model,
           you only write a new adapter that implements <span className="font-mono">ILanguageModel</span> and
-          update <span className="font-mono">buildLLM()</span>. The 7 agents and the pipeline are unchanged.
+          update <span className="font-mono">buildLLM()</span>. The 8 agents and the pipeline are unchanged.
         </Note>
       </Section>
 
