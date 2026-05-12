@@ -1,6 +1,6 @@
 "use client";
 
-import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput } from "@/src/shared/types";
+import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput, KataBoard } from "@/src/shared/types";
 
 interface Props {
   agentKey: string;
@@ -517,6 +517,137 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
               {label("Valuation")}
               <span className="block text-[11px] text-[#C8804A] font-medium leading-relaxed">{r.summary.valuation}</span>
             </span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (agentKey === "kata") {
+    const r = result as KataBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+    const impactColor = (impact: string) =>
+      impact === "high" ? "text-[#C84848]" : impact === "medium" ? "text-[#C89040]" : "text-[#A89E94]";
+    const confColor = r.process_confidence >= 0.75 ? "text-[#C8804A]" : r.process_confidence >= 0.55 ? "text-[#C89040]" : "text-[#C84848]";
+
+    return (
+      <span className="block space-y-2">
+        {/* ── Header row ── */}
+        <span className="block text-[#A89E94] text-[11px]">
+          process confidence{" "}
+          <span className={`font-semibold ${confColor}`}>
+            {(r.process_confidence * 100).toFixed(0)}%
+          </span>
+          {" · "}review <span className="text-[#6E6258]">{r.next_review_date}</span>
+          {" · "}{r.target_horizon}
+        </span>
+
+        {/* ── Challenge ── */}
+        <span className="block border-t border-[#EDE7E0] pt-2">
+          {label("Challenge")}
+          <span className="block prose-tufte text-[11px] text-[#1E1A14] leading-relaxed">{r.challenge}</span>
+        </span>
+
+        {/* ── Current condition → Target condition ── */}
+        <span className="block border-t border-[#EDE7E0] pt-2 space-y-2">
+          <span className="block">
+            {label("Current Condition")}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.current_condition}</span>
+          </span>
+          <span className="block">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">
+              Target Condition{" "}
+              <span className="text-[#C8804A] normal-case font-normal tracking-normal">→ {r.target_horizon}</span>
+            </span>
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.target_condition}</span>
+          </span>
+        </span>
+
+        {/* ── Knowledge gaps + Assumption risks ── */}
+        <span className="block border-t border-[#EDE7E0] pt-2 space-y-2">
+          {r.knowledge_gaps?.length > 0 && (
+            <span className="block">
+              {label("Knowledge Gaps")}
+              <span className="block space-y-1">
+                {r.knowledge_gaps.map((g) => (
+                  <span key={g.id} className="flex items-start gap-2 text-[11px]">
+                    <span className="font-mono text-[#C89040] shrink-0">{g.id}</span>
+                    <span className="text-[#6E6258] flex-1">{g.description}</span>
+                    <span className="text-[#A89E94] shrink-0">· {g.source_agent}</span>
+                  </span>
+                ))}
+              </span>
+            </span>
+          )}
+          {r.assumption_risks?.length > 0 && (
+            <span className="block">
+              {label("Assumption Risks")}
+              <span className="block space-y-1">
+                {r.assumption_risks.map((a) => (
+                  <span key={a.id} className="flex items-start gap-2 text-[11px]">
+                    <span className={`font-mono shrink-0 ${impactColor(a.impact)}`}>
+                      {a.impact[0].toUpperCase()}
+                    </span>
+                    <span className="text-[#6E6258] flex-1">{a.description}</span>
+                  </span>
+                ))}
+              </span>
+            </span>
+          )}
+        </span>
+
+        {/* ── Obstacles ── */}
+        {r.obstacles?.length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Obstacles")}
+            <span className="block space-y-1.5">
+              {r.obstacles.map((o) => (
+                <span
+                  key={o.id}
+                  className={`flex items-start gap-2 text-[11px] rounded-sm px-2 py-1.5 ${o.addressing_now ? "bg-[#FDF8F4] border border-[#C8804A]/20" : ""}`}
+                >
+                  <span className={`font-mono shrink-0 mt-px ${o.addressing_now ? "text-[#C8804A]" : "text-[#D8D0C8]"}`}>
+                    {o.addressing_now ? "▶" : "·"}
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-[#1E1A14]">{o.description}</span>
+                    {o.addressing_now && (
+                      <span className="block text-[10px] text-[#A89E94] mt-0.5">
+                        next: <span className="text-[#6E6258]">{o.next_step}</span>
+                        {" · "}checkpoint <span className="text-[#6E6258]">{o.checkpoint_date}</span>
+                      </span>
+                    )}
+                  </span>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+
+        {/* ── PDCA cycle ── */}
+        {r.pdca_cycle && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("PDCA Cycle")}
+            <span className="grid grid-cols-2 gap-2 text-[11px]">
+              {(["plan","do","check","act"] as const).map((k, i) => (
+                <span key={k} className="block border border-[#EDE7E0] rounded-sm px-2 py-1.5">
+                  <span className="block text-[9px] font-semibold tracking-[0.1em] text-[#C0B8AC] uppercase mb-1">
+                    {["P — Plan","D — Do","C — Check","A — Act"][i]}
+                  </span>
+                  <span className="block text-[#6E6258] leading-relaxed">{r.pdca_cycle[k]}</span>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+
+        {/* ── Coaching memo ── */}
+        {r.coaching_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Coaching Memo")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.coaching_memo}</span>
           </span>
         )}
       </span>

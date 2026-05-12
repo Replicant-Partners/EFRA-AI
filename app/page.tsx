@@ -8,7 +8,7 @@ import type { PipelineState, AgentEvent } from "@/src/shared/types";
 
 export type { AgentEvent };
 
-type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "communication";
+type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "communication" | "kata";
 
 type FormData = {
   ticker: string;
@@ -26,6 +26,7 @@ const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "forensic",      label: "05 · FORENSIC",        desc: "Full Scan" },
   { key: "valuation",     label: "06 · VALUATION",       desc: "Price Target" },
   { key: "communication", label: "07 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
+  { key: "kata",          label: "08 · KATA",            desc: "Improvement Coach" },
 ];
 
 // maps agent key → which key in PipelineState to store result
@@ -37,6 +38,7 @@ const STATE_KEY: Record<AgentKey, keyof PipelineState> = {
   forensic:      "forensic",
   valuation:     "valuation",
   communication: "communication",
+  kata:          "kata",
 };
 
 export default function Home() {
