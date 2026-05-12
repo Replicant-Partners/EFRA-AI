@@ -25,8 +25,8 @@ const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "cf",            label: "04 · CRITICAL FACTOR", desc: "Thesis + Scenarios" },
   { key: "forensic",      label: "05 · FORENSIC",        desc: "Full Scan" },
   { key: "valuation",     label: "06 · VALUATION",       desc: "Price Target" },
-  { key: "communication", label: "07 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
-  { key: "kata",          label: "08 · KATA",            desc: "Improvement Coach" },
+  { key: "kata",          label: "07 · KATA",            desc: "Improvement Coach" },
+  { key: "communication", label: "08 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
 ];
 
 // maps agent key → which key in PipelineState to store result

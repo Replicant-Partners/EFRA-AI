@@ -3,6 +3,7 @@ import { runIntel } from "@/src/agents/02-intel/index";
 import { runCriticalFactor } from "@/src/agents/03-critical-factor/index";
 import { runForensic } from "@/src/agents/04-forensic/index";
 import { runValuation } from "@/src/agents/05-valuation/index";
+import { runKata } from "@/src/agents/08-kata/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
 import { buildLLM } from "@/src/configurator";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
@@ -412,7 +413,7 @@ export async function POST(request: Request) {
 
           send({ type: "done", result });
 
-        // ── 06 COMMUNICATION ──────────────────────────────────────────────
+        // ── 08 COMMUNICATION ──────────────────────────────────────────────
         } else if (agent === "communication") {
           log(`Evaluating ENTER gate — drafting CASCADE research note…`);
 
@@ -436,6 +437,45 @@ export async function POST(request: Request) {
           }
           await pause(60);  log(`Publication:      ${result?.publication_possible ? result.output_type : "DROP — gate below threshold"}`);
           await pause(60);  log(`Final confidence: ${pct(result?.audit_trail?.final_confidence, 0)}`);
+
+          send({ type: "done", result });
+
+        // ── 07 KATA ───────────────────────────────────────────────────────
+        } else if (agent === "kata") {
+          log(`Applying Toyota Improvement Kata — analyzing research process…`);
+
+          const scout = state.scout;
+          const result = await runKata(llm, {
+            ticker,
+            downstream_mode: scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
+            scout:           state.scout!,
+            intel:           state.intel!,
+            forensic:        state.forensic!,
+            cf:              state.cf!,
+            valuation:       state.valuation!,
+            communication:   state.communication!,
+          });
+
+          await pause(80);
+          log(`Process confidence: ${result?.process_confidence != null ? (result.process_confidence * 100).toFixed(0) : "?"}%`);
+          await pause(60);
+          log(`Knowledge gaps:     ${result?.knowledge_gaps?.length ?? 0} identified`);
+          await pause(60);
+          log(`Assumption risks:   ${result?.assumption_risks?.length ?? 0} identified`);
+          await pause(60);
+          log(`Obstacles:          ${result?.obstacles?.length ?? 0} mapped`);
+          await pause(60);
+          log(`Target horizon:     ${result?.target_horizon ?? "?"}`);
+          await pause(60);
+          log(`Next review:        ${result?.next_review_date ?? "?"}`);
+
+          const active = result?.obstacles?.find(o => o.addressing_now);
+          if (active) {
+            await pause(60);
+            log(`─────────────────────`);
+            log(`Addressing now:     ${active.description}`);
+            log(`Next step:          ${active.next_step}`);
+          }
 
           send({ type: "done", result, final: true });
         }

@@ -2,6 +2,118 @@
 
 import type { PipelineState } from "@/src/shared/types";
 
+// ─── CASCADE Renderer ─────────────────────────────────────────────────────────
+// Parses the raw CASCADE text (C/A/S/C/D sections) into structured readable blocks.
+
+const CASCADE_SECTIONS = [
+  { key: "C", label: "Conclusion",  color: "text-[#C8804A]", border: "border-[#C8804A]/30", bg: "bg-[#FDF8F4]" },
+  { key: "A", label: "Action",      color: "text-[#1E1A14]", border: "border-[#E4DDD6]",    bg: "" },
+  { key: "S", label: "Scenarios",   color: "text-[#1E1A14]", border: "border-[#E4DDD6]",    bg: "" },
+  { key: "C2","label": "Catalysts", color: "text-[#1E1A14]", border: "border-[#E4DDD6]",    bg: "" },
+  { key: "D", label: "Data",        color: "text-[#1E1A14]", border: "border-[#E4DDD6]",    bg: "" },
+];
+
+function parseCascade(raw: string): { label: string; color: string; border: string; bg: string; lines: string[] }[] {
+  // Normalize line endings and split
+  const text = raw.replace(/\\n/g, "\n").replace(/\r\n/g, "\n");
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+
+  // Try to detect CASCADE section headers: lines that are or contain
+  // CONCLUSION, ACTION, SCENARIOS, CATALYSTS, DATA (case-insensitive)
+  const sectionPatterns = [
+    { re: /\b(CONCLUSION|^C\s*—|^C\s*:)/i,  idx: 0 },
+    { re: /\b(ACTION|^A\s*—|^A\s*:)/i,       idx: 1 },
+    { re: /\b(SCENARIO|^S\s*—|^S\s*:)/i,     idx: 2 },
+    { re: /\b(CATALYST|^C2?\s*—|UPCOMING)/i, idx: 3 },
+    { re: /\b(DATA|EDGAR|^D\s*—|^D\s*:)/i,  idx: 4 },
+  ];
+
+  // Build sections by scanning lines
+  const sections: { label: string; color: string; border: string; bg: string; lines: string[] }[] = CASCADE_SECTIONS.map(s => ({
+    label: s.label, color: s.color, border: s.border, bg: s.bg, lines: [],
+  }));
+
+  let currentIdx = 0; // default: dump everything into Conclusion until a header is found
+  let foundAnyHeader = false;
+
+  for (const line of lines) {
+    let matched = false;
+    for (const { re, idx } of sectionPatterns) {
+      if (re.test(line) && line.length < 80) {
+        currentIdx = idx;
+        foundAnyHeader = true;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      sections[currentIdx].lines.push(line);
+    }
+  }
+
+  // If no headers were found at all, put everything in one block
+  if (!foundAnyHeader) {
+    sections[0].lines = lines;
+  }
+
+  return sections.filter(s => s.lines.length > 0);
+}
+
+function CascadeRenderer({ content }: { content: string }) {
+  const sections = parseCascade(content);
+
+  return (
+    <div className="space-y-3">
+      {sections.map((sec, i) => (
+        <div key={i} className={`border rounded-sm ${sec.border} ${sec.bg} px-4 py-3`}>
+          {/* Section label */}
+          <div className={`text-[9px] font-bold tracking-[0.15em] uppercase mb-2 ${sec.color}`}>
+            {sec.label}
+          </div>
+          {/* Content lines — bullet-aware */}
+          <div className="space-y-1.5">
+            {sec.lines.map((line, j) => {
+              // Detect bullet-like lines
+              const isBullet = /^[•·\-–*▸►]/.test(line) || /^\d+[\.\)]/.test(line);
+              const cleanLine = line.replace(/^[•·\-–*▸►]\s*/, "").replace(/^\d+[\.\)]\s*/, "");
+
+              // Detect key-value lines like "Rating: BUY" or "PT: $148"
+              const kvMatch = line.match(/^([A-Z][A-Za-z\s\/]{1,30}):\s*(.+)$/);
+
+              if (kvMatch && kvMatch[1].length < 30) {
+                return (
+                  <div key={j} className="flex items-baseline gap-2 text-xs">
+                    <span className="t-label shrink-0 w-28">{kvMatch[1]}</span>
+                    <span className="text-[#1E1A14] font-medium">{kvMatch[2]}</span>
+                  </div>
+                );
+              }
+
+              if (isBullet) {
+                return (
+                  <div key={j} className="flex items-start gap-2 text-xs">
+                    <span className="text-[#C8804A] shrink-0 mt-px">·</span>
+                    <span className="text-[#6E6258] leading-relaxed">{cleanLine}</span>
+                  </div>
+                );
+              }
+
+              // Plain paragraph line
+              return (
+                <p key={j} className="text-xs text-[#6E6258] leading-relaxed">
+                  {line}
+                </p>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface Props {
   state: PipelineState;
 }
@@ -152,10 +264,8 @@ export default function ResultPanel({ state }: Props) {
           {/* CASCADE output */}
           {comm.content && (
             <div className="mb-6">
-              <div className="t-label mb-3">CASCADE Output</div>
-              <pre className="text-xs text-[#6E6258] whitespace-pre-wrap leading-relaxed overflow-auto max-h-96 font-mono">
-                {comm.content}
-              </pre>
+              <div className="t-label mb-3">Research Note</div>
+              <CascadeRenderer content={comm.content} />
             </div>
           )}
         </>
