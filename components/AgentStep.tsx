@@ -659,105 +659,131 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
     const label = (txt: string) => (
       <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
     );
-
     const verdictColor =
-      r.overall_verdict === "CONSISTENT"   ? "text-[#7A9E6A] border-[#7A9E6A]/30 bg-[#F6FAF4]" :
-      r.overall_verdict === "INCONSISTENT" ? "text-[#C84848] border-[#C84848]/30 bg-[#FDF5F5]" :
-                                             "text-[#C89040] border-[#C89040]/30 bg-[#FDFAF4]";
+      r.overall_verdict === "CONSISTENT"   ? "text-[#7A9E6A]" :
+      r.overall_verdict === "INCONSISTENT" ? "text-[#C84848]" : "text-[#C89040]";
     const dkColor =
       r.dunning_kruger?.flag === "high"   ? "text-[#C84848]" :
-      r.dunning_kruger?.flag === "medium" ? "text-[#C89040]" :
-                                            "text-[#7A9E6A]";
+      r.dunning_kruger?.flag === "medium" ? "text-[#C89040]" : "text-[#7A9E6A]";
     const hcColor =
       r.hidden_champion?.fit === "strong"  ? "text-[#7A9E6A]" :
-      r.hidden_champion?.fit === "partial" ? "text-[#C89040]" :
-                                             "text-[#C84848]";
+      r.hidden_champion?.fit === "partial" ? "text-[#C89040]" : "text-[#A89E94]";
 
     return (
-      <span className="block space-y-3">
+      <span className="block space-y-2">
 
-        {/* ── Verdict banner ── */}
-        <span className={`block border rounded-sm px-3 py-2.5 ${verdictColor}`}>
-          <span className="block text-[9px] font-bold tracking-[0.18em] uppercase mb-1">Overall Verdict</span>
-          <span className="block text-[13px] font-bold tracking-widest mb-1">{r.overall_verdict}</span>
-          <span className="block text-[11px] leading-relaxed opacity-90">{r.verdict_rationale}</span>
+        {/* ── Header row — same pattern as KATA/SCOUT ── */}
+        <span className="block text-[#A89E94] text-[11px]">
+          verdict{" "}
+          <span className={`font-semibold ${verdictColor}`}>{r.overall_verdict}</span>
+          {" · "}loop <span className="text-[#6E6258]">{r.loop?.score}/100</span>
+          {" · "}sf <span className="text-[#6E6258]">{r.superforecasting?.score}/100</span>
+          {" · "}dk <span className={dkColor}>{r.dunning_kruger?.flag}</span>
+          {" · "}hc <span className={hcColor}>{r.hidden_champion?.fit}</span>
         </span>
 
-        {/* ── Five lenses scorecard ── */}
+        {/* ── Verdict rationale ── */}
         <span className="block border-t border-[#EDE7E0] pt-2">
+          {label("Verdict")}
+          <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.verdict_rationale}</span>
+        </span>
+
+        {/* ── Five lenses ── */}
+        <span className="block border-t border-[#EDE7E0] pt-2 space-y-2">
           {label("Five Lenses")}
-          <span className="block space-y-1.5">
-            {/* Loop */}
-            <span className="flex items-start gap-2 text-[11px]">
-              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">The Loop</span>
-              <span className="flex-1">
-                <span className="text-[#C8804A] font-bold">{r.loop?.score}/100</span>
-                <span className="text-[#A89E94] ml-2">· {r.loop?.domain}</span>
-                <span className={`ml-2 ${r.loop?.variant_expectations ? "text-[#7A9E6A]" : "text-[#C84848]"}`}>
-                  {r.loop?.variant_expectations ? "variant expectations ✓" : "consensus thesis ✗"}
-                </span>
-                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.loop?.assessment}</span>
+
+          {/* Loop */}
+          <span className="block">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-0.5">
+              The Loop · <span className="text-[#C8804A] normal-case font-normal tracking-normal">{r.loop?.score}/100 · {r.loop?.domain}</span>
+            </span>
+            <span className="block text-[11px] text-[#A89E94] mb-0.5">
+              variant expectations{" "}
+              <span className={r.loop?.variant_expectations ? "text-[#7A9E6A]" : "text-[#C84848]"}>
+                {r.loop?.variant_expectations ? "yes" : "no"}
+              </span>
+              {" · "}distributes future{" "}
+              <span className={r.loop?.distributes_future ? "text-[#7A9E6A]" : "text-[#C84848]"}>
+                {r.loop?.distributes_future ? "yes" : "no"}
               </span>
             </span>
-            {/* Superforecasting */}
-            <span className="flex items-start gap-2 text-[11px]">
-              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Superforecasting</span>
-              <span className="flex-1">
-                <span className="text-[#C8804A] font-bold">{r.superforecasting?.score}/100</span>
-                <span className={`ml-2 ${r.superforecasting?.probabilities_granular ? "text-[#7A9E6A]" : "text-[#C89040]"}`}>
-                  {r.superforecasting?.probabilities_granular ? "granular probs ✓" : "round probs ✗"}
-                </span>
-                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.superforecasting?.assessment}</span>
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.loop?.assessment}</span>
+          </span>
+
+          {/* Superforecasting */}
+          <span className="block border-t border-[#F0EBE4] pt-1.5">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-0.5">
+              Superforecasting · <span className="text-[#C8804A] normal-case font-normal tracking-normal">{r.superforecasting?.score}/100</span>
+            </span>
+            <span className="block text-[11px] text-[#A89E94] mb-0.5">
+              granular probs{" "}
+              <span className={r.superforecasting?.probabilities_granular ? "text-[#7A9E6A]" : "text-[#C89040]"}>
+                {r.superforecasting?.probabilities_granular ? "yes" : "no"}
+              </span>
+              {" · "}causal forces balanced{" "}
+              <span className={r.superforecasting?.causal_forces_balanced ? "text-[#7A9E6A]" : "text-[#C89040]"}>
+                {r.superforecasting?.causal_forces_balanced ? "yes" : "no"}
+              </span>
+              {" · "}invalidation specific{" "}
+              <span className={r.superforecasting?.invalidation_specific ? "text-[#7A9E6A]" : "text-[#C89040]"}>
+                {r.superforecasting?.invalidation_specific ? "yes" : "no"}
               </span>
             </span>
-            {/* Dunning-Kruger */}
-            <span className="flex items-start gap-2 text-[11px]">
-              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Dunning-Kruger</span>
-              <span className="flex-1">
-                <span className={`font-bold ${dkColor}`}>{r.dunning_kruger?.flag?.toUpperCase()} risk</span>
-                <span className="text-[#A89E94] ml-2">· {r.dunning_kruger?.knowledge_gap_count} gaps</span>
-                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.dunning_kruger?.assessment}</span>
-                {(r.dunning_kruger?.overconfidence_signals ?? []).length > 0 && (
-                  <span className="block mt-0.5 space-y-0.5">
-                    {r.dunning_kruger.overconfidence_signals.map((s, i) => (
-                      <span key={i} className="flex items-start gap-1.5 text-[10px]">
-                        <span className="text-[#C84848] shrink-0">·</span>
-                        <span className="text-[#A89E94]">{s}</span>
-                      </span>
-                    ))}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.superforecasting?.assessment}</span>
+          </span>
+
+          {/* Dunning-Kruger */}
+          <span className="block border-t border-[#F0EBE4] pt-1.5">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-0.5">
+              Dunning-Kruger · <span className={`normal-case font-normal tracking-normal ${dkColor}`}>{r.dunning_kruger?.flag} risk</span>
+            </span>
+            <span className="block text-[11px] text-[#A89E94] mb-0.5">
+              {r.dunning_kruger?.knowledge_gap_count} knowledge gaps · {r.dunning_kruger?.confidence_gap}
+            </span>
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.dunning_kruger?.assessment}</span>
+            {(r.dunning_kruger?.overconfidence_signals ?? []).length > 0 && (
+              <span className="block mt-1 space-y-0.5">
+                {r.dunning_kruger.overconfidence_signals.map((s, i) => (
+                  <span key={i} className="flex items-start gap-1.5 text-[11px]">
+                    <span className="text-[#C84848] shrink-0 mt-px">·</span>
+                    <span className="text-[#A89E94] leading-relaxed">{s}</span>
                   </span>
+                ))}
+              </span>
+            )}
+          </span>
+
+          {/* Hidden Champions */}
+          <span className="block border-t border-[#F0EBE4] pt-1.5">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-0.5">
+              Hidden Champion · <span className={`normal-case font-normal tracking-normal ${hcColor}`}>{r.hidden_champion?.fit} fit</span>
+            </span>
+            {(r.hidden_champion?.characteristics_present ?? []).length > 0 && (
+              <span className="block text-[11px] text-[#A89E94] mb-0.5">
+                present: <span className="text-[#7A9E6A]">{r.hidden_champion.characteristics_present.join(", ")}</span>
+                {(r.hidden_champion?.characteristics_missing ?? []).length > 0 && (
+                  <> · missing: <span className="text-[#C89040]">{r.hidden_champion.characteristics_missing.join(", ")}</span></>
                 )}
               </span>
-            </span>
-            {/* Hidden Champions */}
-            <span className="flex items-start gap-2 text-[11px]">
-              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Hidden Champion</span>
-              <span className="flex-1">
-                <span className={`font-bold ${hcColor}`}>{r.hidden_champion?.fit?.toUpperCase()} fit</span>
-                {(r.hidden_champion?.characteristics_present ?? []).length > 0 && (
-                  <span className="text-[#7A9E6A] text-[10px] ml-2">
-                    ✓ {r.hidden_champion.characteristics_present.join(", ")}
-                  </span>
-                )}
-                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.hidden_champion?.assessment}</span>
+            )}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.hidden_champion?.assessment}</span>
+          </span>
+
+          {/* Kauffman */}
+          <span className="block border-t border-[#F0EBE4] pt-1.5">
+            <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-0.5">
+              Kauffman · <span className="normal-case font-normal tracking-normal text-[#6E6258]">{r.kauffman?.complement_or_substitute}</span>
+              {" · "}
+              <span className={`normal-case font-normal tracking-normal ${r.kauffman?.ergodic_assumption ? "text-[#C84848]" : "text-[#7A9E6A]"}`}>
+                {r.kauffman?.ergodic_assumption ? "ergodic model" : "nonergodic"}
               </span>
             </span>
-            {/* Kauffman */}
-            <span className="flex items-start gap-2 text-[11px]">
-              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Kauffman</span>
-              <span className="flex-1">
-                <span className="text-[#6E6258]">{r.kauffman?.complement_or_substitute}</span>
-                <span className={`ml-2 ${r.kauffman?.ergodic_assumption ? "text-[#C84848]" : "text-[#7A9E6A]"}`}>
-                  {r.kauffman?.ergodic_assumption ? "ergodic model ✗" : "nonergodic ✓"}
-                </span>
-                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.kauffman?.assessment}</span>
-                {r.kauffman?.adjacent_possible && (
-                  <span className="block text-[10px] text-[#A89E94] mt-0.5 italic">
-                    Adjacent possible: {r.kauffman.adjacent_possible}
-                  </span>
-                )}
+            {r.kauffman?.adjacent_possible && (
+              <span className="block text-[11px] text-[#A89E94] mb-0.5">
+                adjacent possible: <span className="text-[#6E6258]">{r.kauffman.adjacent_possible}</span>
               </span>
-            </span>
+            )}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.kauffman?.assessment}</span>
           </span>
         </span>
 
