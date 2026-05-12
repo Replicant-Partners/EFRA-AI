@@ -5,6 +5,7 @@ import { runForensic } from "@/src/agents/04-forensic/index";
 import { runValuation } from "@/src/agents/05-valuation/index";
 import { runKata } from "@/src/agents/08-kata/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
+import { runLens } from "@/src/agents/09-lens/index";
 import { buildLLM } from "@/src/configurator";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
 
@@ -438,7 +439,7 @@ export async function POST(request: Request) {
           await pause(60);  log(`Publication:      ${result?.publication_possible ? result.output_type : "DROP — gate below threshold"}`);
           await pause(60);  log(`Final confidence: ${pct(result?.audit_trail?.final_confidence, 0)}`);
 
-          send({ type: "done", result, final: true });
+          send({ type: "done", result });
 
         // ── 07 KATA ───────────────────────────────────────────────────────
         } else if (agent === "kata") {
@@ -478,6 +479,56 @@ export async function POST(request: Request) {
           }
 
           send({ type: "done", result });
+
+        // ── 09 LENS ───────────────────────────────────────────────────────
+        } else if (agent === "lens") {
+          log(`Auditing research consistency against firm's investment frameworks…`);
+
+          const scout = state.scout;
+          const result = await runLens(llm, {
+            ticker,
+            downstream_mode: scout?.downstream_mode ?? (mode as "valentine" | "gunn" | "dual"),
+            scout:           state.scout!,
+            intel:           state.intel!,
+            forensic:        state.forensic!,
+            cf:              state.cf!,
+            valuation:       state.valuation!,
+            communication:   state.communication,
+            kata:            state.kata,
+          });
+
+          await pause(80);
+          log(`─────────────────────`);
+          log(`Overall verdict:     ${result?.overall_verdict ?? "?"}`);
+          await pause(60);
+          log(`The Loop:            ${result?.loop?.score ?? "?"}/100 · domain: ${result?.loop?.domain ?? "?"}`);
+          await pause(60);
+          log(`Superforecasting:    ${result?.superforecasting?.score ?? "?"}/100`);
+          await pause(60);
+          log(`Dunning-Kruger:      ${result?.dunning_kruger?.flag ?? "?"} risk`);
+          await pause(60);
+          log(`Hidden Champions:    ${result?.hidden_champion?.fit ?? "?"} fit`);
+          await pause(60);
+          log(`Kauffman:            ${result?.kauffman?.complement_or_substitute ?? "?"} · ergodic: ${result?.kauffman?.ergodic_assumption}`);
+          if ((result?.key_tensions ?? []).length > 0) {
+            await pause(80);
+            log(`─────────────────────`);
+            log(`Key tensions:`);
+            for (const t of result.key_tensions) {
+              await pause(40);
+              log(`  · ${t}`);
+            }
+          }
+          if ((result?.recommendations ?? []).length > 0) {
+            await pause(80);
+            log(`Recommendations:`);
+            for (const r of result.recommendations) {
+              await pause(40);
+              log(`  · ${r}`);
+            }
+          }
+
+          send({ type: "done", result, final: true });
         }
 
       } catch (err) {

@@ -1,6 +1,6 @@
 "use client";
 
-import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput, KataBoard } from "@/src/shared/types";
+import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput, KataBoard, LensBoard } from "@/src/shared/types";
 
 interface Props {
   agentKey: string;
@@ -648,6 +648,154 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
           <span className="block border-t border-[#EDE7E0] pt-2">
             {label("Coaching Memo")}
             <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.coaching_memo}</span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (agentKey === "lens") {
+    const r = result as LensBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+
+    const verdictColor =
+      r.overall_verdict === "CONSISTENT"   ? "text-[#7A9E6A] border-[#7A9E6A]/30 bg-[#F6FAF4]" :
+      r.overall_verdict === "INCONSISTENT" ? "text-[#C84848] border-[#C84848]/30 bg-[#FDF5F5]" :
+                                             "text-[#C89040] border-[#C89040]/30 bg-[#FDFAF4]";
+    const dkColor =
+      r.dunning_kruger?.flag === "high"   ? "text-[#C84848]" :
+      r.dunning_kruger?.flag === "medium" ? "text-[#C89040]" :
+                                            "text-[#7A9E6A]";
+    const hcColor =
+      r.hidden_champion?.fit === "strong"  ? "text-[#7A9E6A]" :
+      r.hidden_champion?.fit === "partial" ? "text-[#C89040]" :
+                                             "text-[#C84848]";
+
+    return (
+      <span className="block space-y-3">
+
+        {/* ── Verdict banner ── */}
+        <span className={`block border rounded-sm px-3 py-2.5 ${verdictColor}`}>
+          <span className="block text-[9px] font-bold tracking-[0.18em] uppercase mb-1">Overall Verdict</span>
+          <span className="block text-[13px] font-bold tracking-widest mb-1">{r.overall_verdict}</span>
+          <span className="block text-[11px] leading-relaxed opacity-90">{r.verdict_rationale}</span>
+        </span>
+
+        {/* ── Five lenses scorecard ── */}
+        <span className="block border-t border-[#EDE7E0] pt-2">
+          {label("Five Lenses")}
+          <span className="block space-y-1.5">
+            {/* Loop */}
+            <span className="flex items-start gap-2 text-[11px]">
+              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">The Loop</span>
+              <span className="flex-1">
+                <span className="text-[#C8804A] font-bold">{r.loop?.score}/100</span>
+                <span className="text-[#A89E94] ml-2">· {r.loop?.domain}</span>
+                <span className={`ml-2 ${r.loop?.variant_expectations ? "text-[#7A9E6A]" : "text-[#C84848]"}`}>
+                  {r.loop?.variant_expectations ? "variant expectations ✓" : "consensus thesis ✗"}
+                </span>
+                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.loop?.assessment}</span>
+              </span>
+            </span>
+            {/* Superforecasting */}
+            <span className="flex items-start gap-2 text-[11px]">
+              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Superforecasting</span>
+              <span className="flex-1">
+                <span className="text-[#C8804A] font-bold">{r.superforecasting?.score}/100</span>
+                <span className={`ml-2 ${r.superforecasting?.probabilities_granular ? "text-[#7A9E6A]" : "text-[#C89040]"}`}>
+                  {r.superforecasting?.probabilities_granular ? "granular probs ✓" : "round probs ✗"}
+                </span>
+                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.superforecasting?.assessment}</span>
+              </span>
+            </span>
+            {/* Dunning-Kruger */}
+            <span className="flex items-start gap-2 text-[11px]">
+              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Dunning-Kruger</span>
+              <span className="flex-1">
+                <span className={`font-bold ${dkColor}`}>{r.dunning_kruger?.flag?.toUpperCase()} risk</span>
+                <span className="text-[#A89E94] ml-2">· {r.dunning_kruger?.knowledge_gap_count} gaps</span>
+                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.dunning_kruger?.assessment}</span>
+                {(r.dunning_kruger?.overconfidence_signals ?? []).length > 0 && (
+                  <span className="block mt-0.5 space-y-0.5">
+                    {r.dunning_kruger.overconfidence_signals.map((s, i) => (
+                      <span key={i} className="flex items-start gap-1.5 text-[10px]">
+                        <span className="text-[#C84848] shrink-0">·</span>
+                        <span className="text-[#A89E94]">{s}</span>
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </span>
+            </span>
+            {/* Hidden Champions */}
+            <span className="flex items-start gap-2 text-[11px]">
+              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Hidden Champion</span>
+              <span className="flex-1">
+                <span className={`font-bold ${hcColor}`}>{r.hidden_champion?.fit?.toUpperCase()} fit</span>
+                {(r.hidden_champion?.characteristics_present ?? []).length > 0 && (
+                  <span className="text-[#7A9E6A] text-[10px] ml-2">
+                    ✓ {r.hidden_champion.characteristics_present.join(", ")}
+                  </span>
+                )}
+                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.hidden_champion?.assessment}</span>
+              </span>
+            </span>
+            {/* Kauffman */}
+            <span className="flex items-start gap-2 text-[11px]">
+              <span className="text-[#C0B8AC] w-32 shrink-0 font-semibold">Kauffman</span>
+              <span className="flex-1">
+                <span className="text-[#6E6258]">{r.kauffman?.complement_or_substitute}</span>
+                <span className={`ml-2 ${r.kauffman?.ergodic_assumption ? "text-[#C84848]" : "text-[#7A9E6A]"}`}>
+                  {r.kauffman?.ergodic_assumption ? "ergodic model ✗" : "nonergodic ✓"}
+                </span>
+                <span className="block text-[10px] text-[#8C7E70] mt-0.5 leading-relaxed">{r.kauffman?.assessment}</span>
+                {r.kauffman?.adjacent_possible && (
+                  <span className="block text-[10px] text-[#A89E94] mt-0.5 italic">
+                    Adjacent possible: {r.kauffman.adjacent_possible}
+                  </span>
+                )}
+              </span>
+            </span>
+          </span>
+        </span>
+
+        {/* ── Key tensions ── */}
+        {(r.key_tensions ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Key Tensions")}
+            <span className="block space-y-1">
+              {r.key_tensions.map((t, i) => (
+                <span key={i} className="flex items-start gap-2 text-[11px]">
+                  <span className="text-[#C84848] shrink-0 mt-px">·</span>
+                  <span className="text-[#6E6258] leading-relaxed">{t}</span>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+
+        {/* ── Recommendations ── */}
+        {(r.recommendations ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Recommendations for PM")}
+            <span className="block space-y-1">
+              {r.recommendations.map((rec, i) => (
+                <span key={i} className="flex items-start gap-2 text-[11px]">
+                  <span className="text-[#C8804A] shrink-0 mt-px">→</span>
+                  <span className="text-[#6E6258] leading-relaxed">{rec}</span>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+
+        {/* ── PM Memo ── */}
+        {r.pm_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("PM Memo")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.pm_memo}</span>
           </span>
         )}
       </span>

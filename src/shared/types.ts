@@ -268,6 +268,7 @@ export interface PipelineState {
   valuation?: ValuationModel;
   communication?: CommOutput;
   kata?: KataBoard;
+  lens?: LensBoard;
 }
 
 // ─── UI Event ─────────────────────────────────────────────
@@ -280,6 +281,74 @@ export type AgentEvent = {
   final?: boolean;
   error?: string;
 };
+
+// ─── Agent 09 — LENS ──────────────────────────
+
+export interface LensLoopScore {
+  score:                       number;       // 0–100
+  domain:                      "biological" | "physical" | "digital" | "mixed";
+  variant_expectations:        boolean;
+  distributes_future:          boolean;
+  valuation_anchor_consistent: boolean;
+  assessment:                  string;
+}
+
+export interface LensSuperforecastingScore {
+  score:                   number;       // 0–100
+  probabilities_granular:  boolean;
+  inside_outside_balanced: boolean;
+  invalidation_specific:   boolean;
+  causal_forces_balanced:  boolean;
+  assessment:              string;
+}
+
+export interface LensDunningKruger {
+  flag:                   "low" | "medium" | "high";
+  overconfidence_signals: string[];
+  knowledge_gap_count:    number;
+  confidence_gap:         string;
+  assessment:             string;
+}
+
+export interface LensHiddenChampion {
+  fit:                     "none" | "partial" | "strong";
+  characteristics_present: string[];
+  characteristics_missing: string[];
+  assessment:              string;
+}
+
+export interface LensKauffman {
+  ergodic_assumption:       boolean;
+  adjacent_possible:        string;
+  preadaptations:           string[];
+  complement_or_substitute: "complement" | "substitute" | "mixed";
+  assessment:               string;
+}
+
+export interface LensBoard {
+  loop:             LensLoopScore;
+  superforecasting: LensSuperforecastingScore;
+  dunning_kruger:   LensDunningKruger;
+  hidden_champion:  LensHiddenChampion;
+  kauffman:         LensKauffman;
+  overall_verdict:  "CONSISTENT" | "PARTIAL" | "INCONSISTENT";
+  verdict_rationale:string;
+  key_tensions:     string[];   // 2–3 specific contradictions
+  recommendations:  string[];   // 2–3 concrete actions for the PM
+  pm_memo:          string;     // 200 words max
+}
+
+export interface LensInput {
+  ticker:          string;
+  downstream_mode: DownstreamMode;
+  scout:           ScoutOutput;
+  intel:           IntelBundle;
+  forensic:        ForensicProfile;
+  cf:              CFOutput;
+  valuation:       ValuationModel;
+  communication?:  CommOutput;
+  kata?:           KataBoard;
+}
 
 // ─── Report Document ──────────────────────────────────────
 
