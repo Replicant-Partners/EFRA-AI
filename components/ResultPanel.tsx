@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function ResultPanel({ state }: Props) {
-  const { status, scout, valuation, communication, forensic, cf } = state;
+  const { status, scout, valuation, communication, forensic, cf, kata } = state;
   const comm = communication;
 
   const statusColor =
@@ -161,6 +161,129 @@ export default function ResultPanel({ state }: Props) {
         </>
       )}
 
+      {/* KATA — Toyota Improvement Kata board */}
+      {kata && (
+        <>
+          <hr className="t-rule mb-4" />
+
+          <div className="mb-6">
+            {/* Header */}
+            <div className="flex items-baseline gap-4 mb-4">
+              <span className="t-label">Improvement Kata</span>
+              <span className="text-xs text-[#A89E94]">
+                process confidence{" "}
+                <span className={kata.process_confidence >= 0.75 ? "text-[#C8804A]" : kata.process_confidence >= 0.55 ? "text-[#C89040]" : "text-[#C84848]"}>
+                  {(kata.process_confidence * 100).toFixed(0)}%
+                </span>
+              </span>
+              <span className="text-xs text-[#A89E94]">
+                review <span className="text-[#6E6258]">{kata.next_review_date}</span>
+              </span>
+            </div>
+
+            {/* Challenge */}
+            <div className="mb-4">
+              <div className="t-label mb-1">Challenge</div>
+              <p className="prose-tufte text-sm">{kata.challenge}</p>
+            </div>
+
+            {/* Current condition → Target condition */}
+            <div className="grid grid-cols-2 gap-6 mb-4">
+              <div>
+                <div className="t-label mb-1">Current Condition</div>
+                <p className="text-xs text-[#6E6258] leading-relaxed">{kata.current_condition}</p>
+              </div>
+              <div>
+                <div className="t-label mb-1">
+                  Target Condition{" "}
+                  <span className="text-[#C8804A]">→ {kata.target_horizon}</span>
+                </div>
+                <p className="text-xs text-[#6E6258] leading-relaxed">{kata.target_condition}</p>
+              </div>
+            </div>
+
+            <hr className="t-rule mb-4" />
+
+            {/* Knowledge gaps + Assumption risks side by side */}
+            <div className="grid grid-cols-2 gap-6 mb-4">
+              <div>
+                <div className="t-label mb-2">Knowledge Gaps</div>
+                <div className="space-y-2">
+                  {kata.knowledge_gaps.map((g) => (
+                    <div key={g.id} className="flex items-start gap-2 text-xs">
+                      <span className="text-[#C89040] font-mono mt-px">{g.id}</span>
+                      <div className="flex-1">
+                        <span className="text-[#6E6258]">{g.description}</span>
+                        <span className="text-[#A89E94] ml-2">· {g.source_agent}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="t-label mb-2">Assumption Risks</div>
+                <div className="space-y-2">
+                  {kata.assumption_risks.map((a) => (
+                    <div key={a.id} className="flex items-start gap-2 text-xs">
+                      <span className={`font-mono mt-px ${a.impact === "high" ? "text-[#C84848]" : a.impact === "medium" ? "text-[#C89040]" : "text-[#A89E94]"}`}>
+                        {a.impact[0].toUpperCase()}
+                      </span>
+                      <span className="text-[#6E6258] flex-1">{a.description}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <hr className="t-rule mb-4" />
+
+            {/* Obstacles */}
+            <div className="mb-4">
+              <div className="t-label mb-2">Obstacles</div>
+              <div className="space-y-2">
+                {kata.obstacles.map((o) => (
+                  <div key={o.id} className={`flex items-start gap-3 text-xs p-2 ${o.addressing_now ? "bg-[#F5F0EA]" : ""}`}>
+                    <span className={`font-mono mt-px w-4 ${o.addressing_now ? "text-[#C8804A]" : "text-[#A89E94]"}`}>
+                      {o.addressing_now ? "▶" : "·"}
+                    </span>
+                    <div className="flex-1">
+                      <span className="text-[#6E6258]">{o.description}</span>
+                      {o.addressing_now && (
+                        <div className="mt-1 text-[#A89E94]">
+                          next step: <span className="text-[#6E6258]">{o.next_step}</span>
+                          {" · "}checkpoint <span className="text-[#6E6258]">{o.checkpoint_date}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <hr className="t-rule mb-4" />
+
+            {/* PDCA cycle */}
+            <div className="mb-4">
+              <div className="t-label mb-2">PDCA Cycle</div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <PdcaCell label="P — Plan"  text={kata.pdca_cycle.plan}  />
+                <PdcaCell label="D — Do"    text={kata.pdca_cycle.do}    />
+                <PdcaCell label="C — Check" text={kata.pdca_cycle.check} />
+                <PdcaCell label="A — Act"   text={kata.pdca_cycle.act}   />
+              </div>
+            </div>
+
+            <hr className="t-rule mb-4" />
+
+            {/* Coaching memo */}
+            <div>
+              <div className="t-label mb-2">Coaching Memo</div>
+              <p className="prose-tufte text-sm leading-relaxed">{kata.coaching_memo}</p>
+            </div>
+          </div>
+        </>
+      )}
+
       {(status === "DROPPED" || status === "COMPLIANCE_HALT") && !comm && (
         <p className="prose-tufte text-sm">
           {status === "COMPLIANCE_HALT"
@@ -188,5 +311,14 @@ function ScorePair({ label, value, max }: { label: string; value: number; max: n
       <span className="text-[#6E6258]">{value}</span>
       <span className="text-[#D8D0C8]">/{max}</span>
     </span>
+  );
+}
+
+function PdcaCell({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="border border-[#E4DDD6] p-3">
+      <div className="t-label mb-1">{label}</div>
+      <p className="text-[#6E6258] leading-relaxed">{text}</p>
+    </div>
   );
 }
