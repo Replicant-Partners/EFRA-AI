@@ -59,6 +59,38 @@ export default function Home() {
   const formDataRef = useRef<FormData | null>(null);
   const pipeStateRef = useRef<Partial<PipelineState> & { idea_id?: string }>({});
 
+  async function callAgent(agentKey: string, fd: FormData, retryCount = 0): Promise<Response> {
+    const controller = new AbortController();
+    // 4 min timeout per agent — enough for Opus models, killed cleanly on hang
+    const timer = setTimeout(() => controller.abort(), 4 * 60 * 1000);
+    try {
+      const res = await fetch("/api/agent", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent: agentKey,
+          ticker: fd.ticker,
+          analyst_id: fd.analyst_id,
+          catalyst: fd.catalyst,
+          mode: fd.mode,
+          news: fd.news,
+          state: pipeStateRef.current,
+        }),
+      });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      // Retry once on network error (transient Railway disconnect)
+      if (retryCount === 0 && String(err).includes("network")) {
+        await new Promise(r => setTimeout(r, 1500));
+        return callAgent(agentKey, fd, 1);
+      }
+      throw err;
+    }
+  }
+
   async function runStep(idx: number) {
     if (idx >= AGENTS.length) {
       setIsDone(true);
@@ -75,19 +107,7 @@ export default function Home() {
     setAgentLogs(prev => ({ ...prev, [agent.key]: [] }));
 
     try {
-      const res = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agent: agent.key,
-          ticker: fd.ticker,
-          analyst_id: fd.analyst_id,
-          catalyst: fd.catalyst,
-          mode: fd.mode,
-          news: fd.news,
-          state: pipeStateRef.current,
-        }),
-      });
+      const res = await callAgent(agent.key, fd);
 
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -156,10 +176,15 @@ export default function Home() {
         }
       }
     } catch (err) {
-      setError(String(err));
+      const msg = String(err);
+      const isAbort = msg.includes("abort") || msg.includes("AbortError");
+      const display = isAbort
+        ? `Timeout — agent ${agent.label} took too long. Try again.`
+        : msg;
+      setError(display);
       setEvents(prev => ({
         ...prev,
-        [agent.key]: { agent: agent.key, status: "error", error: String(err) },
+        [agent.key]: { agent: agent.key, status: "error", error: display },
       }));
       setIsDone(true);
       setStepPhase("idle");
