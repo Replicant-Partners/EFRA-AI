@@ -481,7 +481,13 @@ export async function POST(request: Request) {
         }
 
       } catch (err) {
-        send({ type: "error", error: String(err) });
+        const raw = String(err);
+        // Surface a clean, actionable message instead of raw TypeError
+        const isNetwork = raw.includes("network") || raw.includes("fetch") || raw.includes("ECONNRESET") || raw.includes("ETIMEDOUT");
+        const message = isNetwork
+          ? `OpenRouter connection failed after retries (agent: ${agent}). This is usually a transient issue — click Approve & Continue to retry this step.`
+          : raw;
+        send({ type: "error", error: message });
       }
 
       controller.close();

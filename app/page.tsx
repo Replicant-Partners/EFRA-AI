@@ -350,9 +350,26 @@ export default function Home() {
             </div>
           )}
 
-          {/* Error */}
+          {/* Error — with retry button */}
           {error && (
-            <p className="text-sm text-[#C84848]">Error: {error}</p>
+            <div className="border-t border-[#C84848]/30 pt-4 space-y-3">
+              <p className="text-xs text-[#C84848]">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  setIsDone(false);
+                  setEvents(prev => {
+                    const next = { ...prev };
+                    delete next[AGENTS[stepIdx].key];
+                    return next;
+                  });
+                  runStep(stepIdx);
+                }}
+                className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+              >
+                ↺ Retry {AGENTS[stepIdx]?.label}
+              </button>
+            </div>
           )}
 
           {/* Save status */}

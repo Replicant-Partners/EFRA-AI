@@ -44,7 +44,7 @@ export class OpenRouterAdapter implements ILanguageModel {
       body.thinking = { type: "adaptive" };
     }
 
-    const maxAttempts = 3;
+    const maxAttempts = 5;
     let lastError: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -54,10 +54,23 @@ export class OpenRouterAdapter implements ILanguageModel {
         return (response as OpenAI.Chat.Completions.ChatCompletion).choices[0]?.message?.content ?? "";
       } catch (err) {
         lastError = err;
-        const isNetworkError = err instanceof TypeError || (err instanceof Error && err.message.includes("network"));
-        if (!isNetworkError || attempt === maxAttempts) throw err;
-        const delay = attempt * 2000;
-        console.warn(`[OpenRouter] Network error on attempt ${attempt}, retrying in ${delay}ms…`);
+        const isRetryable =
+          err instanceof TypeError ||
+          (err instanceof Error && (
+            err.message.includes("network") ||
+            err.message.includes("fetch") ||
+            err.message.includes("ECONNRESET") ||
+            err.message.includes("ETIMEDOUT") ||
+            err.message.includes("socket") ||
+            err.message.includes("529") ||   // OpenRouter overloaded
+            err.message.includes("500") ||   // upstream error
+            err.message.includes("502") ||
+            err.message.includes("503")
+          ));
+        if (!isRetryable || attempt === maxAttempts) throw err;
+        // Exponential backoff: 2s, 4s, 8s, 16s
+        const delay = Math.min(2000 * Math.pow(2, attempt - 1), 16000);
+        console.warn(`[OpenRouter] Retryable error on attempt ${attempt}/${maxAttempts}, retrying in ${delay}ms… (${(err as Error).message})`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
