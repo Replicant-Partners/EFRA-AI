@@ -438,7 +438,7 @@ export async function POST(request: Request) {
           await pause(60);  log(`Publication:      ${result?.publication_possible ? result.output_type : "DROP — gate below threshold"}`);
           await pause(60);  log(`Final confidence: ${pct(result?.audit_trail?.final_confidence, 0)}`);
 
-          send({ type: "done", result });
+          send({ type: "done", result, final: true });
 
         // ── 07 KATA ───────────────────────────────────────────────────────
         } else if (agent === "kata") {
@@ -477,7 +477,7 @@ export async function POST(request: Request) {
             log(`Next step:          ${active.next_step}`);
           }
 
-          send({ type: "done", result, final: true });
+          send({ type: "done", result });
         }
 
       } catch (err) {
