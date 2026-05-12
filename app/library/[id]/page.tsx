@@ -8,7 +8,7 @@ import IntelItemCard, { type IntelItem } from "@/components/IntelItemCard";
 import AddIntelForm from "@/components/AddIntelForm";
 import type { PipelineState, AgentEvent } from "@/src/shared/types";
 
-type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "communication";
+type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "kata" | "communication" | "lens";
 
 const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "scout",         label: "01 · SCOUT",           desc: "Alpha Score" },
@@ -17,7 +17,9 @@ const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "cf",            label: "04 · CRITICAL FACTOR", desc: "Thesis + Scenarios" },
   { key: "forensic",      label: "05 · FORENSIC",        desc: "Full Scan" },
   { key: "valuation",     label: "06 · VALUATION",       desc: "Price Target" },
-  { key: "communication", label: "07 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
+  { key: "kata",          label: "07 · KATA",            desc: "Improvement Coach" },
+  { key: "communication", label: "08 · COMMUNICATION",   desc: "ENTER Gate + Publish" },
+  { key: "lens",          label: "09 · LENS",            desc: "Consistency Auditor" },
 ];
 
 type Analysis = {
@@ -49,7 +51,9 @@ function buildEvents(state: PipelineState): Record<string, AgentEvent> {
   if (state.cf)            ev["cf"]            = { agent: "cf",            status: "done", result: state.cf };
   if (state.forensic)      ev["forensic"]      = { agent: "forensic",      status: "done", result: state.forensic };
   if (state.valuation)     ev["valuation"]     = { agent: "valuation",     status: "done", result: { ...state.valuation, _cf_scenarios: state.cf?.scenarios ?? [] } };
+  if (state.kata)          ev["kata"]          = { agent: "kata",          status: "done", result: state.kata };
   if (state.communication) ev["communication"] = { agent: "communication", status: "done", result: state.communication };
+  if (state.lens)          ev["lens"]          = { agent: "lens",          status: "done", result: state.lens };
   return ev;
 }
 
