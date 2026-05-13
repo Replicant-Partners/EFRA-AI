@@ -17,12 +17,13 @@ export default function RootLayout({
         <header className="px-8 pt-7 pb-4 flex items-baseline justify-between border-b border-[#E4DDD6]">
           <div className="flex items-baseline gap-4">
             <span className="text-[#C8804A] font-bold tracking-tight" style={{ letterSpacing: "-0.02em" }}>EFRAIN AI</span>
-            <span className="t-label">Investment Research · v2.2</span>
+            <span className="t-label">Investment Research · v3.0</span>
           </div>
           <nav className="flex items-baseline gap-6">
             <a href="/" className="t-label hover:text-[#C8804A] transition-colors">Pipeline</a>
             <a href="/screener" className="t-label hover:text-[#C8804A] transition-colors">Screener</a>
             <a href="/library" className="t-label hover:text-[#C8804A] transition-colors">Library</a>
+            <a href="/observatory" className="t-label hover:text-[#C8804A] transition-colors">Observatory</a>
             <a href="/docs" className="t-label hover:text-[#C8804A] transition-colors">Guide</a>
           </nav>
         </header>
