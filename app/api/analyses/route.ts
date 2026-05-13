@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import type { PipelineState } from "@/src/shared/types";
 import { buildReportContent } from "@/src/lib/report-builder";
+import { writeEpisode, type Provenance } from "@/src/lib/episode-store";
 
 export async function POST(request: Request) {
   try {
@@ -36,10 +37,98 @@ export async function POST(request: Request) {
       },
     });
 
+    // ── Write episodes for every agent that ran ───────────────────────────
+    // We do this after saving so we have the analysis_id.
+    // Provenance is determined by pipeline outcome:
+    //   - COMPLETED → all agents = "auto_pass" (analyst approved each step)
+    //   - DROPPED / COMPLIANCE_HALT → terminal agent = "auto_drop"
+    // In a future step, we will upgrade provenance to "human_approved" or
+    // "human_corrected" when the analyst adds notes during approval.
+    void writeEpisodesFromState({
+      analysis_id: analysis.id,
+      analyst_id,
+      ticker:      ticker.toUpperCase(),
+      state,
+    });
+
     return NextResponse.json({ id: analysis.id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/analyses]", err);
     return NextResponse.json({ error: "Failed to save analysis" }, { status: 500 });
+  }
+}
+
+// ─── Episode emission ─────────────────────────────────────────────────────────
+// Called non-blocking (void) after analysis is saved.
+// Iterates over every agent output in the state and writes one Episode per agent.
+
+async function writeEpisodesFromState({
+  analysis_id,
+  analyst_id,
+  ticker,
+  state,
+}: {
+  analysis_id: string;
+  analyst_id:  string;
+  ticker:      string;
+  state:       PipelineState;
+}) {
+  const isDropped = state.status === "DROPPED" || state.status === "COMPLIANCE_HALT";
+
+  const agentMap: Array<{
+    key:    string;
+    result: object | undefined;
+    isFinal?: boolean;
+  }> = [
+    { key: "scout",         result: state.scout         as object | undefined },
+    { key: "intel",         result: state.intel         as object | undefined },
+    { key: "forensic_pre",  result: state.forensic      as object | undefined },
+    { key: "cf",            result: state.cf            as object | undefined },
+    { key: "forensic",      result: state.forensic      as object | undefined },
+    { key: "valuation",     result: state.valuation     as object | undefined },
+    { key: "kata",          result: state.kata          as object | undefined },
+    { key: "communication", result: state.communication as object | undefined },
+    { key: "lens",          result: state.lens          as object | undefined, isFinal: true },
+  ];
+
+  for (const { key, result, isFinal } of agentMap) {
+    if (!result) continue;
+
+    // The last agent before a drop gets auto_drop provenance
+    const isLastBeforeDrop = isDropped && isFinal;
+    const provenance: Provenance = isLastBeforeDrop ? "auto_drop" : "auto_pass";
+
+    // Build concise query summary
+    const queryParts: string[] = [`ticker:${ticker}`, `agent:${key}`];
+    if (state.scout)    queryParts.push(`alpha:${state.scout.alpha_score.total}`);
+    if (state.forensic) queryParts.push(`risk:${state.forensic.risk_score}`);
+    if (state.valuation)queryParts.push(`pt:${state.valuation.pt_12m}`, `rating:${state.valuation.rating}`);
+
+    try {
+      await writeEpisode({
+        analysis_id,
+        analyst_id,
+        ticker,
+        agent:      key,
+        query:      queryParts.join(" | "),
+        response:   result,
+        provenance,
+        // Denormalized scores
+        alpha_score:        key === "scout"         ? (state.scout?.alpha_score.total)          : undefined,
+        risk_score:         (key === "forensic_pre" || key === "forensic") ? (state.forensic?.risk_score) : undefined,
+        confidence:         key === "scout"         ? (state.scout?.confidence)                 :
+                            key === "communication" ? (state.communication?.audit_trail?.final_confidence) :
+                            key === "kata"          ? (state.kata?.process_confidence)          : undefined,
+        rr_ratio:           key === "valuation"     ? (state.valuation?.rr_ratio)               : undefined,
+        enter_score:        key === "communication" ? (state.communication?.enter_gate?.effective_score) : undefined,
+        process_confidence: key === "kata"          ? (state.kata?.process_confidence)          : undefined,
+        lens_verdict:       key === "lens"          ? (state.lens?.overall_verdict)             : undefined,
+        loop_score:         key === "lens"          ? (state.lens?.loop?.score)                 : undefined,
+        dk_flag:            key === "lens"          ? (state.lens?.dunning_kruger?.flag)        : undefined,
+      });
+    } catch (err) {
+      console.warn(`[EpisodeStore] Failed to write episode for ${key}:`, err);
+    }
   }
 }
 

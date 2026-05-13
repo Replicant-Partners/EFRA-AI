@@ -24,11 +24,78 @@ model Analysis {
   created_at  DateTime    @default(now())
   updated_at  DateTime    @updatedAt
   intel_items IntelItem[]
+  episodes    Episode[]
 
   @@index([ticker])
   @@index([created_at])
   @@index([rating])
   @@index([status])
+}
+
+// ─── Episode Store ────────────────────────────────────────────────────────────
+// Inspired by the Social Agent Observability Platform logical architecture.
+// Each agent step in each pipeline run produces one Episode.
+// Analyst approvals produce episodes with higher authority_weight than
+// auto-generated ones — human evidence outweighs machine evidence.
+
+model Episode {
+  id                    String   @id @default(cuid())
+
+  // Foreign key to the analysis this episode belongs to
+  analysis_id           String
+  analysis              Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+
+  // Who and what
+  analyst_id            String
+  ticker                String
+  agent                 String   // "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "kata" | "communication" | "lens"
+
+  // The "query" is the input the agent received (serialized context summary)
+  // The "response" is the structured output the agent produced
+  query                 String   @db.Text
+  response              Json
+
+  // Provenance — where did this episode come from?
+  // "auto_pass"         : agent ran and analyst approved without modification
+  // "auto_drop"         : agent triggered a DROP/BLOCK gate
+  // "human_approved"    : analyst explicitly reviewed and approved
+  // "human_corrected"   : analyst added a note/correction before continuing
+  // "synthetic"         : created by the system as a correction record (future)
+  provenance            String   @default("auto_pass")
+
+  // Authority weight — how much epistemic weight does this episode carry?
+  // auto_pass     → 0.5  (machine generated, not reviewed)
+  // human_approved→ 0.8  (human saw it and said OK)
+  // human_corrected→1.0  (human actively modified it — highest authority)
+  // auto_drop     → 0.3  (pipeline rejected it — low signal)
+  authority_weight      Float    @default(0.5)
+
+  // Agent output scores (denormalized for fast queries — no JSON parsing needed)
+  alpha_score           Float?
+  risk_score            Float?
+  confidence            Float?
+  rr_ratio              Float?
+  enter_score           Float?
+  process_confidence    Float?
+  lens_verdict          String?
+  loop_score            Float?
+  dk_flag               String?
+
+  // Analyst note added at approval time (null = no note)
+  analyst_note          String?  @db.Text
+
+  // Pipeline persona version — increments when system prompt of any agent changes
+  // Allows drift detection across pipeline versions
+  pipeline_version      Int      @default(1)
+
+  created_at            DateTime @default(now())
+
+  @@index([analysis_id])
+  @@index([analyst_id])
+  @@index([ticker])
+  @@index([agent])
+  @@index([provenance])
+  @@index([created_at])
 }
 
 model IntelItem {
