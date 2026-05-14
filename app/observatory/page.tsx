@@ -8,6 +8,13 @@ import type {
   AnomalyEvent,
   AnalystProfile,
 } from "@/app/api/observatory/route";
+import type {
+  QualityData,
+  QualityTimelineRow,
+  QualityAnomaly,
+  QualityTrend,
+  QualityObsState,
+} from "@/app/api/observatory/quality/route";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
@@ -377,22 +384,354 @@ function SummaryBar({ data }: { data: ObservatoryData }) {
   );
 }
 
+// ─── Quality Monitor Views ────────────────────────────────────────────────────
+
+function scoreColor(v: number): string {
+  return v >= 0.7 ? "text-[#7A9E6A]" : v >= 0.45 ? "text-[#C89040]" : "text-[#C84848]";
+}
+
+function scoreBg(v: number): string {
+  return v >= 0.7 ? "bg-[#7A9E6A]" : v >= 0.45 ? "bg-[#C89040]" : "bg-[#C84848]";
+}
+
+function trendArrow(dir: string): string {
+  return dir === "improving" ? "↑" : dir === "declining" ? "↓" : "→";
+}
+
+function trendColor(dir: string): string {
+  return dir === "improving" ? "text-[#7A9E6A]" : dir === "declining" ? "text-[#C84848]" : "text-[#A89E94]";
+}
+
+function QualityTimelineView({ rows }: { rows: QualityTimelineRow[] }) {
+  if (rows.length === 0) {
+    return <p className="text-[11px] text-[#A89E94] py-6 text-center">No quality data yet. Run a pipeline first.</p>;
+  }
+
+  const dims = ["overall", "argument_quality", "scenario_coherence", "probability_calibration"] as const;
+  const dimLabel: Record<string, string> = {
+    overall:                 "Overall",
+    argument_quality:        "Argument",
+    scenario_coherence:      "Scenarios",
+    probability_calibration: "Probabilities",
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="grid grid-cols-[90px_80px_60px_60px_60px_60px_60px_80px] gap-x-3 py-1.5 mb-1">
+        <Label>Ticker</Label>
+        <Label>Analyst</Label>
+        <Label>Overall</Label>
+        <Label>Argument</Label>
+        <Label>Scenarios</Label>
+        <Label>Proba.</Label>
+        <Label>Drift</Label>
+        <Label>Date</Label>
+      </div>
+      <Rule />
+      {rows.map(r => (
+        <div key={r.id}>
+          <div className="grid grid-cols-[90px_80px_60px_60px_60px_60px_60px_80px] gap-x-3 py-2 text-[11px] hover:bg-[#F5F0EB] transition-colors rounded-sm">
+            <span className="font-semibold text-[#1E1A14] truncate">{r.ticker}</span>
+            <span className="text-[#6E6258] truncate">{r.analyst_id}</span>
+            <span className={`font-semibold ${scoreColor(r.overall)}`}>{(r.overall * 100).toFixed(0)}%</span>
+            <span className={scoreColor(r.argument_quality)}>{(r.argument_quality * 100).toFixed(0)}%</span>
+            <span className={scoreColor(r.scenario_coherence)}>{(r.scenario_coherence * 100).toFixed(0)}%</span>
+            <span className={scoreColor(r.probability_calibration)}>{(r.probability_calibration * 100).toFixed(0)}%</span>
+            <span className={r.drift_norm > 0.20 ? "text-[#C84848] font-semibold" : r.drift_norm > 0.10 ? "text-[#C89040]" : "text-[#A89E94]"}>
+              {r.drift_norm > 0 ? r.drift_norm.toFixed(3) : "—"}
+            </span>
+            <span className="text-[#A89E94]">
+              {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+          {/* Mini bars */}
+          <div className="grid grid-cols-[90px_80px_60px_60px_60px_60px_60px_80px] gap-x-3 pb-1.5">
+            <span /><span />
+            {dims.map(dim => (
+              <div key={dim} className="h-[2px] bg-[#EDE7E0] rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${scoreBg(r[dim])} rounded-full`}
+                  style={{ width: `${(r[dim] * 100).toFixed(0)}%` }}
+                />
+              </div>
+            ))}
+            <span />
+          </div>
+          <Rule />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function QualityAnomalyView({
+  anomalies,
+  onResolve,
+}: {
+  anomalies:  QualityAnomaly[];
+  onResolve?: (id: string) => void;
+}) {
+  const kindLabel: Record<string, string> = {
+    drift:    "Score Drift",
+    conflict: "Evaluator Conflict",
+    rupture:  "Score Rupture",
+    safety:   "Quality Floor",
+  };
+
+  const pending   = anomalies.filter(a => a.requires_review && !a.resolved_at);
+  const resolved  = anomalies.filter(a => a.resolved_at);
+  const info      = anomalies.filter(a => !a.requires_review && !a.resolved_at);
+
+  return (
+    <div className="space-y-6">
+      {/* Pending review */}
+      {pending.length > 0 && (
+        <div>
+          <p className="t-label mb-3">Pending Review ({pending.length})</p>
+          {pending.map(a => {
+            const msg = (a.payload?.message as string) ?? `${a.kind} anomaly on ${a.ticker}`;
+            return (
+              <div key={a.id}>
+                <div className="py-2.5 flex items-start gap-3">
+                  <span className={`text-[9px] font-bold tracking-wider uppercase mt-0.5 w-4 ${severityColor(a.severity)}`}>
+                    {a.severity[0].toUpperCase()}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 mb-0.5">
+                      <span className="text-[11px] font-semibold text-[#1E1A14]">{a.ticker}</span>
+                      <span className={`text-[9px] font-bold tracking-wider uppercase ${severityColor(a.severity)}`}>
+                        {kindLabel[a.kind] ?? a.kind}
+                      </span>
+                      <span className="text-[#A89E94] text-[10px] ml-auto shrink-0">
+                        {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#6E6258] leading-relaxed">{msg}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-[#A89E94]">{a.analyst_id}</span>
+                      {a.timeline_entry && (
+                        <span className="text-[10px] text-[#A89E94]">
+                          overall {((a.timeline_entry.dim_scores.overall ?? 0) * 100).toFixed(0)}%
+                          {a.timeline_entry.drift_norm > 0 ? ` · drift ${a.timeline_entry.drift_norm.toFixed(3)}` : ""}
+                        </span>
+                      )}
+                      {onResolve && (
+                        <button
+                          onClick={() => onResolve(a.id)}
+                          className="text-[10px] text-[#C8804A] hover:underline ml-auto"
+                        >
+                          Mark resolved →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Rule />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Info (no review required) */}
+      {info.length > 0 && (
+        <div>
+          <p className="t-label mb-3">Informational ({info.length})</p>
+          {info.map(a => {
+            const msg = (a.payload?.message as string) ?? `${a.kind} on ${a.ticker}`;
+            return (
+              <div key={a.id}>
+                <div className="py-2 flex items-start gap-3">
+                  <span className="text-[9px] font-bold tracking-wider uppercase mt-0.5 w-4 text-[#A89E94]">i</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 mb-0.5">
+                      <span className="text-[11px] font-semibold text-[#1E1A14]">{a.ticker}</span>
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#A89E94]">
+                        {kindLabel[a.kind] ?? a.kind}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#A89E94]">{msg}</p>
+                  </div>
+                </div>
+                <Rule />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {pending.length === 0 && info.length === 0 && resolved.length === 0 && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">No quality anomalies detected.</p>
+      )}
+
+      {resolved.length > 0 && (
+        <p className="text-[10px] text-[#A89E94] text-center">{resolved.length} resolved anomaly/ies not shown.</p>
+      )}
+    </div>
+  );
+}
+
+function QualityTrendView({
+  trends,
+  obsStates,
+  onTriggerScan,
+  scanning,
+}: {
+  trends:         QualityTrend[];
+  obsStates:      QualityObsState[];
+  onTriggerScan:  (analyst_id: string) => void;
+  scanning:       string | null;
+}) {
+  const dims = ["argument_quality", "scenario_coherence", "probability_calibration"] as const;
+  const dimLabel: Record<string, string> = {
+    argument_quality:        "Argument Quality",
+    scenario_coherence:      "Scenario Coherence",
+    probability_calibration: "Probability Calibration",
+  };
+
+  if (trends.length === 0) {
+    return <p className="text-[11px] text-[#A89E94] py-6 text-center">No trend data yet. Need at least 3 analyses per analyst.</p>;
+  }
+
+  return (
+    <div className="space-y-8">
+      {trends.map(t => {
+        const state = obsStates.find(s => s.analyst_id === t.analyst_id);
+        return (
+          <div key={t.analyst_id}>
+            {/* Analyst header */}
+            <div className="flex items-baseline justify-between mb-3">
+              <div>
+                <span className="text-[12px] font-semibold text-[#1E1A14]">{t.analyst_id}</span>
+                <span className="text-[#A89E94] text-[11px] ml-3">
+                  {t.window_size} analyses · {new Date(t.period_start).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(t.period_end).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+              <button
+                onClick={() => onTriggerScan(t.analyst_id)}
+                disabled={scanning === t.analyst_id}
+                className="text-[10px] text-[#A89E94] hover:text-[#C8804A] transition-colors disabled:opacity-40"
+              >
+                {scanning === t.analyst_id ? "Scanning…" : "⟳ Trigger scan"}
+              </button>
+            </div>
+
+            {/* Overall score */}
+            <div className="mb-3">
+              <div className="flex justify-between mb-1">
+                <Label>Overall Quality Score</Label>
+                <span className={`text-[10px] font-semibold ${scoreColor(t.means.overall)}`}>
+                  {(t.means.overall * 100).toFixed(0)}%
+                  <span className={`ml-1 ${trendColor(t.trend_direction.overall ?? "stable")}`}>
+                    {trendArrow(t.trend_direction.overall ?? "stable")}
+                  </span>
+                </span>
+              </div>
+              <div className="h-[3px] bg-[#EDE7E0] rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${scoreBg(t.means.overall)} rounded-full`}
+                  style={{ width: `${(t.means.overall * 100).toFixed(0)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Per-dimension grid */}
+            <div className="grid grid-cols-3 gap-4">
+              {dims.map(dim => (
+                <div key={dim}>
+                  <div className="flex justify-between mb-1">
+                    <Label>{dimLabel[dim]}</Label>
+                    <span className={`text-[10px] font-semibold ${scoreColor(t.means[dim])}`}>
+                      {(t.means[dim] * 100).toFixed(0)}%
+                      <span className={`ml-1 ${trendColor(t.trend_direction[dim] ?? "stable")}`}>
+                        {trendArrow(t.trend_direction[dim] ?? "stable")}
+                      </span>
+                    </span>
+                  </div>
+                  <MiniBar value={t.means[dim] * 100} max={100} color={scoreBg(t.means[dim])} />
+                </div>
+              ))}
+            </div>
+
+            {/* Best / worst + anomaly rate */}
+            <div className="flex gap-6 mt-3 text-[10px] text-[#A89E94]">
+              <span>Best: <span className="text-[#7A9E6A]">{dimLabel[t.best_dimension] ?? t.best_dimension}</span></span>
+              <span>Weakest: <span className="text-[#C84848]">{dimLabel[t.worst_dimension] ?? t.worst_dimension}</span></span>
+              <span>Anomaly rate: <span className={t.anomaly_rate > 0.3 ? "text-[#C84848]" : "text-[#A89E94]"}>{(t.anomaly_rate * 100).toFixed(0)}%</span></span>
+              {state && (
+                <span className="ml-auto">
+                  Last scan: {state.last_worker_run_at
+                    ? new Date(state.last_worker_run_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+                    : "never"}
+                </span>
+              )}
+            </div>
+
+            <Rule />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "timeline" | "agents" | "anomalies" | "analysts";
+type Tab = "timeline" | "agents" | "anomalies" | "analysts" | "quality";
 
 export default function ObservatoryPage() {
-  const [data,    setData]    = useState<ObservatoryData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
-  const [tab,     setTab]     = useState<Tab>("timeline");
+  const [data,        setData]        = useState<ObservatoryData | null>(null);
+  const [qualityData, setQualityData] = useState<QualityData | null>(null);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState<string | null>(null);
+  const [tab,         setTab]         = useState<Tab>("timeline");
+  const [scanning,    setScanning]    = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/observatory")
-      .then(r => r.json())
-      .then(d => { setData(d as ObservatoryData); setLoading(false); })
+    Promise.all([
+      fetch("/api/observatory").then(r => r.json()),
+      fetch("/api/observatory/quality").then(r => r.json()),
+    ])
+      .then(([d, q]) => {
+        setData(d as ObservatoryData);
+        setQualityData(q as QualityData);
+        setLoading(false);
+      })
       .catch(e => { setError(String(e)); setLoading(false); });
   }, []);
+
+  async function handleTriggerScan(analyst_id: string) {
+    setScanning(analyst_id);
+    try {
+      await fetch("/api/observatory/scan", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ analyst_id }),
+      });
+      // Re-fetch quality data after 3s to show updated results
+      setTimeout(() => {
+        fetch("/api/observatory/quality")
+          .then(r => r.json())
+          .then(q => setQualityData(q as QualityData))
+          .finally(() => setScanning(null));
+      }, 3000);
+    } catch {
+      setScanning(null);
+    }
+  }
+
+  async function handleResolveAnomaly(id: string) {
+    await fetch(`/api/observatory/quality`, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ anomaly_id: id, resolved_by: "observatory_ui" }),
+    });
+    // Refresh quality data
+    fetch("/api/observatory/quality")
+      .then(r => r.json())
+      .then(q => setQualityData(q as QualityData));
+  }
 
   if (loading) {
     return (
@@ -410,6 +749,8 @@ export default function ObservatoryPage() {
       </div>
     );
   }
+
+  const pendingAnomalies = qualityData?.anomalies.filter(a => a.requires_review && !a.resolved_at).length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -451,6 +792,12 @@ export default function ObservatoryPage() {
         <TabButton active={tab === "analysts"}  onClick={() => setTab("analysts")}>
           Analyst Calibration
         </TabButton>
+        <TabButton active={tab === "quality"}   onClick={() => setTab("quality")}>
+          Quality Monitor
+          {pendingAnomalies > 0 && (
+            <span className="ml-1.5 text-[#C89040] font-bold">{pendingAnomalies}</span>
+          )}
+        </TabButton>
       </div>
 
       <hr className="t-rule" />
@@ -460,6 +807,47 @@ export default function ObservatoryPage() {
       {tab === "agents"    && <AgentPerformanceView stats={data.agent_stats} />}
       {tab === "anomalies" && <AnomalyFeedView anomalies={data.anomalies} />}
       {tab === "analysts"  && <AnalystCalibrationView analysts={data.analysts} />}
+      {tab === "quality"   && qualityData && (
+        <div className="space-y-8">
+          {/* Quality Timeline */}
+          <div>
+            <p className="t-label mb-4">Evaluator Registry Scores</p>
+            <QualityTimelineView rows={qualityData.timeline} />
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Quality Anomalies */}
+          <div>
+            <p className="t-label mb-4">
+              Quality Anomalies
+              {pendingAnomalies > 0 && (
+                <span className="ml-2 text-[#C89040]">({pendingAnomalies} pending review)</span>
+              )}
+            </p>
+            <QualityAnomalyView
+              anomalies={qualityData.anomalies}
+              onResolve={handleResolveAnomaly}
+            />
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Trend analysis */}
+          <div>
+            <p className="t-label mb-4">Trend Analysis</p>
+            <QualityTrendView
+              trends={qualityData.trends}
+              obsStates={qualityData.obs_states}
+              onTriggerScan={handleTriggerScan}
+              scanning={scanning}
+            />
+          </div>
+        </div>
+      )}
+      {tab === "quality" && !qualityData && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">Loading quality data…</p>
+      )}
 
     </div>
   );
