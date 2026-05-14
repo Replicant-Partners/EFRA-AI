@@ -25,17 +25,23 @@
  */
 
 import { prisma } from "./prisma.js";
+import { writeEpisode } from "./episode-store.js";
+import { writeCorrectionTimelineEntry } from "./timeline-writer.js";
 import type { EncodedIntervention } from "./intervention-encoder.js";
 import type { GateOutcome } from "./coherence-gate.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface TwoWriteReceipt {
-  correction_id:       string;
-  synthetic_episode_id:string;
-  anomaly_resolved:    boolean;
-  gate_verdict:        string;
-  gamma:               number;
+  correction_id:        string;
+  synthetic_episode_id: string;
+  // ID of the Episode row written into the main Episode Store
+  // This is what makes the correction visible to the drift monitor
+  // and future evaluations — the real re-injection.
+  injected_episode_id:  string;
+  anomaly_resolved:     boolean;
+  gate_verdict:         string;
+  gamma:                number;
 }
 
 export interface OriginalEpisodeContext {
@@ -77,9 +83,9 @@ export async function executeTwoWrite({
     },
   };
 
-  // Run both writes in a transaction
+  // Run Writes 1 + 2 in a transaction (EpisodeCorrection + SyntheticEpisode)
   const [correction, synthetic] = await prisma.$transaction(async (tx) => {
-    // Write 1 — EpisodeCorrection (audit record)
+    // Write 1 — EpisodeCorrection (immutable audit record)
     const corr = await tx.episodeCorrection.create({
       data: {
         episode_id:        original_episode.episode_id,
@@ -98,7 +104,7 @@ export async function executeTwoWrite({
       select: { id: true },
     });
 
-    // Write 2 — SyntheticEpisode (high-authority re-injection)
+    // Write 2 — SyntheticEpisode (audit + FK to correction)
     const synth = await tx.syntheticEpisode.create({
       data: {
         correction_id:      corr.id,
@@ -116,7 +122,61 @@ export async function executeTwoWrite({
     return [corr, synth];
   });
 
-  // Resolve the AnomalyEvent outside the transaction (non-critical)
+  // Write 3 — Re-inject into Episode Store (the actual re-injection)
+  // This is what closes the loop: the drift monitor, evaluator registry,
+  // and future analyses all read from Episode. Without this write,
+  // the correction has no observable effect on future behavior.
+  //
+  // Why outside the transaction: writeEpisode uses a separate prisma client
+  // call and we want a clean cuid() ID. A failure here is non-critical —
+  // the correction is already recorded in EpisodeCorrection.
+  let injected_episode_id = "";
+  try {
+    injected_episode_id = await writeEpisode({
+      analysis_id:      original_episode.analysis_id,
+      analyst_id:       original_episode.analyst_id,
+      ticker:           original_episode.ticker,
+      agent:            original_episode.agent,
+      // Query context: reference to the original + correction metadata
+      query:            [
+        `ticker:${original_episode.ticker}`,
+        `agent:${original_episode.agent}`,
+        `synthetic:true`,
+        `correction:${correction.id}`,
+        `gamma:${gate_outcome.gamma.toFixed(3)}`,
+        `scope:${encoded.scope}`,
+        `classification:${encoded.classification}`,
+      ].join(" | "),
+      // Corrected response carries the original output + _correction annotation
+      response:         corrected_response,
+      provenance:       "synthetic",
+      analyst_note:     `Reviewer intervention (${encoded.classification}) — Γ(C)=${gate_outcome.gamma.toFixed(3)} · ${gate_outcome.verdict}`,
+      pipeline_version: 1,
+    });
+
+    console.log(`[TwoWriteMemory] ✓ Write 3 — Episode re-injected: ${injected_episode_id}`);
+  } catch (err) {
+    console.warn("[TwoWriteMemory] Write 3 failed — Episode not re-injected:", err);
+    // Fall back to synthetic episode id so the receipt is still useful
+    injected_episode_id = synthetic.id;
+  }
+
+  // Write 4 — Correction TimelineEntry (signals drift monitor to recalibrate)
+  // This is what makes the re-injection visible to the Background Worker on its
+  // next scan. Without this entry, the drift monitor would never see the correction.
+  try {
+    await writeCorrectionTimelineEntry({
+      analysis_id:   original_episode.analysis_id,
+      analyst_id:    original_episode.analyst_id,
+      ticker:        original_episode.ticker,
+      correction_id: correction.id,
+      gamma:         gate_outcome.gamma,
+    });
+  } catch (err) {
+    console.warn("[TwoWriteMemory] Write 4 failed — TimelineEntry not written:", err);
+  }
+
+  // Resolve the AnomalyEvent (non-critical)
   let anomaly_resolved = false;
   try {
     await prisma.anomalyEvent.update({
@@ -132,23 +192,24 @@ export async function executeTwoWrite({
   }
 
   console.log(
-    `[TwoWriteMemory] ✓ Write 1 — correction: ${correction.id} | ` +
-    `Write 2 — synthetic: ${synthetic.id} | ` +
-    `gamma: ${gate_outcome.gamma.toFixed(3)} | ` +
-    `verdict: ${gate_outcome.verdict} | ` +
+    `[TwoWriteMemory] ✓ Loop closed — ` +
+    `correction: ${correction.id} | synthetic: ${synthetic.id} | ` +
+    `episode: ${injected_episode_id} | ` +
+    `Γ(C): ${gate_outcome.gamma.toFixed(3)} (${gate_outcome.verdict}) | ` +
     `anomaly resolved: ${anomaly_resolved}`
   );
 
   return {
     correction_id:        correction.id,
     synthetic_episode_id: synthetic.id,
+    injected_episode_id,
     anomaly_resolved,
     gate_verdict:         gate_outcome.verdict,
     gamma:                gate_outcome.gamma,
   };
 }
 
-// ─── Read helpers (for Observatory audit trail) ───────────────────────────────
+// ─── Read helpers ─────────────────────────────────────────────────────────────
 
 export async function getCorrectionsForAnalysis(analysis_id: string) {
   return prisma.episodeCorrection.findMany({
@@ -164,5 +225,47 @@ export async function getSyntheticEpisodesForAnalyst(analyst_id: string, limit =
     include: { correction: { select: { classification: true, dimension: true, gamma: true, reviewer_id: true } } },
     orderBy: { created_at: "desc" },
     take:    limit,
+  });
+}
+
+/**
+ * Get high-authority episodes for an analyst (synthetic + human_corrected).
+ * These are the episodes that should carry the most weight in drift detection.
+ * Returned newest-first, authority_weight descending within same date.
+ *
+ * Used by the drift monitor to build a weighted baseline:
+ *   synthetic episodes (1.0) >> human_corrected (1.0) >> human_approved (0.8) >> auto_pass (0.5)
+ */
+export async function getHighAuthorityEpisodes(analyst_id: string, limit = 100) {
+  return prisma.episode.findMany({
+    where: {
+      analyst_id,
+      provenance: { in: ["synthetic", "human_corrected", "human_approved"] },
+    },
+    orderBy: [
+      { authority_weight: "desc" },
+      { created_at:       "desc" },
+    ],
+    take: limit,
+    select: {
+      id:               true,
+      ticker:           true,
+      agent:            true,
+      provenance:       true,
+      authority_weight: true,
+      confidence:       true,
+      analyst_note:     true,
+      created_at:       true,
+    },
+  });
+}
+
+/**
+ * Count of synthetic episodes injected for an analyst.
+ * Used by Observatory to show how many corrections have been re-injected.
+ */
+export async function countSyntheticEpisodes(analyst_id: string): Promise<number> {
+  return prisma.episode.count({
+    where: { analyst_id, provenance: "synthetic" },
   });
 }

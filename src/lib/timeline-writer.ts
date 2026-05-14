@@ -30,7 +30,7 @@ export interface DimScores {
 export interface TimelineEntryRecord {
   id:               string;
   analysis_id:      string;
-  eval_run_id:      string;
+  eval_run_id:      string | null;   // null for correction-sourced entries
   analyst_id:       string;
   ticker:           string;
   dim_scores:       DimScores;
@@ -88,6 +88,61 @@ export async function writeTimelineEntry({
   console.log(
     `[TimelineWriter] Entry written — id: ${entry.id} | ` +
     `overall: ${overall_score.toFixed(3)} | flags: ${initial_flags.join(", ") || "none"}`
+  );
+
+  return entry.id;
+}
+
+// ─── Write correction entry (from Two-Write Memory) ──────────────────────────
+// Written when a human correction is re-injected.
+// Has no EvalRun (eval_run_id = null, provenance = "correction").
+// dim_scores are inherited from the most recent normal TimelineEntry for this
+// analyst so the rolling mean has a valid anchor point.
+// The drift monitor will recalibrate when it next scans this entry.
+
+export async function writeCorrectionTimelineEntry({
+  analysis_id,
+  analyst_id,
+  ticker,
+  correction_id,
+  gamma,
+}: {
+  analysis_id:   string;
+  analyst_id:    string;
+  ticker:        string;
+  correction_id: string;
+  gamma:         number;
+}): Promise<string> {
+  // Inherit dim_scores from most recent entry for this analyst
+  const prior = await prisma.timelineEntry.findFirst({
+    where:   { analyst_id },
+    orderBy: { created_at: "desc" },
+    select:  { dim_scores: true },
+  });
+
+  const dim_scores = prior
+    ? (prior.dim_scores as unknown as DimScores)
+    : { argument_quality: 0.5, scenario_coherence: 0.5, probability_calibration: 0.5, overall: 0.5 };
+
+  const entry = await prisma.timelineEntry.create({
+    data: {
+      analysis_id,
+      eval_run_id:      null,   // no EvalRun for correction entries
+      analyst_id,
+      ticker:           ticker.toUpperCase(),
+      dim_scores:       dim_scores as object,
+      drift_norm:       0.0,
+      anomaly_flags:    [`correction:${correction_id}`, `gamma:${gamma.toFixed(3)}`],
+      provenance:       "correction",
+      pipeline_version: 1,
+      worker_processed: false,
+    },
+    select: { id: true },
+  });
+
+  console.log(
+    `[TimelineWriter] Correction entry written — id: ${entry.id} | ` +
+    `correction: ${correction_id} | Γ(C): ${gamma.toFixed(3)}`
   );
 
   return entry.id;

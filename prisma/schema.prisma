@@ -179,9 +179,10 @@ model TimelineEntry {
   id               String   @id @default(cuid())
 
   analysis_id      String
-  analysis         Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
-  eval_run_id      String
-  eval_run         EvalRun  @relation(fields: [eval_run_id], references: [id], onDelete: Cascade)
+  analysis         Analysis  @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+  // Nullable: correction-sourced entries have no EvalRun (provenance="correction")
+  eval_run_id      String?
+  eval_run         EvalRun?  @relation(fields: [eval_run_id], references: [id], onDelete: SetNull)
   analyst_id       String
   ticker           String
 
