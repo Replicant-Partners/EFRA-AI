@@ -629,11 +629,14 @@ function QualityAnomalyView({
 }) {
   const [activeIntervene, setActiveIntervene] = useState<string | null>(null);
 
-  const kindLabel: Record<string, string> = {
-    drift:    "Score Drift",
-    conflict: "Evaluator Conflict",
-    rupture:  "Score Rupture",
-    safety:   "Quality Floor",
+  const kindLabel = (kind: string, payload: Record<string, unknown>): string => {
+    if (kind === "rupture") {
+      const rk = payload?.rupture_kind as string | undefined;
+      return rk === "trust" ? "Dyad Trust Rupture"
+           : rk === "rapport" ? "Dyad Rapport Rupture"
+           : "Score Rupture";
+    }
+    return { drift: "Score Drift", conflict: "Evaluator Conflict", safety: "Quality Floor" }[kind] ?? kind;
   };
 
   const pending   = anomalies.filter(a => a.requires_review && !a.resolved_at);
@@ -668,7 +671,7 @@ function QualityAnomalyView({
                     <div className="flex items-baseline gap-2 mb-0.5">
                       <span className="text-[11px] font-semibold text-[#1E1A14]">{a.ticker}</span>
                       <span className={`text-[9px] font-bold tracking-wider uppercase ${severityColor(a.severity)}`}>
-                        {kindLabel[a.kind] ?? a.kind}
+                        {kindLabel(a.kind, a.payload)}
                       </span>
                       <span className="text-[#A89E94] text-[10px] ml-auto shrink-0">
                         {new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -734,7 +737,7 @@ function QualityAnomalyView({
                     <div className="flex items-baseline gap-2 mb-0.5">
                       <span className="text-[11px] font-semibold text-[#1E1A14]">{a.ticker}</span>
                       <span className="text-[9px] font-bold tracking-wider uppercase text-[#A89E94]">
-                        {kindLabel[a.kind] ?? a.kind}
+                        {kindLabel(a.kind, a.payload)}
                       </span>
                     </div>
                     <p className="text-[11px] text-[#A89E94]">{msg}</p>

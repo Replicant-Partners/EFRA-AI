@@ -34,6 +34,7 @@
  */
 
 import { prisma } from "./prisma.js";
+import { writeDyadRuptureTimelineEntry } from "./timeline-writer.js";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -239,6 +240,57 @@ export async function updateDyad(input: DyadUpdateInput): Promise<DyadUpdateResu
       `[DyadTracker] RUPTURE — analyst: ${analyst_id} | ticker: ${ticker} | ` +
       `kind: ${rupture_kind} | trust: ${prev_trust.toFixed(3)}→${new_trust.toFixed(3)}`
     );
+
+    // ── Materialize rupture as AnomalyEvent (HITL queue) ─────────────────
+    // AnomalyEvent requires a TimelineEntry FK. We create a "dyad_rupture"
+    // TimelineEntry (provenance="correction") to anchor the anomaly.
+    // This makes the rupture visible in the Quality Monitor and HITL queue.
+    try {
+      const timeline_entry_id = await writeDyadRuptureTimelineEntry({
+        analysis_id,
+        analyst_id,
+        ticker,
+        dyad_id:      dyad.id,
+        rupture_kind: rupture_kind!,
+        prev_trust,
+        new_trust,
+      });
+
+      const severity = rupture_kind === "trust" ? "high" : "medium";
+      const message  = rupture_kind === "trust"
+        ? `Trust rupture on ${ticker}: quality collapsed from ${prev_trust.toFixed(2)} → ${new_trust.toFixed(2)} (Δ=${(prev_trust - new_trust).toFixed(2)}). Analyst's work on this ticker has degraded significantly.`
+        : `Rapport rupture on ${ticker}: conviction flipped from ${prev_rating ?? "?"} to ${rating ?? "?"} while rapport was high (${prev_rapport.toFixed(2)}). Sudden thesis reversal detected.`;
+
+      await prisma.anomalyEvent.create({
+        data: {
+          analyst_id,
+          ticker:            ticker.toUpperCase(),
+          timeline_entry_id,
+          kind:              "rupture",
+          severity,
+          payload: {
+            rupture_kind,
+            message,
+            dyad_id:          dyad.id,
+            dyad_entry_id:    entry.id,
+            prev_trust:       prev_trust,
+            new_trust:        new_trust,
+            prev_rapport:     prev_rapport,
+            new_rapport:      new_rapport,
+            prev_rating:      prev_rating,
+            new_rating:       rating,
+            episode_count:    new_episode_count,
+            analysis_id,
+          },
+          requires_review: true,
+        },
+      });
+
+      console.log(`[DyadTracker] AnomalyEvent created — rupture:${rupture_kind} | ${analyst_id}/${ticker} | severity: ${severity}`);
+    } catch (err) {
+      // Non-critical — rupture is recorded in DyadEntry regardless
+      console.warn("[DyadTracker] Failed to create AnomalyEvent for rupture:", err);
+    }
   } else {
     console.log(
       `[DyadTracker] Updated — ${analyst_id}/${ticker} | ` +

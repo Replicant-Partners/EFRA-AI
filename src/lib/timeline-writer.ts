@@ -148,6 +148,70 @@ export async function writeCorrectionTimelineEntry({
   return entry.id;
 }
 
+// ─── Write dyad rupture entry ─────────────────────────────────────────────────
+// Written by the Dyad Tracker when a relational rupture is detected.
+// Has no EvalRun. provenance = "correction" (reuses the nullable FK slot).
+// anomaly_flags: ["rupture:<kind>", "dyad:<id>"]
+// The Background Worker skips these in drift computation (worker_processed = true).
+
+export async function writeDyadRuptureTimelineEntry({
+  analysis_id,
+  analyst_id,
+  ticker,
+  dyad_id,
+  rupture_kind,
+  prev_trust,
+  new_trust,
+}: {
+  analysis_id:   string;
+  analyst_id:    string;
+  ticker:        string;
+  dyad_id:       string;
+  rupture_kind:  string;
+  prev_trust:    number;
+  new_trust:     number;
+}): Promise<string> {
+  // Inherit dim_scores from most recent entry (anchor point for consistency)
+  const prior = await prisma.timelineEntry.findFirst({
+    where:   { analyst_id },
+    orderBy: { created_at: "desc" },
+    select:  { dim_scores: true },
+  });
+
+  // Override trust dimension with the new (ruptured) value
+  const base_scores = prior
+    ? (prior.dim_scores as unknown as DimScores)
+    : { argument_quality: 0.5, scenario_coherence: 0.5, probability_calibration: 0.5, overall: 0.5 };
+
+  const dim_scores: DimScores = {
+    ...base_scores,
+    overall: new_trust,  // reflect the trust collapse in the overall score
+  };
+
+  const entry = await prisma.timelineEntry.create({
+    data: {
+      analysis_id,
+      eval_run_id:      null,
+      analyst_id,
+      ticker:           ticker.toUpperCase(),
+      dim_scores:       dim_scores as object,
+      drift_norm:       Math.abs(prev_trust - new_trust),  // rupture magnitude as drift
+      anomaly_flags:    [`rupture:${rupture_kind}`, `dyad:${dyad_id}`],
+      provenance:       "correction",
+      pipeline_version: 1,
+      worker_processed: true,  // skip Background Worker drift re-computation for ruptures
+    },
+    select: { id: true },
+  });
+
+  console.log(
+    `[TimelineWriter] Dyad rupture entry — id: ${entry.id} | ` +
+    `rupture_kind: ${rupture_kind} | trust: ${prev_trust.toFixed(3)}→${new_trust.toFixed(3)}`
+  );
+
+  return entry.id;
+}
+
 // ─── Read helpers ─────────────────────────────────────────────────────────────
 
 /**
