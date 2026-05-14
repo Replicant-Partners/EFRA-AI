@@ -25,6 +25,7 @@ import {
 } from "@/src/lib/intervention-encoder";
 import { checkCoherence } from "@/src/lib/coherence-gate";
 import { executeTwoWrite } from "@/src/lib/two-write-memory";
+import { updateDyad } from "@/src/lib/dyad-tracker";
 
 export async function POST(request: Request) {
   try {
@@ -116,7 +117,20 @@ export async function POST(request: Request) {
       original_episode,
     });
 
-    // ── 6. Return receipt ─────────────────────────────────────────────────
+    // ── 6. Update Dyad correction count (non-blocking) ───────────────────
+    void updateDyad({
+      analyst_id:    original_episode.analyst_id,
+      ticker:        original_episode.ticker,
+      analysis_id:   original_episode.analysis_id,
+      overall_score: null,       // no new eval score — correction only
+      rating:        null,
+      mode:          "valentine", // fallback mode — correction doesn't change mode
+      has_correction: true,
+    }).catch(err => {
+      console.warn("[DyadTracker] Correction update failed:", err);
+    });
+
+    // ── 7. Return receipt ─────────────────────────────────────────────────
     return NextResponse.json({
       ...receipt,
       gate: {

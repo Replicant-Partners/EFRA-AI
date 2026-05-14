@@ -28,6 +28,7 @@ model Analysis {
   evalRuns          EvalRun[]
   timelineEntries   TimelineEntry[]
   syntheticEpisodes SyntheticEpisode[]
+  dyadEntries       DyadEntry[]
 
   @@index([ticker])
   @@index([created_at])
@@ -351,4 +352,79 @@ model IntelItem {
   created_at        DateTime @default(now())
 
   @@index([analysis_id])
+}
+
+// ─── Dyad Tracker — Social Tracker (Plane C) ─────────────────────────────────
+// A Dyad is a (analyst_id, ticker) pair — the longitudinal relationship
+// between an analyst and a specific ticker across all analyses.
+// Three EWMA dimensions: rapport (rating consistency), trust (quality),
+// reciprocity (depth of engagement). Rupture detected on sudden trust drop.
+
+model Dyad {
+  id               String      @id @default(cuid())
+  analyst_id       String
+  ticker           String
+
+  // EWMA relational state (0.0–1.0, updated after each analysis)
+  rapport          Float       @default(0.5)  // rating consistency over time
+  trust            Float       @default(0.5)  // quality of analyses for this pair
+  reciprocity      Float       @default(0.5)  // depth of engagement
+
+  // Counters
+  episode_count    Int         @default(0)
+  buy_count        Int         @default(0)
+  hold_count       Int         @default(0)
+  sell_count       Int         @default(0)
+  correction_count Int         @default(0)
+
+  // Mode diversity
+  modes_used       String[]    @default([])
+
+  // Last analysis snapshot
+  last_rating      String?
+  last_overall     Float?
+  last_analysis_id String?
+
+  // Rupture tracking
+  rupture_count    Int         @default(0)
+  last_rupture_at  DateTime?
+
+  entries          DyadEntry[]
+
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+
+  @@unique([analyst_id, ticker])
+  @@index([analyst_id])
+  @@index([ticker])
+  @@index([trust])
+  @@index([rapport])
+}
+
+model DyadEntry {
+  id           String   @id @default(cuid())
+  dyad_id      String
+  dyad         Dyad     @relation(fields: [dyad_id], references: [id], onDelete: Cascade)
+  analysis_id  String
+  analysis     Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+
+  // Dyad state snapshot at this analysis
+  rapport      Float
+  trust        Float
+  reciprocity  Float
+
+  // Drivers for this update
+  overall_score Float?   // from EvalRun
+  rating        String?  // BUY / HOLD / UNDERPERFORM
+  mode          String?  // valentine / gunn / dual
+
+  // Rupture detection
+  rupture       Boolean  @default(false)
+  rupture_kind  String?  // "trust" | "rapport" | null
+
+  created_at    DateTime @default(now())
+
+  @@index([dyad_id])
+  @@index([analysis_id])
+  @@index([created_at])
 }

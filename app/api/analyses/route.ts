@@ -6,6 +6,7 @@ import { writeEpisode, type Provenance } from "@/src/lib/episode-store";
 import { runEvaluatorRegistry } from "@/src/lib/evaluator-registry";
 import { writeTimelineEntry } from "@/src/lib/timeline-writer";
 import { scanAnalyst } from "@/src/lib/background-worker";
+import { updateDyad } from "@/src/lib/dyad-tracker";
 
 export async function POST(request: Request) {
   try {
@@ -80,6 +81,19 @@ export async function POST(request: Request) {
         // Plane C — Background Worker (async two-pass scan, non-blocking)
         void scanAnalyst(analyst_id).catch(err => {
           console.warn("[BackgroundWorker] Scan failed:", err);
+        });
+
+        // Plane C — Dyad Tracker (Social Tracker, non-blocking)
+        void updateDyad({
+          analyst_id,
+          ticker:         ticker.toUpperCase(),
+          analysis_id:    analysis.id,
+          overall_score:  registry_outcome.overall_score,
+          rating:         (state.valuation?.rating ?? null) as "BUY" | "HOLD" | "UNDERPERFORM" | null,
+          mode,
+          has_correction: false,  // updated later if an intervention is made
+        }).catch(err => {
+          console.warn("[DyadTracker] Failed:", err);
         });
 
       } catch (err) {

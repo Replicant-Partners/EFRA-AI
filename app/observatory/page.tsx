@@ -19,6 +19,10 @@ import type {
   CorrectionsData,
   CorrectionRecord,
 } from "@/app/api/observatory/corrections/route";
+import type {
+  DyadsData,
+  DyadSummary,
+} from "@/app/api/observatory/dyads/route";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
@@ -858,6 +862,144 @@ function QualityTrendView({
   );
 }
 
+// ─── Dyads View ───────────────────────────────────────────────────────────────
+
+function MiniSparkline({ entries, dim }: {
+  entries: DyadSummary["entries"];
+  dim: "rapport" | "trust" | "reciprocity";
+}) {
+  if (entries.length < 2) return null;
+  const vals = entries.map(e => e[dim]);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 0.01;
+  const w = 60;
+  const h = 18;
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  const last = vals[vals.length - 1];
+  const color = last >= 0.7 ? "#7A9E6A" : last >= 0.45 ? "#C89040" : "#C84848";
+  return (
+    <svg width={w} height={h} className="overflow-visible">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DyadCard({ d }: { d: DyadSummary }) {
+  const ratingBias = d.episode_count > 0
+    ? d.buy_count > d.hold_count && d.buy_count > d.sell_count ? "BUY"
+    : d.sell_count > d.hold_count ? "SELL"
+    : "HOLD"
+    : null;
+
+  const rColor = (v: number) => v >= 0.7 ? "text-[#7A9E6A]" : v >= 0.45 ? "text-[#C89040]" : "text-[#C84848]";
+  const rBg    = (v: number) => v >= 0.7 ? "bg-[#7A9E6A]" : v >= 0.45 ? "bg-[#C89040]" : "bg-[#C84848]";
+
+  return (
+    <div className={`py-3 ${d.rupture_count > 0 ? "border-l-2 border-[#C84848] pl-3" : ""}`}>
+      {/* Header */}
+      <div className="flex items-baseline gap-2 mb-2">
+        <span className="text-[12px] font-semibold text-[#1E1A14]">{d.ticker}</span>
+        <span className="text-[10px] text-[#A89E94]">{d.analyst_id}</span>
+        <span className="text-[9px] text-[#A89E94] ml-1">{d.episode_count} {d.episode_count === 1 ? "analysis" : "analyses"}</span>
+        {d.rupture_count > 0 && (
+          <span className="text-[9px] font-bold text-[#C84848] tracking-wider uppercase ml-1">
+            {d.rupture_count} rupture{d.rupture_count > 1 ? "s" : ""}
+          </span>
+        )}
+        {ratingBias && (
+          <span className={`text-[9px] font-bold tracking-wider uppercase ml-auto ${
+            ratingBias === "BUY" ? "text-[#C8804A]" : ratingBias === "SELL" ? "text-[#C84848]" : "text-[#A89E94]"
+          }`}>{ratingBias} bias</span>
+        )}
+      </div>
+
+      {/* Dimension bars + sparklines */}
+      <div className="grid grid-cols-3 gap-4">
+        {(["rapport", "trust", "reciprocity"] as const).map(dim => (
+          <div key={dim}>
+            <div className="flex justify-between mb-0.5">
+              <Label>{dim}</Label>
+              <span className={`text-[10px] font-semibold ${rColor(d[dim])}`}>
+                {(d[dim] * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="h-[2px] bg-[#EDE7E0] rounded-full overflow-hidden mb-1">
+              <div className={`h-full ${rBg(d[dim])} rounded-full`} style={{ width: `${(d[dim] * 100).toFixed(0)}%` }} />
+            </div>
+            <MiniSparkline entries={d.entries} dim={dim} />
+          </div>
+        ))}
+      </div>
+
+      {/* Mode diversity + correction count */}
+      <div className="flex gap-4 mt-2 text-[10px] text-[#A89E94]">
+        <span>Modes: <span className="text-[#6E6258]">{d.modes_used.join(", ") || "—"}</span></span>
+        {d.correction_count > 0 && (
+          <span>Corrections: <span className="text-[#C8804A]">{d.correction_count}</span></span>
+        )}
+        {d.last_rupture_at && (
+          <span>Last rupture: <span className="text-[#C84848]">{new Date(d.last_rupture_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></span>
+        )}
+        {d.last_analysis_id && (
+          <a href={`/library/${d.last_analysis_id}`} className="ml-auto text-[#A89E94] hover:text-[#C8804A] transition-colors">
+            Latest →
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DyadsView({ data }: { data: DyadsData }) {
+  const [filter, setFilter] = useState<"all" | "ruptures">("all");
+
+  const shown = filter === "ruptures"
+    ? data.dyads.filter(d => d.rupture_count > 0)
+    : data.dyads;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[#A89E94]">
+        <span>{data.total} dyads</span>
+        <span>analysts <span className="text-[#6E6258]">{data.analysts.join(", ") || "—"}</span></span>
+        <span>tickers <span className="text-[#6E6258]">{data.tickers.length}</span></span>
+        {data.rupture_count > 0 && (
+          <span>ruptures <span className="text-[#C84848] font-semibold">{data.rupture_count}</span></span>
+        )}
+      </div>
+
+      {/* Filter */}
+      <div className="flex gap-4">
+        <TabButton active={filter === "all"}      onClick={() => setFilter("all")}>All Dyads</TabButton>
+        <TabButton active={filter === "ruptures"} onClick={() => setFilter("ruptures")}>
+          Ruptures {data.rupture_count > 0 && <span className="ml-1 text-[#C84848]">{data.rupture_count}</span>}
+        </TabButton>
+      </div>
+
+      <Rule />
+
+      {shown.length === 0 && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">
+          {filter === "ruptures" ? "No ruptures detected." : "No dyads yet. Run a pipeline to create the first one."}
+        </p>
+      )}
+
+      {shown.map(d => (
+        <div key={d.id}>
+          <DyadCard d={d} />
+          <Rule />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Corrections Audit Trail ──────────────────────────────────────────────────
 
 function CorrectionsView({ data }: { data: CorrectionsData }) {
@@ -975,12 +1117,13 @@ function CorrectionsView({ data }: { data: CorrectionsData }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "timeline" | "agents" | "anomalies" | "analysts" | "quality" | "corrections";
+type Tab = "timeline" | "agents" | "anomalies" | "analysts" | "quality" | "corrections" | "dyads";
 
 export default function ObservatoryPage() {
   const [data,             setData]             = useState<ObservatoryData | null>(null);
   const [qualityData,      setQualityData]      = useState<QualityData | null>(null);
   const [correctionsData,  setCorrectionsData]  = useState<CorrectionsData | null>(null);
+  const [dyadsData,        setDyadsData]        = useState<DyadsData | null>(null);
   const [loading,          setLoading]          = useState(true);
   const [error,            setError]            = useState<string | null>(null);
   const [tab,              setTab]              = useState<Tab>("timeline");
@@ -991,11 +1134,13 @@ export default function ObservatoryPage() {
       fetch("/api/observatory").then(r => r.json()),
       fetch("/api/observatory/quality").then(r => r.json()),
       fetch("/api/observatory/corrections").then(r => r.json()),
+      fetch("/api/observatory/dyads").then(r => r.json()),
     ])
-      .then(([d, q, c]) => {
+      .then(([d, q, c, dy]) => {
         setData(d as ObservatoryData);
         setQualityData(q as QualityData);
         setCorrectionsData(c as CorrectionsData);
+        setDyadsData(dy as DyadsData);
         setLoading(false);
       })
       .catch(e => { setError(String(e)); setLoading(false); });
@@ -1094,6 +1239,12 @@ export default function ObservatoryPage() {
             <span className="ml-1.5 text-[#7A9E6A] font-bold">{correctionsData!.total}</span>
           )}
         </TabButton>
+        <TabButton active={tab === "dyads"} onClick={() => setTab("dyads")}>
+          Dyads
+          {(dyadsData?.rupture_count ?? 0) > 0 && (
+            <span className="ml-1.5 text-[#C84848] font-bold">{dyadsData!.rupture_count}</span>
+          )}
+        </TabButton>
       </div>
 
       <hr className="t-rule" />
@@ -1154,6 +1305,11 @@ export default function ObservatoryPage() {
       )}
       {tab === "corrections" && !correctionsData && (
         <p className="text-[11px] text-[#A89E94] py-6 text-center">Loading corrections…</p>
+      )}
+
+      {tab === "dyads" && dyadsData && <DyadsView data={dyadsData} />}
+      {tab === "dyads" && !dyadsData && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">Loading dyads…</p>
       )}
 
     </div>
