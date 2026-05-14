@@ -4,6 +4,8 @@ import type { PipelineState } from "@/src/shared/types";
 import { buildReportContent } from "@/src/lib/report-builder";
 import { writeEpisode, type Provenance } from "@/src/lib/episode-store";
 import { runEvaluatorRegistry } from "@/src/lib/evaluator-registry";
+import { writeTimelineEntry } from "@/src/lib/timeline-writer";
+import { scanAnalyst } from "@/src/lib/background-worker";
 
 export async function POST(request: Request) {
   try {
@@ -52,17 +54,38 @@ export async function POST(request: Request) {
       state,
     });
 
-    // ── Run Evaluator Registry (Plane B) ──────────────────────────────────
-    // Runs 3 LLM-as-judge evaluators concurrently after each completed analysis.
-    // Non-blocking: never fails the analysis save.
-    void runEvaluatorRegistry({
-      analysis_id: analysis.id,
-      analyst_id,
-      ticker:      ticker.toUpperCase(),
-      state,
-    }).catch(err => {
-      console.warn("[EvalRegistry] Failed to run registry:", err);
-    });
+    // ── Run Evaluator Registry (Plane B) + Longitudinal Observer (Plane C) ──
+    // Non-blocking pipeline: EvalRegistry → TimelineWriter → BackgroundWorker
+    // Each step is chained but never fails the analysis save.
+    void (async () => {
+      try {
+        // Plane B — Evaluator Registry
+        const registry_outcome = await runEvaluatorRegistry({
+          analysis_id: analysis.id,
+          analyst_id,
+          ticker:      ticker.toUpperCase(),
+          state,
+        });
+
+        if (!registry_outcome) return; // skipped (non-COMPLETED status)
+
+        // Plane C — Timeline Writer (inline hot-path write)
+        await writeTimelineEntry({
+          analysis_id:      analysis.id,
+          analyst_id,
+          ticker:           ticker.toUpperCase(),
+          registry_outcome,
+        });
+
+        // Plane C — Background Worker (async two-pass scan, non-blocking)
+        void scanAnalyst(analyst_id).catch(err => {
+          console.warn("[BackgroundWorker] Scan failed:", err);
+        });
+
+      } catch (err) {
+        console.warn("[ObservabilityPipeline] Failed:", err);
+      }
+    })();
 
     return NextResponse.json({ id: analysis.id }, { status: 201 });
   } catch (err) {

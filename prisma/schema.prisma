@@ -24,8 +24,9 @@ model Analysis {
   created_at  DateTime    @default(now())
   updated_at  DateTime    @updatedAt
   intel_items IntelItem[]
-  episodes    Episode[]
-  evalRuns    EvalRun[]
+  episodes        Episode[]
+  evalRuns        EvalRun[]
+  timelineEntries TimelineEntry[]
 
   @@index([ticker])
   @@index([created_at])
@@ -99,6 +100,106 @@ model Episode {
   @@index([created_at])
 }
 
+// ─── Longitudinal Observer — Plane C ─────────────────────────────────────────
+// TimelineEntry: denormalized read surface, one per EvalRun.
+// AnomalyEvent: raised when the timeline reveals drift/conflict/rupture/safety.
+// AgentObservabilityState: per-analyst checkpoint for Background Worker.
+
+model TimelineEntry {
+  id               String   @id @default(cuid())
+
+  analysis_id      String
+  analysis         Analysis @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+  eval_run_id      String
+  eval_run         EvalRun  @relation(fields: [eval_run_id], references: [id], onDelete: Cascade)
+  analyst_id       String
+  ticker           String
+
+  // Per-dimension scores from AggregatedSignal (denormalized for fast reads)
+  // Shape: { argument_quality, scenario_coherence, probability_calibration, overall }
+  dim_scores       Json     @default("{}")
+
+  // Drift norm: distance from rolling mean (0.0 = no drift). Set by Background Worker.
+  drift_norm       Float    @default(0.0)
+
+  // Anomaly flags: e.g. "drift:anomalous", "conflict:argument_quality", "safety:low_overall"
+  anomaly_flags    String[] @default([])
+
+  // Where did this entry come from?
+  provenance       String   @default("eval_run") // "eval_run" | "backfill" | "correction"
+
+  pipeline_version Int      @default(1)
+
+  // Has the Background Worker processed this entry?
+  worker_processed Boolean  @default(false)
+
+  anomalies        AnomalyEvent[]
+
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@index([analysis_id])
+  @@index([eval_run_id])
+  @@index([analyst_id])
+  @@index([ticker])
+  @@index([created_at])
+  @@index([worker_processed])
+}
+
+model AnomalyEvent {
+  id                String        @id @default(cuid())
+  analyst_id        String
+  ticker            String
+  timeline_entry_id String
+  timeline_entry    TimelineEntry @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
+
+  // "drift" | "conflict" | "rupture" | "safety"
+  kind              String
+  // "low" | "medium" | "high" | "critical"
+  severity          String        @default("medium")
+
+  // Context payload: dimension, score, threshold, window size, etc.
+  payload           Json          @default("{}")
+
+  // Feeds Plane D HITL queue
+  requires_review   Boolean       @default(true)
+
+  // Resolution (set by Plane D reviewer)
+  resolved_at       DateTime?
+  resolved_by       String?
+
+  created_at        DateTime      @default(now())
+
+  @@index([analyst_id])
+  @@index([ticker])
+  @@index([kind])
+  @@index([requires_review])
+  @@index([resolved_at])
+  @@index([timeline_entry_id])
+}
+
+model AgentObservabilityState {
+  id                     String    @id @default(cuid())
+  analyst_id             String    @unique
+
+  // Incremental scan checkpoint
+  last_scanned_entry_id  String?
+
+  // Counters
+  total_entries_scanned  Int       @default(0)
+  total_anomalies_raised Int       @default(0)
+  total_analyses         Int       @default(0)
+
+  // Rolling means per dimension (updated by Background Worker)
+  // Shape: { argument_quality, scenario_coherence, probability_calibration, overall }
+  rolling_means          Json      @default("{}")
+
+  last_worker_run_at     DateTime?
+
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+}
+
 // ─── Evaluator Registry — Plane B ────────────────────────────────────────────
 // Inspired by the Social Agent Observability Platform logical architecture.
 // One EvalRun per completed analysis; one EvalSignal per evaluator × dimension.
@@ -128,6 +229,7 @@ model EvalRun {
   conflict_flags      String[]     @default([])
 
   signals             EvalSignal[]
+  timelineEntries     TimelineEntry[]
   created_at          DateTime     @default(now())
 
   @@index([analysis_id])
