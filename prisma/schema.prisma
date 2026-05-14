@@ -24,9 +24,10 @@ model Analysis {
   created_at  DateTime    @default(now())
   updated_at  DateTime    @updatedAt
   intel_items IntelItem[]
-  episodes        Episode[]
-  evalRuns        EvalRun[]
-  timelineEntries TimelineEntry[]
+  episodes          Episode[]
+  evalRuns          EvalRun[]
+  timelineEntries   TimelineEntry[]
+  syntheticEpisodes SyntheticEpisode[]
 
   @@index([ticker])
   @@index([created_at])
@@ -90,6 +91,8 @@ model Episode {
   // Allows drift detection across pipeline versions
   pipeline_version      Int      @default(1)
 
+  corrections           EpisodeCorrection[]
+
   created_at            DateTime @default(now())
 
   @@index([analysis_id])
@@ -98,6 +101,73 @@ model Episode {
   @@index([agent])
   @@index([provenance])
   @@index([created_at])
+}
+
+// ─── Two-Write Memory — Plane D completion ───────────────────────────────────
+// EpisodeCorrection: immutable record of reviewer correction + coherence gate result.
+// SyntheticEpisode: high-authority episode created from the correction,
+//                   re-injected into Episode Store to close the feedback loop.
+
+model EpisodeCorrection {
+  id                 String           @id @default(cuid())
+
+  episode_id         String
+  episode            Episode          @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  anomaly_event_id   String
+  anomaly_event      AnomalyEvent     @relation(fields: [anomaly_event_id], references: [id], onDelete: Cascade)
+
+  reviewer_id        String
+
+  // "episode" | "dyad" | "agent_wide"
+  scope              String           @default("episode")
+
+  // "factual_error" | "reasoning_gap" | "calibration_bias" | "style_issue"
+  classification     String
+
+  correction_text    String           @db.Text
+  dimension          String?
+
+  // Coherence Gate outcome
+  gamma              Float            // Γ(C) 0.0–1.0; must be >= 0.5 to proceed
+  gate_verdict       String           // "approved" | "settled" | "blocked"
+  tensions           Json             @default("[]")
+  minimum_update_set Json             @default("[]")
+
+  authority_weight   Float            @default(1.0)
+
+  synthetic_episode  SyntheticEpisode?
+
+  created_at         DateTime         @default(now())
+
+  @@index([episode_id])
+  @@index([anomaly_event_id])
+  @@index([reviewer_id])
+  @@index([scope])
+}
+
+model SyntheticEpisode {
+  id                  String            @id @default(cuid())
+
+  correction_id       String            @unique
+  correction          EpisodeCorrection @relation(fields: [correction_id], references: [id], onDelete: Cascade)
+
+  analysis_id         String
+  analysis            Analysis          @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+
+  corrected_response  Json
+  authority_weight    Float             @default(1.0)
+  provenance          String            @default("synthetic")
+  agent               String
+  analyst_id          String
+  ticker              String
+
+  created_at          DateTime          @default(now())
+
+  @@index([correction_id])
+  @@index([analysis_id])
+  @@index([analyst_id])
+  @@index([agent])
 }
 
 // ─── Longitudinal Observer — Plane C ─────────────────────────────────────────
@@ -167,6 +237,8 @@ model AnomalyEvent {
   // Resolution (set by Plane D reviewer)
   resolved_at       DateTime?
   resolved_by       String?
+
+  corrections       EpisodeCorrection[]
 
   created_at        DateTime      @default(now())
 

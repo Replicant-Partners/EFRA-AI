@@ -465,13 +465,162 @@ function QualityTimelineView({ rows }: { rows: QualityTimelineRow[] }) {
   );
 }
 
+function InterventionForm({
+  anomaly,
+  onDone,
+  onCancel,
+}: {
+  anomaly:  QualityAnomaly;
+  onDone:   () => void;
+  onCancel: () => void;
+}) {
+  const [scope,           setScope]           = useState<string>("episode");
+  const [classification,  setClassification]  = useState<string>("reasoning_gap");
+  const [correctionText,  setCorrectionText]  = useState("");
+  const [dimension,       setDimension]       = useState("");
+  const [justification,   setJustification]   = useState("");
+  const [submitting,      setSubmitting]       = useState(false);
+  const [result,          setResult]           = useState<{ ok: boolean; msg: string; gamma?: number } | null>(null);
+
+  async function submit() {
+    if (!anomaly.episode_id) return;
+    setSubmitting(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/observatory/intervene", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          anomaly_event_id: anomaly.id,
+          episode_id:       anomaly.episode_id,
+          reviewer_id:      "observatory_ui",
+          scope,
+          classification,
+          correction_text:  correctionText,
+          dimension:        dimension || undefined,
+          justification:    justification || undefined,
+        }),
+      });
+      const data = await res.json() as { gamma?: number; verdict?: string; error?: string; tensions?: unknown[] };
+      if (res.ok) {
+        setResult({ ok: true, msg: `Intervention written — Γ(C) = ${(data.gamma ?? 0).toFixed(3)} · ${data.verdict}` });
+        setTimeout(onDone, 1500);
+      } else if (res.status === 422) {
+        setResult({ ok: false, msg: `Gate blocked — Γ(C) = ${(data.gamma ?? 0).toFixed(3)}. ${(data.tensions as unknown[])?.length ?? 0} tension(s) detected.`, gamma: data.gamma });
+      } else {
+        setResult({ ok: false, msg: data.error ?? "Unknown error" });
+      }
+    } catch (e) {
+      setResult({ ok: false, msg: String(e) });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 mb-3 p-4 bg-[#F5F0EB] rounded border border-[#E4DDD6] space-y-3">
+      <p className="t-label">Intervene — {anomaly.ticker} · {anomaly.agent ?? "agent"}</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="t-label mb-1">Scope</p>
+          <select
+            value={scope}
+            onChange={e => setScope(e.target.value)}
+            className="w-full text-[11px] bg-white border border-[#E4DDD6] rounded px-2 py-1"
+          >
+            <option value="episode">Episode — this analysis only</option>
+            <option value="dyad">Dyad — this analyst pattern</option>
+            <option value="agent_wide">Agent-wide — all analyses</option>
+          </select>
+        </div>
+        <div>
+          <p className="t-label mb-1">Classification</p>
+          <select
+            value={classification}
+            onChange={e => setClassification(e.target.value)}
+            className="w-full text-[11px] bg-white border border-[#E4DDD6] rounded px-2 py-1"
+          >
+            <option value="factual_error">Factual error</option>
+            <option value="reasoning_gap">Reasoning gap</option>
+            <option value="calibration_bias">Calibration bias</option>
+            <option value="style_issue">Style issue</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <p className="t-label mb-1">Dimension (optional)</p>
+        <select
+          value={dimension}
+          onChange={e => setDimension(e.target.value)}
+          className="w-full text-[11px] bg-white border border-[#E4DDD6] rounded px-2 py-1"
+        >
+          <option value="">General</option>
+          <option value="argument_quality">Argument Quality</option>
+          <option value="scenario_coherence">Scenario Coherence</option>
+          <option value="probability_calibration">Probability Calibration</option>
+        </select>
+      </div>
+
+      <div>
+        <p className="t-label mb-1">Correction</p>
+        <textarea
+          value={correctionText}
+          onChange={e => setCorrectionText(e.target.value)}
+          placeholder="Describe the specific correction — what was wrong and what the correct interpretation should be (min 20 chars)"
+          rows={3}
+          className="w-full text-[11px] bg-white border border-[#E4DDD6] rounded px-2 py-1.5 resize-none"
+        />
+      </div>
+
+      {scope === "agent_wide" && (
+        <div>
+          <p className="t-label mb-1">Justification (required for agent-wide)</p>
+          <textarea
+            value={justification}
+            onChange={e => setJustification(e.target.value)}
+            placeholder="Explain the systemic impact of this correction across all analyses"
+            rows={2}
+            className="w-full text-[11px] bg-white border border-[#E4DDD6] rounded px-2 py-1.5 resize-none"
+          />
+        </div>
+      )}
+
+      {result && (
+        <p className={`text-[11px] font-medium ${result.ok ? "text-[#7A9E6A]" : "text-[#C84848]"}`}>
+          {result.msg}
+        </p>
+      )}
+
+      <div className="flex gap-3">
+        <button
+          onClick={submit}
+          disabled={submitting || correctionText.trim().length < 20}
+          className="text-[11px] font-semibold text-white bg-[#C8804A] hover:bg-[#B8703A] disabled:opacity-40 px-3 py-1.5 rounded transition-colors"
+        >
+          {submitting ? "Running coherence gate…" : "Submit intervention"}
+        </button>
+        <button
+          onClick={onCancel}
+          className="text-[11px] text-[#A89E94] hover:text-[#6E6258] transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function QualityAnomalyView({
   anomalies,
-  onResolve,
+  onRefresh,
 }: {
   anomalies:  QualityAnomaly[];
-  onResolve?: (id: string) => void;
+  onRefresh?: () => void;
 }) {
+  const [activeIntervene, setActiveIntervene] = useState<string | null>(null);
+
   const kindLabel: Record<string, string> = {
     drift:    "Score Drift",
     conflict: "Evaluator Conflict",
@@ -483,6 +632,15 @@ function QualityAnomalyView({
   const resolved  = anomalies.filter(a => a.resolved_at);
   const info      = anomalies.filter(a => !a.requires_review && !a.resolved_at);
 
+  async function handleResolve(id: string) {
+    await fetch("/api/observatory/quality", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ anomaly_id: id, resolved_by: "observatory_ui" }),
+    });
+    onRefresh?.();
+  }
+
   return (
     <div className="space-y-6">
       {/* Pending review */}
@@ -491,6 +649,7 @@ function QualityAnomalyView({
           <p className="t-label mb-3">Pending Review ({pending.length})</p>
           {pending.map(a => {
             const msg = (a.payload?.message as string) ?? `${a.kind} anomaly on ${a.ticker}`;
+            const isInterveningHere = activeIntervene === a.id;
             return (
               <div key={a.id}>
                 <div className="py-2.5 flex items-start gap-3">
@@ -516,15 +675,34 @@ function QualityAnomalyView({
                           {a.timeline_entry.drift_norm > 0 ? ` · drift ${a.timeline_entry.drift_norm.toFixed(3)}` : ""}
                         </span>
                       )}
-                      {onResolve && (
-                        <button
-                          onClick={() => onResolve(a.id)}
-                          className="text-[10px] text-[#C8804A] hover:underline ml-auto"
-                        >
-                          Mark resolved →
-                        </button>
-                      )}
+                      <div className="ml-auto flex gap-3">
+                        {a.episode_id && !isInterveningHere && (
+                          <button
+                            onClick={() => setActiveIntervene(a.id)}
+                            className="text-[10px] text-[#6E6258] hover:text-[#C8804A] transition-colors"
+                          >
+                            Intervene →
+                          </button>
+                        )}
+                        {!isInterveningHere && (
+                          <button
+                            onClick={() => handleResolve(a.id)}
+                            className="text-[10px] text-[#A89E94] hover:text-[#6E6258] transition-colors"
+                          >
+                            Mark resolved
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Intervention form */}
+                    {isInterveningHere && (
+                      <InterventionForm
+                        anomaly={a}
+                        onDone={() => { setActiveIntervene(null); onRefresh?.(); }}
+                        onCancel={() => setActiveIntervene(null)}
+                      />
+                    )}
                   </div>
                 </div>
                 <Rule />
@@ -721,17 +899,7 @@ export default function ObservatoryPage() {
     }
   }
 
-  async function handleResolveAnomaly(id: string) {
-    await fetch(`/api/observatory/quality`, {
-      method:  "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ anomaly_id: id, resolved_by: "observatory_ui" }),
-    });
-    // Refresh quality data
-    fetch("/api/observatory/quality")
-      .then(r => r.json())
-      .then(q => setQualityData(q as QualityData));
-  }
+
 
   if (loading) {
     return (
@@ -827,7 +995,11 @@ export default function ObservatoryPage() {
             </p>
             <QualityAnomalyView
               anomalies={qualityData.anomalies}
-              onResolve={handleResolveAnomaly}
+              onRefresh={() => {
+                fetch("/api/observatory/quality")
+                  .then(r => r.json())
+                  .then(q => setQualityData(q as QualityData));
+              }}
             />
           </div>
 

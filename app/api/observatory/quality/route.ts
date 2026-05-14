@@ -47,6 +47,10 @@ export interface QualityAnomaly {
     drift_norm:   number;
     created_at:   string;
   } | null;
+  // Most recent episode for this analyst+ticker — used by intervention modal
+  episode_id:       string | null;
+  analysis_id:      string | null;
+  agent:            string | null;
   created_at:       string;
 }
 
@@ -137,22 +141,42 @@ export async function GET(request: Request) {
       take: 100,
     });
 
-    const anomalies: QualityAnomaly[] = raw_anomalies.map(a => ({
-      id:              a.id,
-      analyst_id:      a.analyst_id,
-      ticker:          a.ticker,
-      kind:            a.kind,
-      severity:        a.severity,
-      requires_review: a.requires_review,
-      resolved_at:     a.resolved_at?.toISOString() ?? null,
-      payload:         a.payload as Record<string, unknown>,
-      timeline_entry:  a.timeline_entry ? {
-        dim_scores:  a.timeline_entry.dim_scores as Record<string, number>,
-        drift_norm:  a.timeline_entry.drift_norm,
-        created_at:  a.timeline_entry.created_at.toISOString(),
-      } : null,
-      created_at:      a.created_at.toISOString(),
-    }));
+    // Fetch most recent episode per anomaly (for intervention modal)
+    const episode_map = new Map<string, { id: string; analysis_id: string; agent: string }>();
+    for (const a of raw_anomalies) {
+      const key = `${a.analyst_id}:${a.ticker}`;
+      if (!episode_map.has(key)) {
+        const ep = await prisma.episode.findFirst({
+          where:   { analyst_id: a.analyst_id, ticker: a.ticker },
+          orderBy: { created_at: "desc" },
+          select:  { id: true, analysis_id: true, agent: true },
+        });
+        if (ep) episode_map.set(key, ep);
+      }
+    }
+
+    const anomalies: QualityAnomaly[] = raw_anomalies.map(a => {
+      const ep = episode_map.get(`${a.analyst_id}:${a.ticker}`);
+      return {
+        id:              a.id,
+        analyst_id:      a.analyst_id,
+        ticker:          a.ticker,
+        kind:            a.kind,
+        severity:        a.severity,
+        requires_review: a.requires_review,
+        resolved_at:     a.resolved_at?.toISOString() ?? null,
+        payload:         a.payload as Record<string, unknown>,
+        timeline_entry:  a.timeline_entry ? {
+          dim_scores:  a.timeline_entry.dim_scores as Record<string, number>,
+          drift_norm:  a.timeline_entry.drift_norm,
+          created_at:  a.timeline_entry.created_at.toISOString(),
+        } : null,
+        episode_id:      ep?.id   ?? null,
+        analysis_id:     ep?.analysis_id ?? null,
+        agent:           ep?.agent ?? null,
+        created_at:      a.created_at.toISOString(),
+      };
+    });
 
     // ── Trend reports (per analyst, window = last 20 entries) ─────────────
     const analyst_ids = analyst_id
