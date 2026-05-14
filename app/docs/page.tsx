@@ -100,6 +100,7 @@ export default function DocsPage() {
           ["#modes",          "Modes: Valentine · Gunn · Dual"],
           ["#concepts",       "Key Concepts"],
           ["#architecture",   "Architecture: Ports & Adapters"],
+          ["#observatory",    "Observatory: Observability Platform"],
         ].map(([href, label]) => (
           <div key={href}>
             <a href={href} className="text-[#8C7E70] hover:text-[#C8804A] transition-colors">{label}</a>
@@ -141,6 +142,23 @@ export default function DocsPage() {
           BLOCK, the pipeline drops the idea. If the ENTER gate scores below 3/5, publication
           is dropped. Kata and Lens never block — they are coaching and auditing steps, not gates.
         </Note>
+
+        <div className="mt-6 pt-5 border-t border-[#EDE7E0]">
+          <div className="text-[9px] font-semibold tracking-[0.14em] text-[#C0B8AC] uppercase mb-3">After each analysis</div>
+          <div className="space-y-2">
+            {[
+              ["Evaluator Registry",   "3 LLM-as-judge evaluators score the research output on argument quality, scenario coherence, and probability calibration."],
+              ["Timeline + Drift",     "Scores are projected into a TimelineEntry. A Background Worker computes drift from the analyst's rolling mean and flags anomalies."],
+              ["Dyad Tracker",         "The (analyst, ticker) pair is updated with EWMA rapport, trust, and reciprocity scores. Conviction flips and quality collapses raise rupture anomalies."],
+              ["Observatory",          "All anomalies surface in the Observatory HITL queue. Reviewers can intervene with a correction that passes a coherence gate and is re-injected into memory."],
+            ].map(([name, desc]) => (
+              <div key={name} className="flex gap-3 text-[11px]">
+                <span className="text-[#C8804A] font-semibold w-40 flex-shrink-0 tracking-wide">{name}</span>
+                <span className="text-[#8C7E70]">{desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </Section>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
@@ -980,6 +998,182 @@ export default function DocsPage() {
           To swap from OpenRouter to a direct Anthropic SDK, Bedrock, or a local model,
           you only write a new adapter that implements <span className="font-mono">ILanguageModel</span> and
           update <span className="font-mono">buildLLM()</span>. The 9 agents and the pipeline are unchanged.
+        </Note>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <Section id="observatory">
+        <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Observatory: Observability Platform</h2>
+
+        <p className="prose-tufte">
+          Every analysis that runs through the pipeline is automatically evaluated and monitored
+          by a four-plane observability system. The system builds a longitudinal record of how
+          an analyst's work evolves over time, detects anomalies, and — when a human reviewer
+          intervenes — re-injects the correction back into memory as high-authority evidence.
+          This closes a recursive improvement loop: the system learns from its own mistakes.
+        </p>
+
+        <Block label="The Four Planes">
+          {[
+            ["Plane A · Episode Store",         "Every agent step writes an Episode record with a provenance and authority weight. Human corrections carry weight 1.0; auto-generated episodes carry 0.5."],
+            ["Plane B · Evaluator Registry",    "After each completed analysis, 3 LLM-as-judge evaluators run concurrently on the Communication output. Their scores are aggregated into a per-analysis quality signal."],
+            ["Plane C · Longitudinal Observer", "Scores are projected into a TimelineEntry. A Background Worker runs a two-pass scan: drift computation (Pass 1) then anomaly detection (Pass 2). The Dyad Tracker monitors relational dynamics per (analyst, ticker) pair."],
+            ["Plane D · Human Interface",       "Anomalies surface in the Observatory HITL queue. Reviewers can approve, relabel, or intervene. Interventions pass a Coherence Gate and are written into memory via Two-Write Memory."],
+          ].map(([plane, desc]) => (
+            <div key={plane} className="flex gap-3 py-2 border-b border-[#F0EBE4] text-[11px]">
+              <span className="text-[#C8804A] font-semibold w-52 flex-shrink-0 leading-snug">{plane}</span>
+              <span className="text-[#A89E94] leading-relaxed">{desc}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Block label="Plane B — Evaluator Registry">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Three evaluators run concurrently after each completed analysis. Each scores one
+            behavioral dimension on a 0.0–1.0 scale with a confidence weight. The Aggregator
+            computes a confidence-weighted mean per dimension and flags inter-evaluator conflicts.
+          </p>
+          <Field name="argument_quality">
+            Is the thesis clearly stated, differentiated from consensus, and supported by specific
+            evidence? Generic "good company" theses score low. Specific, falsifiable, evidence-backed
+            theses score high.
+          </Field>
+          <Field name="scenario_coherence">
+            Are the Bull/Base/Bear scenarios logically distinct with observable triggers? Are
+            price targets consistent with the narratives? Is the scenario spread appropriate for
+            the sector and time horizon?
+          </Field>
+          <Field name="probability_calibration">
+            Are scenario probabilities realistic? Calibration is assessed against superforecaster
+            heuristics: equal weights suggest no view, extreme weights require strong justification,
+            Base should usually be the modal scenario.
+          </Field>
+          <Field name="overall_score">
+            Simple mean of the three dimension scores. Displayed in the Observatory Quality Monitor.
+            Falls below 0.45 → warning. Falls below 0.30 → safety anomaly (quality floor breached).
+          </Field>
+        </Block>
+
+        <Block label="Plane C — Longitudinal Observer">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Tracks quality trends over time using EWMA (Exponentially Weighted Moving Average,
+            α=0.3). The Background Worker runs a two-pass incremental scan after each analysis.
+          </p>
+          <Field name="Timeline Entry">
+            One row per analysis. Stores per-dimension scores, drift norm, and anomaly flags.
+            The primary read surface for all trend analysis.
+          </Field>
+          <Field name="Drift Monitor">
+            Computes <span className="font-mono text-[#6E6258]">drift_norm = |current_overall − rolling_mean|</span>.
+            Warning above 0.10. Anomalous above 0.20. Flags the dimension driving the drift.
+          </Field>
+          <Field name="Anomaly Detector — 4 kinds">
+            <Tag color="red">safety</Tag> Overall score below quality floor (0.30 critical, 0.45 warning).{" "}
+            <Tag color="amber">drift</Tag> Score diverges from analyst's rolling mean.{" "}
+            <Tag color="amber">conflict</Tag> Same evaluator conflict flag in 3+ consecutive analyses.{" "}
+            <Tag color="gray">rupture</Tag> Sudden score collapse in one dimension (&gt;0.35 drop in one step).
+          </Field>
+        </Block>
+
+        <Block label="Plane C — Dyad Tracker (Social Tracker)">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            A <strong>Dyad</strong> is an (analyst_id, ticker) pair — the longitudinal relationship
+            between a specific analyst and a specific ticker across all analyses. Three EWMA
+            dimensions track relational dynamics (α=0.3, range 0.0–1.0).
+          </p>
+          <Field name="rapport">
+            Rating consistency over time. High rapport = the analyst maintains a stable conviction
+            on this ticker. Sudden flip (BUY → UNDERPERFORM) from a high-rapport state triggers
+            a rapport rupture anomaly.
+          </Field>
+          <Field name="trust">
+            Average quality of the analyst's work on this ticker (driven by overall_score).
+            High trust = consistently high-quality analysis. A sudden quality collapse
+            (&gt;0.30 trust drop in one analysis) triggers a trust rupture anomaly.
+          </Field>
+          <Field name="reciprocity">
+            Depth of engagement. Driven by episode count, mode diversity (valentine/gunn/dual),
+            and whether corrections have been made on this ticker. High reciprocity = the analyst
+            follows this ticker closely across multiple analyses.
+          </Field>
+          <Field name="Rupture → AnomalyEvent">
+            When a rupture is detected, it is materialized as a TimelineEntry and an AnomalyEvent
+            with <Tag color="red">requires_review = true</Tag>. It surfaces in the Observatory
+            Quality Monitor HITL queue where a reviewer can intervene.
+          </Field>
+        </Block>
+
+        <Block label="Plane D — Human Interface">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            The Observatory UI at <span className="font-mono text-[#6E6258]">/observatory</span> has
+            seven tabs. The Quality Monitor tab surfaces all anomalies that require human review.
+          </p>
+          <Field name="Intervention Encoder">
+            Validates the reviewer's intent. Requires scope (episode / dyad / agent-wide),
+            classification (factual error / reasoning gap / calibration bias / style issue),
+            and correction text (minimum 20 characters). Agent-wide scope requires a justification.
+          </Field>
+          <Field name="Coherence Gate">
+            An LLM judge evaluates whether the correction is coherent with the existing pipeline
+            output. Scores three principles:{" "}
+            <span className="text-[#6E6258]">non-contradiction (50%)</span>,{" "}
+            <span className="text-[#6E6258]">minimal disruption (30%)</span>,{" "}
+            <span className="text-[#6E6258]">epistemic humility (20%)</span>.
+            The weighted mean is Γ(C). Gate threshold: Γ(C) ≥ 0.50 (≥ 0.65 for agent-wide).
+            Blocked corrections are rejected with the specific tensions identified.
+          </Field>
+          <Field name="Two-Write Memory — 4 writes">
+            When the gate approves:
+            Write 1 — <span className="font-mono text-[#6E6258]">EpisodeCorrection</span> (immutable audit record with gamma and tensions).
+            Write 2 — <span className="font-mono text-[#6E6258]">SyntheticEpisode</span> (FK to correction, audit purposes).
+            Write 3 — <span className="font-mono text-[#6E6258]">Episode</span> (re-injected into main store, authority_weight=1.0 — the real loop closure).
+            Write 4 — <span className="font-mono text-[#6E6258]">TimelineEntry</span> (provenance=correction, signals drift monitor to recalibrate).
+          </Field>
+          <Field name="Why it matters">
+            Synthetic episodes carry authority_weight=1.0 vs 0.5 for auto-generated ones. Future drift
+            detection weights human corrections at 2× relative to machine-generated evidence.
+            The correction becomes part of the analyst's behavioral baseline — the system literally
+            learns from reviewer interventions.
+          </Field>
+        </Block>
+
+        <Block label="Observatory Tabs">
+          {[
+            ["Pipeline Timeline",    "All analyses with alpha score, rating, R/R, LENS verdict, and date."],
+            ["Agent Performance",    "Pass rate, avg score, and fallback rate per agent across all runs."],
+            ["Anomaly Feed",         "Pipeline-level anomalies: drops, compliance halts, forensic blocks, overconfidence flags."],
+            ["Analyst Calibration",  "Per-analyst: BUY rate, avg alpha, avg ENTER score, drop rate, overconfidence rate."],
+            ["Quality Monitor",      "Evaluator Registry scores, quality anomalies (HITL queue), and trend analysis with Trigger Scan."],
+            ["Corrections",          "Audit trail of all human interventions: correction text, Γ(C) score, gate verdict, re-injection status."],
+            ["Dyads",                "All (analyst, ticker) pairs with rapport/trust/reciprocity bars and sparklines. Ruptures highlighted."],
+          ].map(([tab, desc]) => (
+            <div key={tab} className="flex gap-3 py-1.5 border-b border-[#F0EBE4] text-[11px]">
+              <span className="text-[#6E6258] font-semibold w-44 flex-shrink-0">{tab}</span>
+              <span className="text-[#A89E94]">{desc}</span>
+            </div>
+          ))}
+        </Block>
+
+        <Block label="The Recursive Improvement Loop">
+          <div className="font-mono text-[10px] text-[#8C7E70] leading-loose bg-[#F5F0EB] rounded px-4 py-3">
+            <div>Analysis → Episodes (provenance=auto_pass, w=0.5)</div>
+            <div className="pl-4">→ EvalRun + 3 LLM judges</div>
+            <div className="pl-8">→ TimelineEntry + drift_norm</div>
+            <div className="pl-12">→ BackgroundWorker → AnomalyEvent</div>
+            <div className="pl-16">→ Observatory HITL queue</div>
+            <div className="pl-20">→ Reviewer: "Intervene →"</div>
+            <div className="pl-24">→ Coherence Gate (Γ(C) ≥ 0.50)</div>
+            <div className="pl-28">→ Write 3: Episode (w=1.0) <span className="text-[#C8804A]">← loop closes here</span></div>
+            <div className="pl-32">→ Write 4: TimelineEntry (recalibrate)</div>
+            <div className="pl-36 text-[#7A9E6A]">→ Next analysis inherits corrected baseline</div>
+          </div>
+        </Block>
+
+        <Note>
+          The observability system runs entirely in the background — it never slows down the
+          pipeline or affects the research output. All writes are non-blocking (void calls with
+          catch handlers). A failure in any observability component is logged but never
+          propagates to the analysis save.
         </Note>
       </Section>
 
