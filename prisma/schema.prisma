@@ -25,6 +25,7 @@ model Analysis {
   updated_at  DateTime    @updatedAt
   intel_items IntelItem[]
   episodes    Episode[]
+  evalRuns    EvalRun[]
 
   @@index([ticker])
   @@index([created_at])
@@ -96,6 +97,70 @@ model Episode {
   @@index([agent])
   @@index([provenance])
   @@index([created_at])
+}
+
+// ─── Evaluator Registry — Plane B ────────────────────────────────────────────
+// Inspired by the Social Agent Observability Platform logical architecture.
+// One EvalRun per completed analysis; one EvalSignal per evaluator × dimension.
+// Three LLM-as-judge evaluators run after each analysis is saved:
+//   1. argument_quality       — thesis structure and evidence quality
+//   2. scenario_coherence     — Bull/Base/Bear internal consistency
+//   3. probability_calibration — scenario probability realism
+
+model EvalRun {
+  id                  String       @id @default(cuid())
+  analysis_id         String
+  analysis            Analysis     @relation(fields: [analysis_id], references: [id], onDelete: Cascade)
+  ticker              String
+  analyst_id          String
+
+  // Aggregated confidence-weighted mean per dimension
+  // Shape: { argument_quality: float, scenario_coherence: float, probability_calibration: float }
+  aggregated_signal   Json         @default("{}")
+
+  // Simple mean of all dimension means (0.0–1.0)
+  overall_score       Float?
+
+  // Was a pre-filter triggered? (reserved for future safety checks)
+  prefilter_blocked   Boolean      @default(false)
+
+  // Dimensions where evaluators disagreed (score spread > 0.3)
+  conflict_flags      String[]     @default([])
+
+  signals             EvalSignal[]
+  created_at          DateTime     @default(now())
+
+  @@index([analysis_id])
+  @@index([ticker])
+  @@index([created_at])
+}
+
+model EvalSignal {
+  id              String   @id @default(cuid())
+  eval_run_id     String
+  eval_run        EvalRun  @relation(fields: [eval_run_id], references: [id], onDelete: Cascade)
+  analysis_id     String
+
+  // Which evaluator produced this signal
+  evaluator_name  String   // "argument_quality" | "scenario_coherence" | "probability_calibration"
+
+  // Behavioral dimension (matches evaluator_name 1:1 in v1)
+  dimension       String
+
+  // LLM judge output
+  score           Float    // 0.0–1.0
+  confidence      Float    // 0.0–1.0
+  rationale       String?  @db.Text
+
+  // Full raw JSON response for auditability
+  raw_response    Json?
+
+  created_at      DateTime @default(now())
+
+  @@index([eval_run_id])
+  @@index([analysis_id])
+  @@index([evaluator_name])
+  @@index([dimension])
 }
 
 model IntelItem {

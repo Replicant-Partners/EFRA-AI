@@ -3,6 +3,7 @@ import { prisma } from "@/src/lib/prisma";
 import type { PipelineState } from "@/src/shared/types";
 import { buildReportContent } from "@/src/lib/report-builder";
 import { writeEpisode, type Provenance } from "@/src/lib/episode-store";
+import { runEvaluatorRegistry } from "@/src/lib/evaluator-registry";
 
 export async function POST(request: Request) {
   try {
@@ -49,6 +50,18 @@ export async function POST(request: Request) {
       analyst_id,
       ticker:      ticker.toUpperCase(),
       state,
+    });
+
+    // ── Run Evaluator Registry (Plane B) ──────────────────────────────────
+    // Runs 3 LLM-as-judge evaluators concurrently after each completed analysis.
+    // Non-blocking: never fails the analysis save.
+    void runEvaluatorRegistry({
+      analysis_id: analysis.id,
+      analyst_id,
+      ticker:      ticker.toUpperCase(),
+      state,
+    }).catch(err => {
+      console.warn("[EvalRegistry] Failed to run registry:", err);
     });
 
     return NextResponse.json({ id: analysis.id }, { status: 201 });
