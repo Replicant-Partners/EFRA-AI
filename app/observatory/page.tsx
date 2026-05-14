@@ -15,6 +15,10 @@ import type {
   QualityTrend,
   QualityObsState,
 } from "@/app/api/observatory/quality/route";
+import type {
+  CorrectionsData,
+  CorrectionRecord,
+} from "@/app/api/observatory/corrections/route";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
@@ -854,26 +858,144 @@ function QualityTrendView({
   );
 }
 
+// ─── Corrections Audit Trail ──────────────────────────────────────────────────
+
+function CorrectionsView({ data }: { data: CorrectionsData }) {
+  const classLabel: Record<string, string> = {
+    factual_error:    "Factual Error",
+    reasoning_gap:    "Reasoning Gap",
+    calibration_bias: "Calibration Bias",
+    style_issue:      "Style Issue",
+  };
+  const scopeLabel: Record<string, string> = {
+    episode:    "Episode",
+    dyad:       "Dyad",
+    agent_wide: "Agent-Wide",
+  };
+  const verdictColor = (v: string) =>
+    v === "approved" ? "text-[#7A9E6A]" : v === "settled" ? "text-[#C89040]" : "text-[#C84848]";
+  const gammaColor = (g: number) =>
+    g >= 0.7 ? "text-[#7A9E6A]" : g >= 0.5 ? "text-[#C89040]" : "text-[#C84848]";
+
+  return (
+    <div className="space-y-6">
+      {/* Summary bar */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-[#A89E94]">
+        <span>{data.total} corrections</span>
+        <span>
+          synthetic episodes re-injected{" "}
+          <span className="text-[#C8804A] font-semibold">{data.synthetic_episodes_total}</span>
+        </span>
+        <span>
+          analysts{" "}
+          <span className="text-[#6E6258] font-semibold">{data.analysts_with_corrections.join(", ") || "—"}</span>
+        </span>
+      </div>
+
+      <Rule />
+
+      {data.corrections.length === 0 && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">
+          No corrections yet. Use the "Intervene" action on a Quality Monitor anomaly to create one.
+        </p>
+      )}
+
+      {data.corrections.map(c => (
+        <div key={c.id}>
+          {/* Header row */}
+          <div className="py-3 space-y-2">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-[12px] font-semibold text-[#1E1A14]">{c.episode.ticker}</span>
+              <span className="text-[9px] font-bold tracking-wider uppercase text-[#C8804A]">
+                {classLabel[c.classification] ?? c.classification}
+              </span>
+              <span className="text-[9px] tracking-wider uppercase text-[#A89E94]">
+                {scopeLabel[c.scope] ?? c.scope}
+              </span>
+              {c.dimension && (
+                <span className="text-[9px] text-[#A89E94]">· {c.dimension.replace(/_/g, " ")}</span>
+              )}
+              <span className="ml-auto text-[10px] text-[#A89E94]">
+                {new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
+
+            {/* Gate outcome strip */}
+            <div className="flex items-center gap-4 text-[10px]">
+              <span className="text-[#A89E94]">agent <span className="text-[#6E6258]">{c.episode.agent}</span></span>
+              <span className="text-[#A89E94]">reviewer <span className="text-[#6E6258]">{c.reviewer_id}</span></span>
+              <span className="text-[#A89E94]">
+                Γ(C) <span className={`font-semibold ${gammaColor(c.gamma)}`}>{c.gamma.toFixed(3)}</span>
+              </span>
+              <span className={`font-semibold ${verdictColor(c.gate_verdict)}`}>
+                {c.gate_verdict}
+              </span>
+              {c.tensions_count > 0 && (
+                <span className="text-[#C89040]">{c.tensions_count} tension{c.tensions_count > 1 ? "s" : ""}</span>
+              )}
+              <span className="text-[#A89E94]">
+                anomaly <span className="text-[#6E6258] uppercase text-[9px]">{c.anomaly.kind}/{c.anomaly.severity}</span>
+              </span>
+            </div>
+
+            {/* Correction text */}
+            <p className="text-[11px] text-[#6E6258] leading-relaxed border-l-2 border-[#E4DDD6] pl-3">
+              {c.correction_text}
+            </p>
+
+            {/* Re-injection status */}
+            <div className="flex items-center gap-4 text-[10px]">
+              {c.synthetic_episode ? (
+                <span className="text-[#7A9E6A]">
+                  ✓ Re-injected into Episode Store ·{" "}
+                  {new Date(c.synthetic_episode.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              ) : (
+                <span className="text-[#C84848]">✗ Re-injection failed</span>
+              )}
+              {c.minimum_update_set.length > 0 && (
+                <span className="text-[#A89E94]">
+                  update set: {c.minimum_update_set.join(", ")}
+                </span>
+              )}
+              <a
+                href={`/library/${c.episode.analysis_id}`}
+                className="ml-auto text-[#A89E94] hover:text-[#C8804A] transition-colors"
+              >
+                View analysis →
+              </a>
+            </div>
+          </div>
+          <Rule />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type Tab = "timeline" | "agents" | "anomalies" | "analysts" | "quality";
+type Tab = "timeline" | "agents" | "anomalies" | "analysts" | "quality" | "corrections";
 
 export default function ObservatoryPage() {
-  const [data,        setData]        = useState<ObservatoryData | null>(null);
-  const [qualityData, setQualityData] = useState<QualityData | null>(null);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState<string | null>(null);
-  const [tab,         setTab]         = useState<Tab>("timeline");
-  const [scanning,    setScanning]    = useState<string | null>(null);
+  const [data,             setData]             = useState<ObservatoryData | null>(null);
+  const [qualityData,      setQualityData]      = useState<QualityData | null>(null);
+  const [correctionsData,  setCorrectionsData]  = useState<CorrectionsData | null>(null);
+  const [loading,          setLoading]          = useState(true);
+  const [error,            setError]            = useState<string | null>(null);
+  const [tab,              setTab]              = useState<Tab>("timeline");
+  const [scanning,         setScanning]         = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/observatory").then(r => r.json()),
       fetch("/api/observatory/quality").then(r => r.json()),
+      fetch("/api/observatory/corrections").then(r => r.json()),
     ])
-      .then(([d, q]) => {
+      .then(([d, q, c]) => {
         setData(d as ObservatoryData);
         setQualityData(q as QualityData);
+        setCorrectionsData(c as CorrectionsData);
         setLoading(false);
       })
       .catch(e => { setError(String(e)); setLoading(false); });
@@ -966,6 +1088,12 @@ export default function ObservatoryPage() {
             <span className="ml-1.5 text-[#C89040] font-bold">{pendingAnomalies}</span>
           )}
         </TabButton>
+        <TabButton active={tab === "corrections"} onClick={() => setTab("corrections")}>
+          Corrections
+          {(correctionsData?.total ?? 0) > 0 && (
+            <span className="ml-1.5 text-[#7A9E6A] font-bold">{correctionsData!.total}</span>
+          )}
+        </TabButton>
       </div>
 
       <hr className="t-rule" />
@@ -1019,6 +1147,13 @@ export default function ObservatoryPage() {
       )}
       {tab === "quality" && !qualityData && (
         <p className="text-[11px] text-[#A89E94] py-6 text-center">Loading quality data…</p>
+      )}
+
+      {tab === "corrections" && correctionsData && (
+        <CorrectionsView data={correctionsData} />
+      )}
+      {tab === "corrections" && !correctionsData && (
+        <p className="text-[11px] text-[#A89E94] py-6 text-center">Loading corrections…</p>
       )}
 
     </div>
