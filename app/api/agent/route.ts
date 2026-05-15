@@ -7,7 +7,54 @@ import { runKata } from "@/src/agents/08-kata/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
 import { runLens } from "@/src/agents/09-lens/index";
 import { buildLLM } from "@/src/configurator";
+import type { ILanguageModel, ChatParams } from "@/src/core/ports/ILanguageModel";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
+
+// ─── Analyst Context LLM wrapper ─────────────────────────────────────────────
+// Wraps any ILanguageModel and prepends analyst notes to every user message.
+// This is how analyst corrections written at approval time reach the agents.
+
+function buildAnalystContextBlock(notes: Record<string, string>, current_agent: string): string {
+  const relevant = Object.entries(notes);
+  if (relevant.length === 0) return "";
+
+  const lines = relevant.map(([agent, note]) =>
+    `  [After ${agent.toUpperCase()}]: ${note}`
+  ).join("\n");
+
+  return `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ANALYST CONTEXT (notes written by the analyst during pipeline review):
+${lines}
+
+These notes represent the analyst's corrections, additions, and opinions
+on prior agent outputs. Treat them as authoritative analyst judgment —
+they have higher weight than any assumption you would make independently.
+If a note corrects or contradicts a prior agent's output, defer to the note.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+class AnalystContextLLM implements ILanguageModel {
+  constructor(
+    private readonly base: ILanguageModel,
+    private readonly context_block: string,
+  ) {}
+
+  async chat(params: ChatParams): Promise<string> {
+    if (!this.context_block) return this.base.chat(params);
+    return this.base.chat({
+      ...params,
+      user: params.user + this.context_block,
+    });
+  }
+
+  async *chatStream(params: ChatParams): AsyncGenerator<string, string> {
+    if (!this.context_block) return yield* this.base.chatStream(params);
+    return yield* this.base.chatStream({
+      ...params,
+      user: params.user + this.context_block,
+    });
+  }
+}
 
 export const maxDuration = 300;
 
@@ -38,7 +85,12 @@ export async function POST(request: Request) {
       const pct = (v: unknown, d = 0) => v != null ? `${(Number(v) * 100).toFixed(d)}%` : "?";
 
       try {
-        const llm = buildLLM();
+        const baseLLM = buildLLM();
+        const analyst_notes = (state as PipelineState & { analyst_notes?: Record<string, string> }).analyst_notes ?? {};
+        const context_block = buildAnalystContextBlock(analyst_notes, agent);
+        const llm: ILanguageModel = context_block
+          ? new AnalystContextLLM(baseLLM, context_block)
+          : baseLLM;
         const idea_id = state.idea_id ?? `idea_${Date.now()}`;
 
         // ── 01 SCOUT ──────────────────────────────────────────────────────

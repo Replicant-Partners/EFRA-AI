@@ -195,8 +195,18 @@ export default function Home() {
 
   function handleApprove() {
     const agentKey = AGENTS[stepIdx].key;
-    if (pendingNote.trim()) {
-      setAnalystNotes(prev => ({ ...prev, [agentKey]: pendingNote.trim() }));
+    const note = pendingNote.trim();
+    if (note) {
+      // Save to React state (for UI display)
+      setAnalystNotes(prev => ({ ...prev, [agentKey]: note }));
+      // Inject into pipeline state so the next agent receives it
+      pipeStateRef.current = {
+        ...pipeStateRef.current,
+        analyst_notes: {
+          ...(pipeStateRef.current.analyst_notes ?? {}),
+          [agentKey]: note,
+        },
+      };
     }
     setPendingNote("");
     runStep(stepIdx + 1);

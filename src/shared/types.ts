@@ -269,6 +269,11 @@ export interface PipelineState {
   communication?: CommOutput;
   kata?: KataBoard;
   lens?: LensBoard;
+  // Analyst notes added at each approval step.
+  // Key = the agent that just completed (e.g. "scout", "intel").
+  // Value = the note the analyst wrote before approving and continuing.
+  // These are injected into subsequent agent prompts as analyst context.
+  analyst_notes?: Record<string, string>;
 }
 
 // ─── UI Event ─────────────────────────────────────────────
