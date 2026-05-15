@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import AgentStep from "@/components/AgentStep";
 import ResultPanel from "@/components/ResultPanel";
+import RevisePanel from "@/components/RevisePanel";
 import IntelItemCard, { type IntelItem } from "@/components/IntelItemCard";
 import AddIntelForm from "@/components/AddIntelForm";
 import type { PipelineState, AgentEvent } from "@/src/shared/types";
@@ -232,6 +233,9 @@ export default function LibraryDetailPage() {
 
       {/* Final result */}
       <ResultPanel state={state} />
+
+      {/* Revise panel */}
+      <RevisePanel analysisId={analysis.id} />
     </div>
   );
 }

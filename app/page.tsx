@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import IdeaForm from "@/components/IdeaForm";
 import AgentStep from "@/components/AgentStep";
 import ResultPanel from "@/components/ResultPanel";
+import RevisePanel from "@/components/RevisePanel";
 import type { PipelineState, AgentEvent } from "@/src/shared/types";
 
 export type { AgentEvent };
@@ -406,6 +407,11 @@ export default function Home() {
           {/* Final result */}
           {isDone && finalState && !error && (
             <ResultPanel state={finalState} />
+          )}
+
+          {/* Revise panel — only when analysis is saved */}
+          {isDone && finalState && !error && savedAnalysisId && (
+            <RevisePanel analysisId={savedAnalysisId} />
           )}
         </div>
       )}
