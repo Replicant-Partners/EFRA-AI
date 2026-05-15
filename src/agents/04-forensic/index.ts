@@ -67,10 +67,10 @@ is this a team you would trust with your capital? Maximum 200 words.
 → Capture in: management_summary
 
 ════════════════════════════════════════════
-OUTPUT JSON — estructura exacta (usa valores reales, no estos):
+OUTPUT JSON — exact structure (use real values, not these):
 ════════════════════════════════════════════
 
-PRE-SCREEN (sin management_profile):
+PRE-SCREEN (without management_profile):
 {
   "risk_score": 32,
   "mgmt_trust_score": 71,
@@ -82,7 +82,7 @@ PRE-SCREEN (sin management_profile):
   "recommendation": "CLEAR"
 }
 
-FULL SCAN (incluye management_profile):
+FULL SCAN (includes management_profile):
 {
   "risk_score": 28,
   "mgmt_trust_score": 78,

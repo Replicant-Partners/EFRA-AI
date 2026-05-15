@@ -95,7 +95,7 @@ export async function runCriticalFactor(
 DOWNSTREAM MODE: ${downstream_mode}
 HORIZON TAG:     ${horizon_tag}
 
-INTEL (${intel_bundle.surfaced_count} noticias):
+INTEL (${intel_bundle.surfaced_count} news items):
 Hypotheses: ${intel_bundle.hypotheses.map((h) => h.statement).join(" | ") || "None"}
 mgmt_comm_score: ${intel_bundle.mgmt_comm_score}
 
@@ -104,9 +104,9 @@ risk_score: ${forensic_profile.risk_score}
 mgmt_trust_score: ${forensic_profile.mgmt_trust_score}
 Flags: ${forensic_profile.flags.map((f) => `SEV-${f.severity}: ${f.description}`).join(", ") || "None"}
 
-Identifica 2–4 Critical Factors con eps_impact_pct.
-Genera escenarios Bull/Base/Bear (probabilidades suman 1.0).
-${isGunn ? "Incluye build_to_last_score (Gunn mode)." : "build_to_last_score debe ser null."}
+Identify 2–4 Critical Factors with eps_impact_pct.
+Generate Bull/Base/Bear scenarios (probabilities must sum to 1.0).
+${isGunn ? "Include build_to_last_score (Gunn mode)." : "build_to_last_score must be null."}
 `.trim();
 
   const text = await llm.chat({
