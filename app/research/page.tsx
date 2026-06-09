@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { GorillaBoard, ImagineBoard } from "@/src/shared/types";
+import type { GorillaBoard, ImagineBoard, ThesisBoard } from "@/src/shared/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Mode = "valentine" | "gunn" | "dual";
-type Tab = "business" | "thesis" | "evidence" | "gorilla" | "imagine" | "launch";
+type Tab = "business" | "thesis" | "evidence" | "gorilla" | "imagine" | "synthesis" | "launch";
 type EconomicDomain = "biological" | "physical" | "digital" | "mixed" | "";
 type MoatType = "brand" | "costs" | "network" | "regulatory" | "other" | "";
 
@@ -1314,6 +1314,432 @@ function ImagineTab({ draft }: { draft: ResearchDraft }) {
   );
 }
 
+// ─── Synthesis Tab ───────────────────────────────────────────────────────────
+
+const QUALITY_CONFIG: Record<string, { label: string; color: string; border: string; bg: string }> = {
+  investment_grade: { label: "INVESTMENT GRADE", color: "text-[#7A9E6A]", border: "border-[#7A9E6A]/40", bg: "bg-[#7A9E6A]/10" },
+  needs_work:       { label: "NEEDS WORK",        color: "text-[#C8804A]", border: "border-[#C8804A]/40", bg: "bg-[#C8804A]/10" },
+  incomplete:       { label: "INCOMPLETE",         color: "text-[#C84848]", border: "border-[#C84848]/40", bg: "bg-[#C84848]/10" },
+};
+
+const MOAT_COLOR: Record<string, string> = {
+  wide:     "text-[#7A9E6A]",
+  narrow:   "text-[#C8804A]",
+  building: "text-[#C89040]",
+  none:     "text-[#C84848]",
+};
+
+const VERDICT_COLOR: Record<string, string> = {
+  excellent:  "text-[#7A9E6A]",
+  good:       "text-[#7A9E6A]",
+  fair:       "text-[#C8804A]",
+  poor:       "text-[#C84848]",
+  unknown:    "text-[#A89E94]",
+  strong:     "text-[#7A9E6A]",
+  moderate:   "text-[#C8804A]",
+  weak:       "text-[#C84848]",
+  concerning: "text-[#C84848]",
+  mixed:      "text-[#C89040]",
+  stable:     "text-[#7A9E6A]",
+  improving:  "text-[#7A9E6A]",
+  deteriorating: "text-[#C84848]",
+};
+
+function Pill({ value, label }: { value: string; label?: string }) {
+  const color = VERDICT_COLOR[value] ?? "text-[#A89E94]";
+  return (
+    <span className={`text-[10px] font-bold tracking-wider uppercase ${color}`}>
+      {label ?? value}
+    </span>
+  );
+}
+
+function SynthesisTab({ draft }: { draft: ResearchDraft }) {
+  const [phase,  setPhase]  = useState<"idle" | "running" | "done" | "error">("idle");
+  const [logs,   setLogs]   = useState<string[]>([]);
+  const [result, setResult] = useState<ThesisBoard | null>(null);
+  const [error,  setError]  = useState<string | null>(null);
+  const logsEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  const canRun =
+    draft.ticker.trim().length > 0 &&
+    (draft.business_summary.trim().length > 0 || draft.main_thesis.trim().length > 0);
+
+  async function run() {
+    setPhase("running");
+    setLogs([]);
+    setResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/research/thesis", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:              draft.ticker.toUpperCase().trim(),
+          company_name:        draft.company_name,
+          analyst_id:          draft.analyst_id,
+          business_summary:    draft.business_summary,
+          economic_domain:     draft.economic_domain,
+          geographic_exposure: draft.geographic_exposure,
+          moat_type:           draft.moat_type,
+          moat_evidence:       draft.moat_evidence,
+          key_metrics:         draft.key_metrics,
+          management_notes:    draft.management_notes,
+          main_thesis:         draft.main_thesis,
+          catalyst:            draft.catalyst,
+          bull_triggers:       draft.bull_triggers,
+          base_narrative:      draft.base_narrative,
+          bear_risk:           draft.bear_risk,
+          invalidation:        draft.invalidation,
+          news_headlines:      draft.news_items.map(n => n.headline).filter(Boolean),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer    = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (!json) continue;
+          const msg = JSON.parse(json) as { type: string; msg?: string; result?: ThesisBoard; error?: string };
+          if (msg.type === "log" && msg.msg)  setLogs(prev => [...prev, msg.msg!]);
+          else if (msg.type === "done")        { setResult(msg.result!); setPhase("done"); }
+          else if (msg.type === "error")       { setError(msg.error ?? "Unknown error"); setPhase("error"); }
+        }
+      }
+    } catch (err) {
+      setError(String(err));
+      setPhase("error");
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-[#6E6258] leading-relaxed">
+        Synthesizes the research into a formal investment thesis covering the firm&apos;s three pillars:
+        <span className="text-[#1E1A14]"> Business Franchise · Management Quality · Valuation</span>.
+        Includes Financial Signposts, 3-stage Value Expectations, Value Gorilla summary, and Turd Blossom assessment.
+      </p>
+
+      {!canRun && (
+        <p className="text-[11px] text-[#C89040]">
+          Add a ticker and at least a business summary or main thesis to generate a thesis.
+        </p>
+      )}
+
+      {phase === "idle" || phase === "error" ? (
+        <div className="space-y-3">
+          <button
+            onClick={run}
+            disabled={!canRun}
+            className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5"
+          >
+            {phase === "error" ? "↺ Retry Synthesis" : "Write Thesis →"}
+          </button>
+          {error && <p className="text-[11px] text-[#C84848]">{error}</p>}
+        </div>
+      ) : phase === "running" ? (
+        <button disabled className="text-xs font-bold tracking-widest uppercase text-[#A89E94] opacity-60 cursor-not-allowed">
+          Writing…
+        </button>
+      ) : null}
+
+      {/* Logs */}
+      {(phase === "running" || (phase === "done" && logs.length > 0)) && (
+        <div className="bg-[#F5F0EB] rounded border border-[#EDE7E0] p-4 space-y-0.5 max-h-72 overflow-y-auto font-mono">
+          {logs.map((line, i) => (
+            <p key={i} className="text-[10px] text-[#6E6258] leading-relaxed whitespace-pre-wrap">{line}</p>
+          ))}
+          {phase === "running" && <p className="text-[10px] text-[#C8804A] animate-pulse">▌</p>}
+          <div ref={logsEndRef} />
+        </div>
+      )}
+
+      {/* Result */}
+      {phase === "done" && result && (
+        <div className="space-y-8">
+          <hr className="t-rule" />
+
+          {/* Quality banner */}
+          {(() => {
+            const cfg = QUALITY_CONFIG[result.thesis_quality] ?? QUALITY_CONFIG.needs_work;
+            return (
+              <div className={`border rounded p-4 ${cfg.bg} ${cfg.border}`}>
+                <span className={`text-[11px] font-bold tracking-widest uppercase ${cfg.color}`}>
+                  {cfg.label}
+                </span>
+                <p className="text-[12px] text-[#6E6258] mt-1 leading-relaxed">{result.quality_rationale}</p>
+              </div>
+            );
+          })()}
+
+          {/* Thesis Statement */}
+          <div>
+            <SectionLabel>Investment Thesis</SectionLabel>
+            <p className="text-[13px] text-[#1E1A14] leading-relaxed whitespace-pre-wrap mt-2">
+              {result.thesis_statement}
+            </p>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Three Pillars */}
+          <div className="space-y-8">
+
+            {/* Business Franchise */}
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <SectionLabel>Business Franchise</SectionLabel>
+                <Pill value={result.business_franchise?.moat_strength ?? "none"} />
+                <span className="text-[#D8D0C8]">·</span>
+                <span className={`text-[10px] ${MOAT_COLOR[result.business_franchise?.moat_strength ?? "none"]}`}>
+                  {result.business_franchise?.moat_strength?.toUpperCase()} MOAT
+                </span>
+                <span className="text-[#D8D0C8] ml-auto">·</span>
+                <span className="text-[10px] text-[#A89E94]">
+                  durability: {result.business_franchise?.durability ?? "?"}
+                </span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-3">{result.business_franchise?.summary}</p>
+              <div className="mb-3">
+                <SectionLabel>Value creation mechanism</SectionLabel>
+                <p className="text-[12px] text-[#1E1A14]">{result.business_franchise?.value_creation_mechanism}</p>
+              </div>
+              {result.business_franchise?.key_risks?.length > 0 && (
+                <div>
+                  <SectionLabel>Key risks</SectionLabel>
+                  <ul className="space-y-1 mt-1">
+                    {result.business_franchise.key_risks.map((r, i) => (
+                      <li key={i} className="flex gap-2 text-[12px] text-[#C84848]">
+                        <span className="text-[#C0B8AC] flex-shrink-0">·</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Management Quality */}
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <SectionLabel>Management Quality</SectionLabel>
+                <Pill value={result.management_quality?.capital_allocation_verdict ?? "unknown"} />
+                <span className="text-[10px] text-[#A89E94]">capital allocation</span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-3">{result.management_quality?.summary}</p>
+              <div className="mb-3">
+                <SectionLabel>Leadership</SectionLabel>
+                <p className="text-[12px] text-[#1E1A14]">{result.management_quality?.leadership_assessment}</p>
+              </div>
+              {result.management_quality?.culture_indicators?.length > 0 && (
+                <div className="mb-3">
+                  <SectionLabel>Culture indicators</SectionLabel>
+                  <ul className="space-y-1 mt-1">
+                    {result.management_quality.culture_indicators.map((c, i) => (
+                      <li key={i} className="flex gap-2 text-[12px] text-[#7A9E6A]">
+                        <span className="text-[#C0B8AC] flex-shrink-0">✓</span>{c}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {result.management_quality?.red_flags?.length > 0 && (
+                <div>
+                  <SectionLabel>Red flags</SectionLabel>
+                  <ul className="space-y-1 mt-1">
+                    {result.management_quality.red_flags.map((f, i) => (
+                      <li key={i} className="flex gap-2 text-[12px] text-[#C84848]">
+                        <span className="text-[#C0B8AC] flex-shrink-0">!</span>{f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Financial Signposts */}
+          <div>
+            <SectionLabel>Financial Signposts</SectionLabel>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5 mt-3">
+              {/* Market Power */}
+              <div>
+                <p className="text-[9px] font-semibold tracking-[0.14em] text-[#C8804A] uppercase mb-2">Market Power</p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <SectionLabel>Gross margin stability</SectionLabel>
+                      <Pill value={result.financial_signposts?.gross_margin_stability?.score ?? "unknown"} />
+                    </div>
+                    <p className="text-[11px] text-[#A89E94] leading-relaxed">
+                      {result.financial_signposts?.gross_margin_stability?.assessment}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <SectionLabel>Negative working capital</SectionLabel>
+                      <span className={`text-[10px] font-bold ${result.financial_signposts?.negative_working_capital?.present === true ? "text-[#7A9E6A]" : result.financial_signposts?.negative_working_capital?.present === false ? "text-[#C84848]" : "text-[#A89E94]"}`}>
+                        {result.financial_signposts?.negative_working_capital?.present === true ? "YES" : result.financial_signposts?.negative_working_capital?.present === false ? "NO" : "UNKNOWN"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#A89E94] leading-relaxed">
+                      {result.financial_signposts?.negative_working_capital?.assessment}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Management Skill */}
+              <div>
+                <p className="text-[9px] font-semibold tracking-[0.14em] text-[#C8804A] uppercase mb-2">Management Skill</p>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <SectionLabel>LT capital allocation</SectionLabel>
+                      <Pill value={result.financial_signposts?.long_term_capital_allocation?.verdict ?? "unknown"} />
+                    </div>
+                    <p className="text-[11px] text-[#A89E94] leading-relaxed">
+                      {result.financial_signposts?.long_term_capital_allocation?.assessment}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <SectionLabel>ST capital allocation</SectionLabel>
+                      <Pill value={result.financial_signposts?.short_term_capital_allocation?.consistency ?? "unknown"} />
+                    </div>
+                    <p className="text-[11px] text-[#A89E94] leading-relaxed">
+                      {result.financial_signposts?.short_term_capital_allocation?.assessment}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Value Expectations */}
+          <div>
+            <div className="flex items-baseline gap-3 mb-4">
+              <SectionLabel>Value Expectations</SectionLabel>
+              <span className="text-[10px] font-bold text-[#C8804A] tracking-wider">
+                {result.value_expectations?.value_driver?.toUpperCase()} DRIVER
+              </span>
+              <span className="text-[10px] text-[#A89E94]">15% target return</span>
+            </div>
+            <div className="space-y-4">
+              <div className="border-l-2 border-[#EDE7E0] pl-4">
+                <SectionLabel>Stage 1 · Consensus (1–2Y)</SectionLabel>
+                <p className="text-[12px] text-[#6E6258] leading-relaxed">{result.value_expectations?.stage1_consensus}</p>
+              </div>
+              <div className="border-l-2 border-[#C8804A]/40 pl-4">
+                <SectionLabel>Stage 2 · Normalization (3–5Y)</SectionLabel>
+                <p className="text-[12px] text-[#6E6258] leading-relaxed">{result.value_expectations?.stage2_normalization}</p>
+              </div>
+              <div className="border-l-2 border-[#C8804A] pl-4">
+                <SectionLabel>Stage 3 · Terminal (5Y+)</SectionLabel>
+                <div className="grid grid-cols-2 gap-4 mt-1">
+                  <div>
+                    <SectionLabel>Growth</SectionLabel>
+                    <p className="text-[12px] text-[#1E1A14]">{result.value_expectations?.stage3_terminal?.long_term_growth}</p>
+                  </div>
+                  <div>
+                    <SectionLabel>Profitability</SectionLabel>
+                    <p className="text-[12px] text-[#1E1A14]">{result.value_expectations?.stage3_terminal?.long_term_profitability}</p>
+                  </div>
+                  <div>
+                    <SectionLabel>Fair multiple</SectionLabel>
+                    <p className="text-[12px] font-semibold text-[#C8804A]">{result.value_expectations?.stage3_terminal?.implied_multiple}</p>
+                  </div>
+                  <div>
+                    <SectionLabel>Return expectation</SectionLabel>
+                    <p className="text-[12px] text-[#7A9E6A] font-semibold">{result.value_expectations?.return_expectation}</p>
+                  </div>
+                </div>
+                {result.value_expectations?.balance_sheet_adjustments && (
+                  <div className="mt-3">
+                    <SectionLabel>Balance sheet adjustments</SectionLabel>
+                    <p className="text-[11px] text-[#A89E94]">{result.value_expectations.balance_sheet_adjustments}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Gorilla summary + Turd Blossom */}
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <SectionLabel>Value Gorilla Summary</SectionLabel>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mt-2">{result.gorilla_summary}</p>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <SectionLabel>Turd Blossom</SectionLabel>
+                <span className={`text-[10px] font-bold ${result.turd_blossom?.is_turd_blossom ? "text-[#C8804A]" : "text-[#A89E94]"}`}>
+                  {result.turd_blossom?.is_turd_blossom ? "YES" : "NO"}
+                </span>
+              </div>
+              {result.turd_blossom?.is_turd_blossom ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-[#C84848]">{result.turd_blossom?.current_reputation}</p>
+                  {result.turd_blossom?.early_shoots?.length > 0 && (
+                    <ul className="space-y-1">
+                      {result.turd_blossom.early_shoots.map((s, i) => (
+                        <li key={i} className="flex gap-2 text-[11px] text-[#7A9E6A]">
+                          <span className="flex-shrink-0">↑</span>{s}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-[11px] text-[#6E6258]">{result.turd_blossom?.blossom_thesis}</p>
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#A89E94]">Quality compounder — market appreciates this business.</p>
+              )}
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Thesis memo */}
+          <div>
+            <SectionLabel>Thesis memo</SectionLabel>
+            <p className="text-[12px] text-[#6E6258] leading-relaxed whitespace-pre-wrap mt-2">{result.thesis_memo}</p>
+          </div>
+
+          {/* Re-run */}
+          <div className="pt-2">
+            <button
+              onClick={() => { setPhase("idle"); setResult(null); setLogs([]); }}
+              className="text-[10px] text-[#A89E94] hover:text-[#C8804A] transition-colors"
+            >
+              ↺ Run again
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ResearchPage() {
@@ -1400,12 +1826,13 @@ export default function ResearchPage() {
     (draft.catalyst.trim().length > 10 || draft.main_thesis.trim().length > 10);
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: "business", label: "Business" },
-    { key: "thesis",   label: "Thesis" },
-    { key: "evidence", label: "Evidence" },
-    { key: "gorilla",  label: "Gorilla" },
-    { key: "imagine",  label: "Imagine" },
-    { key: "launch",   label: "Launch" },
+    { key: "business",   label: "Business" },
+    { key: "thesis",     label: "Thesis" },
+    { key: "evidence",   label: "Evidence" },
+    { key: "gorilla",    label: "Gorilla" },
+    { key: "imagine",    label: "Imagine" },
+    { key: "synthesis",  label: "Synthesis" },
+    { key: "launch",     label: "Launch" },
   ];
 
   const lastSaved = draft.updated_at
@@ -1519,7 +1946,8 @@ export default function ResearchPage() {
         {tab === "thesis"   && <ThesisTab   draft={draft} update={update} />}
         {tab === "evidence" && <EvidenceTab draft={draft} update={update} />}
         {tab === "gorilla"  && <GorillaTab  draft={draft} />}
-        {tab === "imagine"  && <ImagineTab  draft={draft} />}
+        {tab === "imagine"    && <ImagineTab    draft={draft} />}
+        {tab === "synthesis"  && <SynthesisTab  draft={draft} />}
         {tab === "launch" && (
           <div className="space-y-8">
             <LaunchTab draft={draft} />

@@ -565,6 +565,109 @@ export interface ImagineBoard {
   imagine_memo:            string;   // 200-word memo — direct, forward-looking
 }
 
+// ─── Agent 12 — THESIS ────────────────────────────────────────────────────────
+
+export interface ThesisInput {
+  ticker: string;
+  company_name?: string;
+  analyst_id: string;
+  business_summary: string;
+  economic_domain: string;
+  geographic_exposure: string;
+  moat_type: string;
+  moat_evidence: string;
+  key_metrics: string;
+  management_notes: string;
+  main_thesis: string;
+  catalyst: string;
+  bull_triggers: string;
+  base_narrative: string;
+  bear_risk: string;
+  invalidation: string;
+  news_headlines: string[];
+}
+
+export type MoatStrength             = "wide" | "narrow" | "none" | "building";
+export type ThesisDurability         = "high" | "medium" | "low";
+export type CapitalAllocationVerdict = "excellent" | "good" | "fair" | "poor" | "unknown";
+export type WorkingCapitalTrend      = "stable" | "improving" | "deteriorating" | "unknown";
+export type SignpostScore            = "strong" | "moderate" | "weak" | "unknown";
+export type LtCapitalVerdict         = "good" | "concerning" | "mixed" | "unknown";
+export type ValueDriver              = "sales" | "book" | "mixed";
+export type ThesisQuality            = "investment_grade" | "needs_work" | "incomplete";
+
+export interface BusinessFranchise {
+  summary:                  string;
+  moat_strength:            MoatStrength;
+  value_creation_mechanism: string;
+  durability:               ThesisDurability;
+  key_risks:                string[];
+}
+
+export interface ManagementQuality {
+  summary:                    string;
+  capital_allocation_verdict: CapitalAllocationVerdict;
+  leadership_assessment:      string;
+  culture_indicators:         string[];
+  red_flags:                  string[];
+}
+
+export interface FinancialSignposts {
+  gross_margin_stability: {
+    score:      SignpostScore;
+    assessment: string;
+  };
+  negative_working_capital: {
+    present:    boolean | null;
+    assessment: string;
+  };
+  long_term_capital_allocation: {
+    verdict:    LtCapitalVerdict;
+    evidence:   string;
+    assessment: string;
+  };
+  short_term_capital_allocation: {
+    consistency: WorkingCapitalTrend;
+    assessment:  string;
+  };
+}
+
+export interface Stage3Terminal {
+  long_term_growth:        string;
+  long_term_profitability: string;
+  implied_multiple:        string;
+  target_multiple:         string;
+}
+
+export interface ValueExpectations {
+  value_driver:              ValueDriver;
+  stage1_consensus:          string;
+  stage2_normalization:      string;
+  stage3_terminal:           Stage3Terminal;
+  balance_sheet_adjustments: string;
+  return_expectation:        string;
+}
+
+export interface TurdBlossom {
+  is_turd_blossom:    boolean;
+  current_reputation: string;
+  early_shoots:       string[];
+  blossom_thesis:     string;
+}
+
+export interface ThesisBoard {
+  thesis_statement:    string;
+  business_franchise:  BusinessFranchise;
+  management_quality:  ManagementQuality;
+  financial_signposts: FinancialSignposts;
+  value_expectations:  ValueExpectations;
+  gorilla_summary:     string;
+  turd_blossom:        TurdBlossom;
+  thesis_quality:      ThesisQuality;
+  quality_rationale:   string;
+  thesis_memo:         string;
+}
+
 // ─── Report Document ──────────────────────────────────────
 
 export interface ReportContent {
