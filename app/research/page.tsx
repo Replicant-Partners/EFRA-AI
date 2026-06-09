@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { GorillaBoard } from "@/src/shared/types";
+import type { GorillaBoard, ImagineBoard } from "@/src/shared/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Mode = "valentine" | "gunn" | "dual";
-type Tab = "business" | "thesis" | "evidence" | "gorilla" | "launch";
+type Tab = "business" | "thesis" | "evidence" | "gorilla" | "imagine" | "launch";
 type EconomicDomain = "biological" | "physical" | "digital" | "mixed" | "";
 type MoatType = "brand" | "costs" | "network" | "regulatory" | "other" | "";
 
@@ -993,6 +993,327 @@ function GorillaTab({
   );
 }
 
+// ─── Imagine Tab ─────────────────────────────────────────────────────────────
+
+const STAGE_CONFIG: Record<string, { label: string; color: string; desc: string }> = {
+  model:  { label: "MODEL",  color: "text-[#A89E94]", desc: "Digital version exists — physical world still decides" },
+  shadow: { label: "SHADOW", color: "text-[#C8804A]", desc: "Live sync — physical-first decisions" },
+  twin:   { label: "TWIN",   color: "text-[#7A9E6A]", desc: "Digital is authoritative — physical follows" },
+  source: { label: "SOURCE", color: "text-[#C8804A] font-bold", desc: "Digital IS the product" },
+};
+
+const DRIVER_CONFIG: Record<string, { label: string; color: string }> = {
+  innovation:  { label: "INNOVATION",  color: "text-[#7A9E6A]" },
+  demographic: { label: "DEMOGRAPHIC", color: "text-[#C8804A]" },
+  both:        { label: "BOTH",        color: "text-[#7A9E6A]" },
+  neither:     { label: "NEITHER",     color: "text-[#C84848]" },
+};
+
+function ImagineTab({ draft }: { draft: ResearchDraft }) {
+  const [phase,  setPhase]  = useState<"idle" | "running" | "done" | "error">("idle");
+  const [logs,   setLogs]   = useState<string[]>([]);
+  const [result, setResult] = useState<ImagineBoard | null>(null);
+  const [error,  setError]  = useState<string | null>(null);
+  const logsEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  const canRun =
+    draft.ticker.trim().length > 0 &&
+    (draft.business_summary.trim().length > 0 || draft.main_thesis.trim().length > 0);
+
+  async function run() {
+    setPhase("running");
+    setLogs([]);
+    setResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/research/imagine", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:              draft.ticker.toUpperCase().trim(),
+          company_name:        draft.company_name,
+          analyst_id:          draft.analyst_id,
+          business_summary:    draft.business_summary,
+          economic_domain:     draft.economic_domain,
+          geographic_exposure: draft.geographic_exposure,
+          moat_type:           draft.moat_type,
+          moat_evidence:       draft.moat_evidence,
+          key_metrics:         draft.key_metrics,
+          management_notes:    draft.management_notes,
+          main_thesis:         draft.main_thesis,
+          catalyst:            draft.catalyst,
+          bull_triggers:       draft.bull_triggers,
+          base_narrative:      draft.base_narrative,
+          bear_risk:           draft.bear_risk,
+          invalidation:        draft.invalidation,
+          news_headlines:      draft.news_items.map(n => n.headline).filter(Boolean),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer    = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (!json) continue;
+          const msg = JSON.parse(json) as {
+            type: string;
+            msg?: string;
+            result?: ImagineBoard;
+            error?: string;
+          };
+          if (msg.type === "log" && msg.msg)     setLogs(prev => [...prev, msg.msg!]);
+          else if (msg.type === "done")           { setResult(msg.result!); setPhase("done"); }
+          else if (msg.type === "error")          { setError(msg.error ?? "Unknown error"); setPhase("error"); }
+        }
+      }
+    } catch (err) {
+      setError(String(err));
+      setPhase("error");
+    }
+  }
+
+  const horizonLabel: Record<string, string> = { "5y": "5 Years", "10y": "10 Years", "20y": "20 Years" };
+  const horizonColor: Record<string, string> = {
+    "5y":  "border-[#C8804A] text-[#C8804A]",
+    "10y": "border-[#7A9E6A] text-[#7A9E6A]",
+    "20y": "border-[#6E6258] text-[#6E6258]",
+  };
+
+  return (
+    <div className="space-y-6">
+
+      <p className="text-sm text-[#6E6258] leading-relaxed">
+        Projects the future of the business at 5, 10, and 20 years and surfaces what is
+        not on the page and not in the price — the things the market is missing.
+        Every claim is falsifiable with a specific test.
+      </p>
+
+      {!canRun && (
+        <p className="text-[11px] text-[#C89040]">
+          Add a ticker and at least a business summary or main thesis to run this analysis.
+        </p>
+      )}
+
+      {/* Run button */}
+      {phase === "idle" || phase === "error" ? (
+        <div className="space-y-3">
+          <button
+            onClick={run}
+            disabled={!canRun}
+            className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5"
+          >
+            {phase === "error" ? "↺ Retry Imagination" : "Run Imagination →"}
+          </button>
+          {error && <p className="text-[11px] text-[#C84848]">{error}</p>}
+        </div>
+      ) : phase === "running" ? (
+        <button disabled className="text-xs font-bold tracking-widest uppercase text-[#A89E94] opacity-60 cursor-not-allowed">
+          Running…
+        </button>
+      ) : null}
+
+      {/* Streaming logs */}
+      {(phase === "running" || (phase === "done" && logs.length > 0)) && (
+        <div className="bg-[#F5F0EB] rounded border border-[#EDE7E0] p-4 space-y-0.5 max-h-72 overflow-y-auto font-mono">
+          {logs.map((line, i) => (
+            <p key={i} className="text-[10px] text-[#6E6258] leading-relaxed whitespace-pre-wrap">{line}</p>
+          ))}
+          {phase === "running" && <p className="text-[10px] text-[#C8804A] animate-pulse">▌</p>}
+          <div ref={logsEndRef} />
+        </div>
+      )}
+
+      {/* Result */}
+      {phase === "done" && result && (
+        <div className="space-y-8">
+          <hr className="t-rule" />
+
+          {/* Digital stage + Growth driver */}
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <SectionLabel>Digital Transformation Stage</SectionLabel>
+              <div className="space-y-1 mt-1">
+                {(["model", "shadow", "twin", "source"] as const).map(stage => {
+                  const cfg = STAGE_CONFIG[stage];
+                  const active = result.digital_stage === stage;
+                  return (
+                    <div key={stage} className={`flex items-baseline gap-2 py-0.5 ${active ? "" : "opacity-30"}`}>
+                      <span className={`text-[10px] font-bold tracking-wider w-14 ${cfg.color}`}>
+                        {cfg.label}
+                      </span>
+                      {active && (
+                        <span className="text-[10px] text-[#6E6258]">{cfg.desc}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-[#A89E94] mt-2 leading-relaxed">
+                {result.digital_stage_rationale}
+              </p>
+            </div>
+            <div>
+              <SectionLabel>Growth Driver</SectionLabel>
+              <div className="mt-1">
+                {(() => {
+                  const cfg = DRIVER_CONFIG[result.growth_driver] ?? { label: result.growth_driver.toUpperCase(), color: "text-[#A89E94]" };
+                  return (
+                    <span className={`text-sm font-bold tracking-wider ${cfg.color}`}>
+                      {cfg.label}
+                    </span>
+                  );
+                })()}
+              </div>
+              <p className="text-[11px] text-[#A89E94] mt-2 leading-relaxed">
+                {result.growth_driver_rationale}
+              </p>
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Long-range scenarios */}
+          <div>
+            <SectionLabel>Long-Range Scenarios</SectionLabel>
+            <div className="space-y-5 mt-3">
+              {(result.scenarios ?? []).map(s => {
+                const hColor = horizonColor[s.horizon] ?? "border-[#A89E94] text-[#A89E94]";
+                return (
+                  <div key={s.horizon} className={`border-l-2 pl-4 ${hColor.split(" ")[0]}`}>
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <span className={`text-[11px] font-bold tracking-wider uppercase ${hColor.split(" ")[1]}`}>
+                        {horizonLabel[s.horizon] ?? s.horizon}
+                      </span>
+                      <span className="text-[10px] text-[#A89E94]">
+                        {(s.probability * 100).toFixed(0)}% probability
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <SectionLabel>World</SectionLabel>
+                        <p className="text-[12px] text-[#6E6258] leading-relaxed">{s.world}</p>
+                      </div>
+                      <div>
+                        <SectionLabel>Company</SectionLabel>
+                        <p className="text-[12px] text-[#1E1A14] leading-relaxed">{s.company}</p>
+                      </div>
+                      <div>
+                        <SectionLabel>Key force</SectionLabel>
+                        <p className="text-[12px] text-[#C8804A]">{s.key_force}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Not on the page / Not in the price */}
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <SectionLabel>Not on the page</SectionLabel>
+              <p className="text-[10px] text-[#C0B8AC] mb-3">Things the analyst&apos;s notes don&apos;t capture</p>
+              <ol className="space-y-2">
+                {(result.not_on_the_page ?? []).map((item, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] text-[#6E6258]">
+                    <span className="text-[#C0B8AC] flex-shrink-0">{i + 1}.</span>
+                    <span className="leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div>
+              <SectionLabel>Not in the price</SectionLabel>
+              <p className="text-[10px] text-[#C0B8AC] mb-3">Things the market is not discounting</p>
+              <ol className="space-y-2">
+                {(result.not_in_the_price ?? []).map((item, i) => (
+                  <li key={i} className="flex gap-2 text-[12px] text-[#1E1A14]">
+                    <span className="text-[#C0B8AC] flex-shrink-0">{i + 1}.</span>
+                    <span className="leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Falsifiable predictions */}
+          <div>
+            <SectionLabel>Falsifiable Predictions</SectionLabel>
+            <div className="space-y-4 mt-3">
+              {(result.predictions ?? []).map((p, i) => (
+                <div key={i} className="border-l border-[#EDE7E0] pl-4">
+                  <div className="flex items-baseline gap-3 mb-1">
+                    <span className="text-[10px] text-[#C0B8AC]">{i + 1}</span>
+                    <span className="text-[10px] text-[#A89E94]">{p.horizon}</span>
+                    <span className={`text-[10px] font-semibold ml-auto ${p.confidence >= 0.65 ? "text-[#7A9E6A]" : p.confidence >= 0.45 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                      {(p.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#1E1A14] leading-relaxed mb-1">{p.prediction}</p>
+                  <p className="text-[11px] text-[#A89E94]">
+                    <span className="text-[#C0B8AC]">Test: </span>{p.test}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Imagination confidence + memo */}
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-3">
+              <SectionLabel>Imagination confidence</SectionLabel>
+              <span className={`text-[11px] font-semibold ${result.imagination_confidence >= 0.65 ? "text-[#7A9E6A]" : result.imagination_confidence >= 0.45 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                {(result.imagination_confidence * 100).toFixed(0)}%
+              </span>
+            </div>
+            <p className="text-[11px] text-[#A89E94] leading-relaxed">{result.confidence_rationale}</p>
+          </div>
+
+          <div>
+            <SectionLabel>Imagination memo</SectionLabel>
+            <p className="text-[12px] text-[#6E6258] leading-relaxed whitespace-pre-wrap mt-2">
+              {result.imagine_memo}
+            </p>
+          </div>
+
+          {/* Re-run */}
+          <div className="pt-2">
+            <button
+              onClick={() => { setPhase("idle"); setResult(null); setLogs([]); }}
+              className="text-[10px] text-[#A89E94] hover:text-[#C8804A] transition-colors"
+            >
+              ↺ Run again
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ResearchPage() {
@@ -1083,6 +1404,7 @@ export default function ResearchPage() {
     { key: "thesis",   label: "Thesis" },
     { key: "evidence", label: "Evidence" },
     { key: "gorilla",  label: "Gorilla" },
+    { key: "imagine",  label: "Imagine" },
     { key: "launch",   label: "Launch" },
   ];
 
@@ -1197,6 +1519,7 @@ export default function ResearchPage() {
         {tab === "thesis"   && <ThesisTab   draft={draft} update={update} />}
         {tab === "evidence" && <EvidenceTab draft={draft} update={update} />}
         {tab === "gorilla"  && <GorillaTab  draft={draft} />}
+        {tab === "imagine"  && <ImagineTab  draft={draft} />}
         {tab === "launch" && (
           <div className="space-y-8">
             <LaunchTab draft={draft} />

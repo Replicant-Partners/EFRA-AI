@@ -495,6 +495,76 @@ export interface GorillaBoard {
   gorilla_memo:      string;     // 200-word memo — direct, no hedging
 }
 
+// ─── Agent 11 — IMAGINE ───────────────────────────────────────────────────────
+
+export interface ImagineInput {
+  ticker: string;
+  company_name?: string;
+  analyst_id: string;
+  // Business tab
+  business_summary: string;
+  economic_domain: string;
+  geographic_exposure: string;
+  moat_type: string;
+  moat_evidence: string;
+  key_metrics: string;
+  management_notes: string;
+  // Thesis tab
+  main_thesis: string;
+  catalyst: string;
+  bull_triggers: string;
+  base_narrative: string;
+  bear_risk: string;
+  invalidation: string;
+  // Evidence tab
+  news_headlines: string[];
+}
+
+export type DigitalStage = "model" | "shadow" | "twin" | "source";
+export type GrowthDriver  = "innovation" | "demographic" | "both" | "neither";
+
+export interface FalsifiablePrediction {
+  prediction:  string;   // specific, observable claim
+  test:        string;   // what data point or event would confirm or deny it
+  horizon:     string;   // "6 months" | "1 year" | "3 years" | "5 years"
+  confidence:  number;   // 0–1
+}
+
+export interface LongRangeScenario {
+  horizon:     "5y" | "10y" | "20y";
+  world:       string;   // what the world looks like at this horizon for this business
+  company:     string;   // what the company looks like in this world
+  key_force:   string;   // single most important force driving this scenario
+  probability: number;   // 0–1
+}
+
+export interface ImagineBoard {
+  // Digital transformation stage
+  digital_stage:           DigitalStage;
+  digital_stage_rationale: string;         // why this stage, what's next
+
+  // Growth driver
+  growth_driver:           GrowthDriver;
+  growth_driver_rationale: string;         // innovation vs demographic vs both
+
+  // Long-range scenarios
+  scenarios:               LongRangeScenario[];   // one per horizon: 5y, 10y, 20y
+
+  // What's not on the page and not in the price
+  not_on_the_page:         string[];   // 3–5 things the analyst's notes don't capture
+  not_in_the_price:        string[];   // 3–5 things the market is not pricing in
+
+  // Falsifiable predictions
+  predictions:             FalsifiablePrediction[];  // 3–5 testable claims
+
+  // Overall imagination confidence
+  imagination_confidence:  number;   // 0–1
+  confidence_rationale:    string;
+
+  // Memo
+  imagine_memo:            string;   // 200-word memo — direct, forward-looking
+}
+
 // ─── Report Document ──────────────────────────────────────
 
 export interface ReportContent {
