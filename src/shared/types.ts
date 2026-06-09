@@ -678,3 +678,59 @@ export interface ReportContent {
   cascade_text:       string;
   cascade_updated_at: string;
 }
+
+// ─── Research Chat ─────────────────────────────────────────
+
+export type ChatRole = "user" | "assistant";
+
+export interface ChatMessage {
+  id:         string;
+  role:       ChatRole;
+  content:    string;
+  sources?:   ResearchSource[];   // web sources cited in this turn
+  timestamp:  string;             // ISO
+}
+
+export interface ResearchSource {
+  title: string;
+  url:   string;
+  type:  "sec_filing" | "ir_page" | "news" | "regulatory" | "other";
+  snippet?: string;
+}
+
+/** Subset of ResearchDraft that the chat agent builds incrementally */
+export interface ResearchDraftPatch {
+  ticker?:              string;
+  company_name?:        string;
+  mode?:                "valentine" | "gunn" | "dual";
+  business_summary?:    string;
+  economic_domain?:     string;
+  geographic_exposure?: string;
+  moat_type?:           string;
+  moat_evidence?:       string;
+  management_notes?:    string;
+  key_metrics?:         string;
+  main_thesis?:         string;
+  bull_triggers?:       string;
+  bull_pt?:             string;
+  base_narrative?:      string;
+  base_pt?:             string;
+  bear_risk?:           string;
+  invalidation?:        string;
+  catalyst?:            string;
+  news_items?:          { headline: string; why: string }[];
+}
+
+export interface ResearchChatRequest {
+  ticker:   string;
+  messages: { role: ChatRole; content: string }[];
+  draft:    ResearchDraftPatch;
+}
+
+export interface ResearchChatChunk {
+  type:    "token" | "sources" | "draft_patch" | "done" | "error";
+  token?:  string;
+  sources?: ResearchSource[];
+  patch?:  ResearchDraftPatch;
+  error?:  string;
+}
