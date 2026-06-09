@@ -21,6 +21,7 @@ export default function RootLayout({
           </div>
           <nav className="flex items-baseline gap-6">
             <a href="/" className="t-label hover:text-[#C8804A] transition-colors">Pipeline</a>
+            <a href="/research" className="t-label hover:text-[#C8804A] transition-colors">Research</a>
             <a href="/screener" className="t-label hover:text-[#C8804A] transition-colors">Screener</a>
             <a href="/library" className="t-label hover:text-[#C8804A] transition-colors">Library</a>
             <a href="/observatory" className="t-label hover:text-[#C8804A] transition-colors">Observatory</a>

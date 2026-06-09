@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const PREFILL_KEY = "efrain_research_prefill";
 
 type Mode = "valentine" | "gunn" | "dual";
 
@@ -26,6 +28,31 @@ export default function IdeaForm({ onSubmit }: Props) {
   const [catalyst, setCatalyst] = useState("");
   const [mode, setMode] = useState<Mode>("valentine");
   const [news, setNews] = useState<string[]>([""]);
+  const [prefilled, setPrefilled] = useState(false);
+
+  // Pre-fill from Research page if a draft was launched
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PREFILL_KEY);
+      if (!raw) return;
+      const prefill = JSON.parse(raw) as {
+        ticker?: string;
+        analyst_id?: string;
+        mode?: Mode;
+        catalyst?: string;
+        news?: string[];
+      };
+      if (prefill.ticker)     setTicker(prefill.ticker);
+      if (prefill.analyst_id) setAnalystId(prefill.analyst_id);
+      if (prefill.mode)       setMode(prefill.mode);
+      if (prefill.catalyst)   setCatalyst(prefill.catalyst);
+      if (prefill.news?.length) setNews(prefill.news.length > 0 ? prefill.news : [""]);
+      localStorage.removeItem(PREFILL_KEY);
+      setPrefilled(true);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   function addNews() {
     if (news.length < 10) setNews([...news, ""]);
@@ -55,6 +82,14 @@ export default function IdeaForm({ onSubmit }: Props) {
       <div>
         <h1 className="text-lg font-bold text-[#C8804A] tracking-widest uppercase">New Idea</h1>
         <p className="t-label mt-1">Submit an investment idea to the pipeline</p>
+        {prefilled && (
+          <p className="text-[10px] text-[#7A9E6A] mt-1.5">
+            ✓ Pre-filled from Research —{" "}
+            <a href="/research" className="underline hover:text-[#5A8E5A] transition-colors">
+              edit thesis
+            </a>
+          </p>
+        )}
       </div>
 
       <hr className="t-rule" />
