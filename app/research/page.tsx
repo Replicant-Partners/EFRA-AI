@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import type { GorillaBoard } from "@/src/shared/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Mode = "valentine" | "gunn" | "dual";
-type Tab = "business" | "thesis" | "evidence" | "launch";
+type Tab = "business" | "thesis" | "evidence" | "gorilla" | "launch";
 type EconomicDomain = "biological" | "physical" | "digital" | "mixed" | "";
 type MoatType = "brand" | "costs" | "network" | "regulatory" | "other" | "";
 
@@ -609,6 +610,389 @@ function LaunchTab({ draft }: { draft: ResearchDraft }) {
   );
 }
 
+// ─── Gorilla Score Bar ────────────────────────────────────────────────────────
+
+function ScoreBar({
+  score,
+  label,
+  weight,
+}: {
+  score: number;
+  label: string;
+  weight: string;
+}) {
+  const color =
+    score >= 65 ? "bg-[#7A9E6A]" : score >= 40 ? "bg-[#C8804A]" : "bg-[#C84848]";
+  const textColor =
+    score >= 65 ? "text-[#7A9E6A]" : score >= 40 ? "text-[#C8804A]" : "text-[#C84848]";
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[11px] text-[#1E1A14] font-semibold">{label}</span>
+          <span className="text-[9px] text-[#C0B8AC] tracking-wider">{weight}</span>
+        </div>
+        <span className={`text-[11px] font-bold ${textColor}`}>{score}/100</span>
+      </div>
+      <div className="h-[3px] bg-[#EDE7E0] rounded-full overflow-hidden">
+        <div
+          className={`h-full ${color} rounded-full transition-all duration-700`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Gorilla Tab ──────────────────────────────────────────────────────────────
+
+function GorillaTab({
+  draft,
+}: {
+  draft: ResearchDraft;
+}) {
+  const [phase,  setPhase]  = useState<"idle" | "running" | "done" | "error">("idle");
+  const [logs,   setLogs]   = useState<string[]>([]);
+  const [result, setResult] = useState<GorillaBoard | null>(null);
+  const [error,  setError]  = useState<string | null>(null);
+  const logsEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  const canRun = draft.ticker.trim().length > 0 &&
+    (draft.business_summary.trim().length > 0 || draft.main_thesis.trim().length > 0);
+
+  async function run() {
+    setPhase("running");
+    setLogs([]);
+    setResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/research/gorilla", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:               draft.ticker.toUpperCase().trim(),
+          company_name:         draft.company_name,
+          analyst_id:           draft.analyst_id,
+          business_summary:     draft.business_summary,
+          economic_domain:      draft.economic_domain,
+          geographic_exposure:  draft.geographic_exposure,
+          moat_type:            draft.moat_type,
+          moat_evidence:        draft.moat_evidence,
+          key_metrics:          draft.key_metrics,
+          management_notes:     draft.management_notes,
+          main_thesis:          draft.main_thesis,
+          catalyst:             draft.catalyst,
+          bull_triggers:        draft.bull_triggers,
+          base_narrative:       draft.base_narrative,
+          bear_risk:            draft.bear_risk,
+          invalidation:         draft.invalidation,
+          news_headlines:       draft.news_items.map(n => n.headline).filter(Boolean),
+        }),
+      });
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer    = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (!json) continue;
+
+          const msg = JSON.parse(json) as {
+            type: string;
+            msg?: string;
+            result?: GorillaBoard;
+            error?: string;
+          };
+
+          if (msg.type === "log" && msg.msg) {
+            setLogs(prev => [...prev, msg.msg!]);
+          } else if (msg.type === "done" && msg.result) {
+            setResult(msg.result);
+            setPhase("done");
+          } else if (msg.type === "error") {
+            setError(msg.error ?? "Unknown error");
+            setPhase("error");
+          }
+        }
+      }
+    } catch (err) {
+      setError(String(err));
+      setPhase("error");
+    }
+  }
+
+  const verdictConfig: Record<
+    GorillaBoard["gorilla_verdict"],
+    { label: string; color: string; bg: string; border: string }
+  > = {
+    GORILLA:      { label: "GORILLA",      color: "text-[#7A9E6A]", bg: "bg-[#7A9E6A]/10", border: "border-[#7A9E6A]/40" },
+    SMALL_ANIMAL: { label: "SMALL ANIMAL", color: "text-[#C8804A]", bg: "bg-[#C8804A]/10", border: "border-[#C8804A]/40" },
+    PEDESTRIAN:   { label: "PEDESTRIAN",   color: "text-[#C84848]", bg: "bg-[#C84848]/10", border: "border-[#C84848]/40" },
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* Description */}
+      <p className="text-sm text-[#6E6258] leading-relaxed">
+        Evaluates whether this opportunity fits the firm&apos;s{" "}
+        <span className="text-[#1E1A14] font-semibold">Value Gorilla</span> profile: a large,
+        obvious problem with an invisible solution that is a new combinatorial assembly sitting at
+        a choke point — and trading at a valuation that reflects the market&apos;s disbelief.
+      </p>
+
+      {/* Requirements check */}
+      {!canRun && (
+        <p className="text-[11px] text-[#C89040]">
+          Add a ticker and at least a business summary or main thesis in the previous tabs.
+        </p>
+      )}
+
+      {/* Run button */}
+      {phase === "idle" || phase === "error" ? (
+        <div className="space-y-3">
+          <button
+            onClick={run}
+            disabled={!canRun}
+            className="text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5"
+          >
+            {phase === "error" ? "↺ Retry Gorilla Analysis" : "Run Gorilla Analysis →"}
+          </button>
+          {error && (
+            <p className="text-[11px] text-[#C84848]">{error}</p>
+          )}
+        </div>
+      ) : phase === "running" ? (
+        <button
+          disabled
+          className="text-xs font-bold tracking-widest uppercase text-[#A89E94] opacity-60 cursor-not-allowed"
+        >
+          Running…
+        </button>
+      ) : null}
+
+      {/* Streaming logs */}
+      {(phase === "running" || (phase === "done" && logs.length > 0)) && (
+        <div className="bg-[#F5F0EB] rounded border border-[#EDE7E0] p-4 space-y-0.5 max-h-72 overflow-y-auto font-mono">
+          {logs.map((line, i) => (
+            <p key={i} className="text-[10px] text-[#6E6258] leading-relaxed whitespace-pre-wrap">
+              {line}
+            </p>
+          ))}
+          {phase === "running" && (
+            <p className="text-[10px] text-[#C8804A] animate-pulse">▌</p>
+          )}
+          <div ref={logsEndRef} />
+        </div>
+      )}
+
+      {/* Result */}
+      {phase === "done" && result && (
+        <div className="space-y-6">
+          <hr className="t-rule" />
+
+          {/* Verdict banner */}
+          {(() => {
+            const cfg = verdictConfig[result.gorilla_verdict];
+            return (
+              <div className={`border rounded p-4 ${cfg.bg} ${cfg.border}`}>
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className={`text-sm font-bold tracking-widest uppercase ${cfg.color}`}>
+                    {cfg.label}
+                  </span>
+                  <span className={`text-lg font-bold ${cfg.color}`}>
+                    {result.gorilla_total}/100
+                  </span>
+                </div>
+                <p className="text-[12px] text-[#6E6258] leading-relaxed">
+                  {result.verdict_rationale}
+                </p>
+              </div>
+            );
+          })()}
+
+          {/* Dimension scores */}
+          <div className="space-y-4">
+            <SectionLabel>Four Dimensions</SectionLabel>
+            <ScoreBar score={result.obvious_problem.score}   label="Obvious Problem"    weight="25%" />
+            <ScoreBar score={result.invisible_gorilla.score} label="Invisible Gorilla"  weight="30%" />
+            <ScoreBar score={result.combinatorial.score}     label="Combinatorial"      weight="25%" />
+            <ScoreBar score={result.choke_point.score}       label="Choke Point"        weight="20%" />
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Dimension details */}
+          <div className="space-y-6">
+
+            {/* Obvious Problem */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <SectionLabel>Obvious Problem</SectionLabel>
+                <span className={`text-[10px] font-semibold ml-auto ${result.obvious_problem.score >= 65 ? "text-[#7A9E6A]" : result.obvious_problem.score >= 40 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                  {result.obvious_problem.score}/100
+                </span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-2">
+                {result.obvious_problem.assessment}
+              </p>
+              {result.obvious_problem.evidence?.length > 0 && (
+                <ul className="space-y-1">
+                  {result.obvious_problem.evidence.map((e, i) => (
+                    <li key={i} className="text-[11px] text-[#A89E94] flex gap-2">
+                      <span className="text-[#C0B8AC] flex-shrink-0">·</span>
+                      <span>{e}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Invisible Gorilla */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <SectionLabel>Invisible Gorilla</SectionLabel>
+                <span className={`text-[10px] font-semibold ml-auto ${result.invisible_gorilla.score >= 65 ? "text-[#7A9E6A]" : result.invisible_gorilla.score >= 40 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                  {result.invisible_gorilla.score}/100
+                </span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-3">
+                {result.invisible_gorilla.assessment}
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                <div>
+                  <SectionLabel>Why invisible</SectionLabel>
+                  <p className="text-[12px] text-[#1E1A14]">{result.invisible_gorilla.why_invisible}</p>
+                </div>
+                <div>
+                  <SectionLabel>Market&apos;s wrong assumption</SectionLabel>
+                  <p className="text-[12px] text-[#C84848]">{result.invisible_gorilla.market_assumption}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Combinatorial */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <SectionLabel>Combinatorial</SectionLabel>
+                <span className={`text-[10px] font-semibold ml-auto ${result.combinatorial.score >= 65 ? "text-[#7A9E6A]" : result.combinatorial.score >= 40 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                  {result.combinatorial.score}/100
+                </span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-3">
+                {result.combinatorial.assessment}
+              </p>
+              <div>
+                <SectionLabel>New combination</SectionLabel>
+                <p className="text-[12px] text-[#1E1A14] mb-2">{result.combinatorial.new_combination}</p>
+                {result.combinatorial.existing_technologies?.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {result.combinatorial.existing_technologies.map((t, i) => (
+                      <span key={i} className="text-[10px] text-[#6E6258] bg-[#F5F0EB] px-2 py-0.5 rounded border border-[#EDE7E0]">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Choke Point */}
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <SectionLabel>Choke Point</SectionLabel>
+                <span className={`text-[10px] font-semibold ml-auto ${result.choke_point.score >= 65 ? "text-[#7A9E6A]" : result.choke_point.score >= 40 ? "text-[#C8804A]" : "text-[#C84848]"}`}>
+                  {result.choke_point.score}/100
+                </span>
+              </div>
+              <p className="text-[12px] text-[#6E6258] leading-relaxed mb-3">
+                {result.choke_point.assessment}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <SectionLabel>Value chain</SectionLabel>
+                  <p className="text-[12px] text-[#1E1A14]">{result.choke_point.value_chain}</p>
+                </div>
+                <div>
+                  <SectionLabel>Position</SectionLabel>
+                  <p className="text-[12px] text-[#1E1A14]">{result.choke_point.position}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Valuation gap */}
+          <div>
+            <div className="flex items-baseline gap-3 mb-2">
+              <SectionLabel>Valuation consistency</SectionLabel>
+              <span className={`text-[10px] font-semibold ${result.valuation_gap.consistent ? "text-[#7A9E6A]" : "text-[#C84848]"}`}>
+                {result.valuation_gap.consistent ? "✓ Consistent with gorilla thesis" : "✗ Inconsistent — may already be priced in"}
+              </span>
+            </div>
+            <p className="text-[12px] text-[#6E6258] mb-1">{result.valuation_gap.assessment}</p>
+            <p className="text-[11px] text-[#A89E94]">{result.valuation_gap.current_pricing}</p>
+          </div>
+
+          <hr className="t-rule" />
+
+          {/* Key questions */}
+          {result.key_questions?.length > 0 && (
+            <div>
+              <SectionLabel>Key questions to resolve</SectionLabel>
+              <ol className="space-y-2 mt-2">
+                {result.key_questions.map((q, i) => (
+                  <li key={i} className="flex gap-3 text-[12px] text-[#1E1A14]">
+                    <span className="text-[#C0B8AC] flex-shrink-0 w-4">{i + 1}.</span>
+                    <span className="leading-relaxed">{q}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <hr className="t-rule" />
+
+          {/* Gorilla memo */}
+          <div>
+            <SectionLabel>Gorilla memo</SectionLabel>
+            <p className="text-[12px] text-[#6E6258] leading-relaxed whitespace-pre-wrap mt-2">
+              {result.gorilla_memo}
+            </p>
+          </div>
+
+          {/* Re-run button */}
+          <div className="pt-2">
+            <button
+              onClick={() => { setPhase("idle"); setResult(null); setLogs([]); }}
+              className="text-[10px] text-[#A89E94] hover:text-[#C8804A] transition-colors"
+            >
+              ↺ Run again
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ResearchPage() {
@@ -698,6 +1082,7 @@ export default function ResearchPage() {
     { key: "business", label: "Business" },
     { key: "thesis",   label: "Thesis" },
     { key: "evidence", label: "Evidence" },
+    { key: "gorilla",  label: "Gorilla" },
     { key: "launch",   label: "Launch" },
   ];
 
@@ -811,6 +1196,7 @@ export default function ResearchPage() {
         {tab === "business" && <BusinessTab draft={draft} update={update} />}
         {tab === "thesis"   && <ThesisTab   draft={draft} update={update} />}
         {tab === "evidence" && <EvidenceTab draft={draft} update={update} />}
+        {tab === "gorilla"  && <GorillaTab  draft={draft} />}
         {tab === "launch" && (
           <div className="space-y-8">
             <LaunchTab draft={draft} />

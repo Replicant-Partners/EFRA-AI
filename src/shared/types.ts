@@ -427,6 +427,74 @@ export interface KataInput {
   communication?:  CommOutput;  // optional — KATA runs before COMMUNICATION in UI flow
 }
 
+// ─── Agent 10 — GORILLA ───────────────────────────────────────────────────────
+
+export interface GorillaInput {
+  ticker: string;
+  company_name?: string;
+  analyst_id: string;
+  // Business tab
+  business_summary: string;
+  economic_domain: string;
+  geographic_exposure: string;
+  moat_type: string;
+  moat_evidence: string;
+  key_metrics: string;
+  management_notes: string;
+  // Thesis tab
+  main_thesis: string;
+  catalyst: string;
+  bull_triggers: string;
+  base_narrative: string;
+  bear_risk: string;
+  invalidation: string;
+  // Evidence tab
+  news_headlines: string[];
+}
+
+export interface GorillaDimension {
+  score:      number;   // 0–100
+  assessment: string;   // 2–3 sentences with specific evidence
+}
+
+export interface GorillaObviousProblem extends GorillaDimension {
+  evidence: string[];   // 2–4 concrete facts that make this a large, known problem
+}
+
+export interface GorillaInvisible extends GorillaDimension {
+  why_invisible:     string;   // specific reason the market can't see the solution
+  market_assumption: string;   // the wrong consensus assumption
+}
+
+export interface GorillaCombinatorial extends GorillaDimension {
+  existing_technologies: string[];  // old components being assembled
+  new_combination:       string;    // what is novel about this specific assembly
+}
+
+export interface GorillaChokePoint extends GorillaDimension {
+  value_chain: string;   // which industry value chain
+  position:    string;   // where in the chain (upstream / midstream / platform / last-mile)
+}
+
+export interface GorillaValuationGap {
+  consistent:      boolean;  // does valuation match the "invisible gorilla" thesis?
+  current_pricing: string;   // what expectations the current price embeds
+  assessment:      string;
+}
+
+export interface GorillaBoard {
+  obvious_problem:   GorillaObviousProblem;
+  invisible_gorilla: GorillaInvisible;
+  combinatorial:     GorillaCombinatorial;
+  choke_point:       GorillaChokePoint;
+  valuation_gap:     GorillaValuationGap;
+  gorilla_total:     number;                               // weighted score 0–100
+  gorilla_verdict:   "GORILLA" | "SMALL_ANIMAL" | "PEDESTRIAN";
+  verdict_rationale: string;
+  key_questions:     string[];   // 3 most important questions to resolve
+  gorilla_memo:      string;     // 200-word memo — direct, no hedging
+}
+
 // ─── Report Document ──────────────────────────────────────
 
 export interface ReportContent {
