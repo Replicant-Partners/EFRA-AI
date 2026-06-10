@@ -842,7 +842,7 @@ export interface CompanyTurdBlossom {
 // ─── Financial Profile (Part 4 of COMPANY agent) ─────────────────────────────
 
 export type GrossMarginScore = "strong" | "moderate" | "weak" | "unknown";
-export type ValueDriver      = "sales" | "book" | "mixed";
+// ValueDriver already defined above (line ~596) — reused here
 
 export interface FinancialSignpost {
   // Market power signals
