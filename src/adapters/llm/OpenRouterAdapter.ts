@@ -93,18 +93,46 @@ export class OpenRouterAdapter implements ILanguageModel {
       body.thinking = { type: "adaptive" };
     }
 
-    const stream = await this.client.chat.completions.create(
-      body as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
-    );
+    const maxAttempts = 3;
+    let lastError: unknown;
 
-    let full = "";
-    for await (const chunk of stream as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>) {
-      const delta = chunk.choices[0]?.delta?.content ?? "";
-      if (delta) {
-        full += delta;
-        yield delta;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const stream = await this.client.chat.completions.create(
+          body as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
+        );
+
+        let full = "";
+        for await (const chunk of stream as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>) {
+          const delta = chunk.choices[0]?.delta?.content ?? "";
+          if (delta) {
+            full += delta;
+            yield delta;
+          }
+        }
+        return full;
+      } catch (err) {
+        lastError = err;
+        const msg = String(err);
+        const isRetryable =
+          err instanceof TypeError ||
+          (err instanceof Error && (
+            msg.includes("network") ||
+            msg.includes("fetch") ||
+            msg.includes("ECONNRESET") ||
+            msg.includes("ETIMEDOUT") ||
+            msg.includes("socket") ||
+            msg.includes("529") ||
+            msg.includes("500") ||
+            msg.includes("502") ||
+            msg.includes("503")
+          ));
+        if (!isRetryable || attempt === maxAttempts) throw err;
+        const delay = Math.min(2000 * Math.pow(2, attempt - 1), 8000);
+        console.warn(`[OpenRouter stream] Retryable error on attempt ${attempt}/${maxAttempts}, retrying in ${delay}ms… (${(err as Error).message})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-    return full;
+    throw lastError;
   }
 }

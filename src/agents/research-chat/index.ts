@@ -271,13 +271,11 @@ export async function* runChatTurn(
     system:      systemPrompt,
     user:        userContent,
     temperature: 0.5,
-    max_tokens:  1200,
+    max_tokens:  1500,
   });
 
   for await (const token of stream) {
     fullText += token;
-    // Yield token but strip draft_patch section from streamed output
-    // We accumulate the full text and yield only non-patch tokens
     yield token;
   }
 
