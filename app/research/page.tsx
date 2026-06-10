@@ -310,6 +310,124 @@ function CompanyResultPanel({ board, sources }: { board: CompanyBoard; sources: 
           </Field>
         </Section>
 
+        <Section id="financials" label="Financial Profile">
+          {/* Signposts — market power */}
+          <div className="space-y-3">
+            <span className="text-[9px] font-bold tracking-[0.14em] text-[#C8804A] uppercase">Market Power Signposts</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Gross margin stability</Label>
+                <div className="flex items-center gap-2 mb-1">
+                  <Pill
+                    value={board.financials.signposts.gross_margin_stability.score}
+                    green={["strong"]} red={["weak"]}
+                  />
+                  <span className="text-[10px] text-[#A89E94]">{board.financials.signposts.gross_margin_latest}</span>
+                </div>
+                <p className="text-[11px] text-[#6E6258]">{board.financials.signposts.gross_margin_stability.trend}</p>
+                <p className="text-[10px] text-[#A89E94] italic mt-1">{board.financials.signposts.gross_margin_stability.assessment}</p>
+              </div>
+              <div>
+                <Label>Negative working capital</Label>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[10px] font-bold ${board.financials.signposts.negative_working_capital.present === true ? "text-[#7A9E6A]" : board.financials.signposts.negative_working_capital.present === false ? "text-[#C84848]" : "text-[#A89E94]"}`}>
+                    {board.financials.signposts.negative_working_capital.present === true ? "YES" : board.financials.signposts.negative_working_capital.present === false ? "NO" : "UNKNOWN"}
+                  </span>
+                  <span className="text-[10px] text-[#A89E94]">{board.financials.signposts.negative_working_capital.dpo_minus_dso}</span>
+                </div>
+                <p className="text-[11px] text-[#6E6258]">{board.financials.signposts.negative_working_capital.assessment}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Key metrics grid */}
+          <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+            {[
+              { label: "Revenue CAGR 3Y",    value: board.financials.signposts.revenue_cagr_3y },
+              { label: "Gross margin",        value: board.financials.signposts.gross_margin_latest },
+              { label: "Operating margin",    value: board.financials.signposts.operating_margin },
+              { label: "Net margin",          value: board.financials.signposts.net_margin },
+              { label: "ROIC vs WACC",        value: board.financials.signposts.roic },
+              { label: "FCF generation",      value: board.financials.signposts.fcf_generation },
+              { label: "Net cash / debt",     value: board.financials.signposts.net_cash_debt },
+              { label: "Leverage",            value: board.financials.signposts.leverage_ratio },
+              { label: "Capital intensity",   value: board.financials.signposts.capital_intensity },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <Label>{label}</Label>
+                <p className="text-[12px] text-[#1E1A14] font-medium">{value || "—"}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Current multiples + peers */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Current multiples">{board.financials.current_multiples}</Field>
+            <Field label="Peer comparison">{board.financials.peer_comparison}</Field>
+          </div>
+
+          {/* Value expectations 3-stage */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-bold tracking-[0.14em] text-[#C8804A] uppercase">Value Expectations · 3-Stage Framework</span>
+              <Pill value={board.financials.value_expectations.value_driver} />
+              <span className="text-[10px] text-[#A89E94]">15% target return</span>
+            </div>
+            <p className="text-[11px] text-[#6E6258] italic">{board.financials.value_expectations.value_driver_logic}</p>
+            <div className="space-y-2">
+              <div className="border-l-2 border-[#EDE7E0] pl-3">
+                <Label>Stage 1 · Consensus (1–2Y)</Label>
+                <p className="text-[11px] text-[#6E6258]">{board.financials.value_expectations.stage1_consensus}</p>
+              </div>
+              <div className="border-l-2 border-[#C8804A]/40 pl-3">
+                <Label>Stage 2 · Normalization (3–5Y)</Label>
+                <p className="text-[11px] text-[#6E6258]">{board.financials.value_expectations.stage2_normalization}</p>
+                <p className="text-[10px] text-[#A89E94]">Growth: {board.financials.value_expectations.stage2_growth_rate}</p>
+              </div>
+              <div className="border-l-2 border-[#C8804A] pl-3 space-y-1">
+                <Label>Stage 3 · Terminal (5Y+)</Label>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div><span className="text-[#C0B8AC]">LT growth: </span><span className="text-[#1E1A14]">{board.financials.value_expectations.stage3_long_term_growth}</span></div>
+                  <div><span className="text-[#C0B8AC]">LT profitability: </span><span className="text-[#1E1A14]">{board.financials.value_expectations.stage3_long_term_profitability}</span></div>
+                </div>
+                <p className="text-[12px] font-semibold text-[#C8804A]">Fair multiple: {board.financials.value_expectations.stage3_fair_multiple}</p>
+                {board.financials.value_expectations.balance_sheet_adjustments && (
+                  <p className="text-[10px] text-[#A89E94]">BS adj: {board.financials.value_expectations.balance_sheet_adjustments}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Return expectation</Label>
+                <p className="text-[12px] text-[#7A9E6A] font-semibold">{board.financials.value_expectations.return_expectation}</p>
+              </div>
+              <div>
+                <Label>Current price implies</Label>
+                <p className="text-[11px] text-[#C8804A] italic">{board.financials.value_expectations.current_price_implies}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial memo */}
+          <Field label="Financial memo">
+            <span className="text-[#6E6258]">{board.financials.financial_memo}</span>
+          </Field>
+
+          {/* Data gaps */}
+          {board.financials.data_gaps.length > 0 && (
+            <div>
+              <Label>Data gaps</Label>
+              <ul className="space-y-0.5">
+                {board.financials.data_gaps.map((g, i) => (
+                  <li key={i} className="text-[10px] text-[#A89E94] flex gap-1.5">
+                    <span>·</span>{g}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Section>
+
         <Section id="invisible" label="What Isn't There Yet">
           <div className="grid grid-cols-2 gap-4">
             <div>

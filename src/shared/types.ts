@@ -839,6 +839,65 @@ export interface CompanyTurdBlossom {
   blossom_timeline:   string;   // when could this re-rate
 }
 
+// ─── Financial Profile (Part 4 of COMPANY agent) ─────────────────────────────
+
+export type GrossMarginScore = "strong" | "moderate" | "weak" | "unknown";
+export type ValueDriver      = "sales" | "book" | "mixed";
+
+export interface FinancialSignpost {
+  // Market power signals
+  gross_margin_stability: {
+    score:      GrossMarginScore;
+    trend:      string;   // 3-5Y narrative with actual numbers
+    assessment: string;   // what it implies about market power
+  };
+  negative_working_capital: {
+    present:    boolean | null;
+    dpo_minus_dso: string;   // DPO − DSO in days
+    assessment: string;
+  };
+  // Growth & profitability
+  revenue_cagr_3y:     string;   // e.g. "18% CAGR, organic"
+  gross_margin_latest: string;   // e.g. "67.4% (FY2024)"
+  operating_margin:    string;
+  net_margin:          string;
+  roic:                string;   // ROIC and spread vs WACC
+  fcf_generation:      string;   // FCF margin, FCF conversion from net income
+  // Balance sheet
+  net_cash_debt:       string;   // net cash or net debt position
+  leverage_ratio:      string;   // Net Debt / EBITDA or equivalent
+  capital_intensity:   string;   // capex as % of revenue, asset-light vs asset-heavy
+}
+
+export interface ValueExpectations3Stage {
+  value_driver:        ValueDriver;
+  value_driver_logic:  string;    // why sales-driven or book-driven
+  // Stage 1 — consensus (1-2Y)
+  stage1_consensus:    string;    // what sell-side consensus implies
+  // Stage 2 — normalization (3-5Y)
+  stage2_normalization: string;   // transition: what needs to happen
+  stage2_growth_rate:  string;    // midterm growth assumption
+  // Stage 3 — terminal (5Y+)
+  stage3_long_term_growth:       string;  // max 8% for steady state
+  stage3_long_term_profitability: string; // net margin (sales) or ROE (book)
+  stage3_fair_multiple:          string;  // Profitability / (0.15 - g), show math
+  // Balance sheet adjustments
+  balance_sheet_adjustments: string;
+  // Return expectation
+  return_expectation:  string;    // g + multiple expansion spread
+  // Current price assessment
+  current_price_implies: string;  // what growth/margin the stock is pricing in today
+}
+
+export interface CompanyFinancials {
+  signposts:          FinancialSignpost;
+  value_expectations: ValueExpectations3Stage;
+  current_multiples:  string;   // P/S, P/E, EV/EBITDA, P/FCF snapshot
+  peer_comparison:    string;   // 3-5 comps with multiples
+  financial_memo:     string;   // 150-word synthesis
+  data_gaps:          string[]; // what data is missing / would change the analysis
+}
+
 // Value Gorilla elevator pitch
 export interface CompanyGorillaElevator {
   is_gorilla_candidate:   boolean;
@@ -862,6 +921,7 @@ export interface CompanyBoard {
   self_view:          CompanySelfView;
   franchise:          CompanyFranchise;
   owner_operator:     OwnerOperatorProfile;
+  financials:         CompanyFinancials;
   invisible_layer:    InvisibleLayer;
   turd_blossom:       CompanyTurdBlossom;
   gorilla_elevator:   CompanyGorillaElevator;

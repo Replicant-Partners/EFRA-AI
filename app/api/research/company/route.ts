@@ -47,13 +47,14 @@ export async function POST(request: Request) {
 
         // ── Log analysis steps ─────────────────────────────────────────────────
         const logSteps = [
-          { delay: 800,  msg: `Part 1/7 · Self-View — how ${tickerUpper} sees itself…` },
-          { delay: 4000, msg: `Part 2/7 · Business Franchise — 8-step analysis…` },
-          { delay: 4000, msg: `Part 3/7 · Owner Operator — agency risk & capital allocation…` },
-          { delay: 4000, msg: `Part 4/7 · Invisible Layer — what isn't on the page…` },
-          { delay: 3000, msg: `Part 5/7 · Turd Blossom — market expectation assessment…` },
-          { delay: 3000, msg: `Part 6/7 · Value Gorilla elevator pitch…` },
-          { delay: 3000, msg: `Part 7/7 · Investment Thesis Statement — durable & timeless…` },
+          { delay: 800,  msg: `Part 1/8 · Self-View — how ${tickerUpper} sees itself…` },
+          { delay: 4000, msg: `Part 2/8 · Business Franchise — identity, moat, growth…` },
+          { delay: 4000, msg: `Part 3/8 · Management Skill — CEO + CFO scorecards…` },
+          { delay: 4000, msg: `Part 4/8 · Financial Profile — signposts + 3-stage valuation…` },
+          { delay: 4000, msg: `Part 5/8 · Invisible Layer — what isn't on the page…` },
+          { delay: 3000, msg: `Part 6/8 · Turd Blossom — market expectation assessment…` },
+          { delay: 3000, msg: `Part 7/8 · Value Gorilla elevator pitch…` },
+          { delay: 3000, msg: `Part 8/8 · Investment Thesis Statement — durable & timeless…` },
         ];
 
         let abortLog = false;

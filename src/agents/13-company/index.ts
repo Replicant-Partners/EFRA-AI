@@ -242,7 +242,99 @@ Also: are WE as analysts taking a view aligned with the long-term best interests
 company — or are we confusing a short-term trade for a long-term investment?
 
 ════════════════════════════════════════════════════════════════
-PART 4 — SEEING WHAT ISN'T THERE YET
+PART 4 — FINANCIAL PROFILE
+════════════════════════════════════════════════════════════════
+
+Use live EDGAR data when provided. Where data is unavailable, use your best knowledge
+and flag it in data_gaps. Do NOT invent specific numbers — estimate ranges when necessary
+and mark them as estimates.
+
+────────────────────────────────────────────────────────────────
+A) FINANCIAL SIGNPOSTS — Market Power & Management Skill
+────────────────────────────────────────────────────────────────
+
+TWO CLASSIC SIGNS OF MARKET POWER (visible in financial statements):
+
+1. GROSS MARGIN STABILITY
+   Market power = ability to maintain the mark-up through economic cycles.
+   The goal is NOT increasing gross margins (customers resist that).
+   The goal is STABILITY: same mark-up in a weak economy as in a strong one.
+   A strong mark-up held through boom and bust = durable market power.
+   Score: Strong / Moderate / Weak / Unknown
+   → Cite the actual gross margin % for the last 3-5 years
+
+2. NEGATIVE WORKING CAPITAL
+   DPO − DSO > 0 means customers pay BEFORE the company pays suppliers = market power.
+   This is structural evidence of pricing power and favorable customer/supplier dynamics.
+   Calculate: DPO − DSO in days. Positive = negative working capital (good).
+   → Note: this is market power, NOT a CFO skill signal (see CFO scorecard in Part 3)
+
+GROWTH & PROFITABILITY METRICS:
+   - Revenue CAGR 3Y: organic vs inorganic, consistent vs lumpy
+   - Gross margin latest + trend (5Y if possible)
+   - Operating margin + trend
+   - Net margin
+   - ROIC: Return on Invested Capital vs WACC (are they creating value?)
+   - FCF margin + FCF / Net income conversion ratio
+   - R&D as % of revenue (if relevant)
+
+BALANCE SHEET:
+   - Net cash or net debt (absolute + as % of market cap)
+   - Net Debt / EBITDA leverage ratio
+   - Capital intensity: capex as % of revenue
+   - Asset-light vs asset-heavy model
+
+────────────────────────────────────────────────────────────────
+B) VALUE EXPECTATIONS — 3-Stage Framework (15% target return)
+────────────────────────────────────────────────────────────────
+
+The firm's valuation framework: V = Profits / (r − g), where r = 15% target return.
+
+STEP 1 — IDENTIFY THE VALUE DRIVER
+Is this a SALES-driven or BOOK-driven business?
+  Sales-driven: company grows by selling more → Fair P/S = Net Margin / (r − g)
+  Book-driven:  company grows by deploying equity capital → Fair P/B = ROE / (r − g)
+
+STEP 2 — THREE STAGES
+
+  Stage 1 · Consensus (1–2 years):
+  Use sell-side consensus as the best near-term estimate. The firm does NOT try to beat
+  analysts on near-term modelling. What does consensus imply for revenue/earnings trajectory?
+
+  Stage 2 · Normalization (3–5 years):
+  What needs to happen between near-term consensus and the long-term steady state?
+  What is the midterm growth rate? Is there a margin expansion or compression story?
+
+  Stage 3 · Terminal (5Y+ steady state):
+  - Long-term growth rate (use max 8% for steady state — above that, competition arrives)
+  - Long-term profitability: net margin (sales-driven) or ROE (book-driven)
+  - Fair multiple = Profitability / (0.15 − g) — SHOW THE MATH EXPLICITLY
+    Example: "Net margin 15%, g = 4% → Fair P/S = 0.15 / (0.15 − 0.04) = 1.36×"
+
+STEP 3 — BALANCE SHEET ADJUSTMENTS
+  + Excess cash above operating needs
+  − Net debt
+  ± Significant off-balance-sheet items
+
+STEP 4 — RETURN EXPECTATION
+  Return ≈ g + (Fair multiple − Current multiple) / Current multiple / horizon years
+  Be explicit: at current price, what annualized return does the stock offer?
+
+STEP 5 — WHAT IS THE CURRENT PRICE DISCOUNTING?
+  Work backwards: at today's price, what growth rate, margin, and terminal multiple
+  does the market need to be correct? Is that assumption reasonable or stretched?
+
+────────────────────────────────────────────────────────────────
+C) CURRENT MULTIPLES & PEER COMPARISON
+────────────────────────────────────────────────────────────────
+  - Current P/S, P/E, EV/EBITDA, P/FCF
+  - Which multiple is most relevant for this sector and why?
+  - 3-5 comparable companies with their multiples
+  - Is the stock cheap, fairly valued, or expensive vs peers?
+  - Is there a structural premium or discount justified?
+
+════════════════════════════════════════════════════════════════
+PART 5 — SEEING WHAT ISN'T THERE YET
 ════════════════════════════════════════════════════════════════
 
 The most valuable insight is what is NOT on the page and NOT in the price.
@@ -372,6 +464,46 @@ OUTPUT JSON — exact structure required
     "trust_rationale": "",
     "imagine_running_it": ""
   },
+  "financials": {
+    "signposts": {
+      "gross_margin_stability": {
+        "score": "strong|moderate|weak|unknown",
+        "trend": "",
+        "assessment": ""
+      },
+      "negative_working_capital": {
+        "present": true,
+        "dpo_minus_dso": "",
+        "assessment": ""
+      },
+      "revenue_cagr_3y":     "",
+      "gross_margin_latest": "",
+      "operating_margin":    "",
+      "net_margin":          "",
+      "roic":                "",
+      "fcf_generation":      "",
+      "net_cash_debt":       "",
+      "leverage_ratio":      "",
+      "capital_intensity":   ""
+    },
+    "value_expectations": {
+      "value_driver":        "sales|book|mixed",
+      "value_driver_logic":  "",
+      "stage1_consensus":    "",
+      "stage2_normalization": "",
+      "stage2_growth_rate":  "",
+      "stage3_long_term_growth":        "",
+      "stage3_long_term_profitability": "",
+      "stage3_fair_multiple":           "",
+      "balance_sheet_adjustments":      "",
+      "return_expectation":             "",
+      "current_price_implies":          ""
+    },
+    "current_multiples": "",
+    "peer_comparison":   "",
+    "financial_memo":    "",
+    "data_gaps":         []
+  },
   "invisible_layer": {
     "not_on_the_page": ["", "", ""],
     "not_in_the_price": ["", "", ""],
@@ -498,6 +630,79 @@ const JSON_SCHEMA = {
       ],
       additionalProperties: false,
     },
+    financials: {
+      type: "object",
+      properties: {
+        signposts: {
+          type: "object",
+          properties: {
+            gross_margin_stability: {
+              type: "object",
+              properties: {
+                score:      { type: "string", enum: ["strong","moderate","weak","unknown"] },
+                trend:      { type: "string" },
+                assessment: { type: "string" },
+              },
+              required: ["score","trend","assessment"],
+              additionalProperties: false,
+            },
+            negative_working_capital: {
+              type: "object",
+              properties: {
+                present:       { type: ["boolean","null"] },
+                dpo_minus_dso: { type: "string" },
+                assessment:    { type: "string" },
+              },
+              required: ["present","dpo_minus_dso","assessment"],
+              additionalProperties: false,
+            },
+            revenue_cagr_3y:     { type: "string" },
+            gross_margin_latest: { type: "string" },
+            operating_margin:    { type: "string" },
+            net_margin:          { type: "string" },
+            roic:                { type: "string" },
+            fcf_generation:      { type: "string" },
+            net_cash_debt:       { type: "string" },
+            leverage_ratio:      { type: "string" },
+            capital_intensity:   { type: "string" },
+          },
+          required: [
+            "gross_margin_stability","negative_working_capital",
+            "revenue_cagr_3y","gross_margin_latest","operating_margin","net_margin",
+            "roic","fcf_generation","net_cash_debt","leverage_ratio","capital_intensity",
+          ],
+          additionalProperties: false,
+        },
+        value_expectations: {
+          type: "object",
+          properties: {
+            value_driver:                    { type: "string", enum: ["sales","book","mixed"] },
+            value_driver_logic:              { type: "string" },
+            stage1_consensus:                { type: "string" },
+            stage2_normalization:            { type: "string" },
+            stage2_growth_rate:              { type: "string" },
+            stage3_long_term_growth:         { type: "string" },
+            stage3_long_term_profitability:  { type: "string" },
+            stage3_fair_multiple:            { type: "string" },
+            balance_sheet_adjustments:       { type: "string" },
+            return_expectation:              { type: "string" },
+            current_price_implies:           { type: "string" },
+          },
+          required: [
+            "value_driver","value_driver_logic","stage1_consensus","stage2_normalization",
+            "stage2_growth_rate","stage3_long_term_growth","stage3_long_term_profitability",
+            "stage3_fair_multiple","balance_sheet_adjustments","return_expectation","current_price_implies",
+          ],
+          additionalProperties: false,
+        },
+        current_multiples: { type: "string" },
+        peer_comparison:   { type: "string" },
+        financial_memo:    { type: "string" },
+        data_gaps:         { type: "array", items: { type: "string" } },
+      },
+      required: ["signposts","value_expectations","current_multiples","peer_comparison","financial_memo","data_gaps"],
+      additionalProperties: false,
+    },
     invisible_layer: {
       type: "object",
       properties: {
@@ -553,7 +758,7 @@ const JSON_SCHEMA = {
     analyst_questions: { type: "array", items: { type: "string" } },
   },
   required: [
-    "self_view","franchise","owner_operator","invisible_layer",
+    "self_view","franchise","owner_operator","financials","invisible_layer",
     "turd_blossom","gorilla_elevator","thesis_statement",
     "business_memo","analyst_questions",
   ],
@@ -575,8 +780,9 @@ Company name:  ${input.company_name ?? "Unknown — infer from ticker"}
 ${input.edgar_facts ? `LIVE EDGAR DATA (SEC XBRL):\n${input.edgar_facts}\n` : ""}
 ${input.analyst_note ? `ANALYST CONTEXT:\n${input.analyst_note}\n` : ""}
 
-Execute all 7 parts of the Company Analysis framework and return the complete JSON.
-Be specific. Be honest about knowledge gaps. Think like an owner.
+Execute all 8 parts of the Company Analysis framework and return the complete JSON.
+Be specific. Be honest about knowledge gaps. Flag missing data in data_gaps.
+Think like an owner. Show the math in the 3-stage valuation.
 `.trim();
 
   const raw = await llm.chat({
@@ -584,7 +790,7 @@ Be specific. Be honest about knowledge gaps. Think like an owner.
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.2,
-    max_tokens:  6000,
+    max_tokens:  8000,
     json_schema: JSON_SCHEMA,
   });
 
