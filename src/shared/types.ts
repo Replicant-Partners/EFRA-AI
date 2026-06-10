@@ -734,3 +734,94 @@ export interface ResearchChatChunk {
   patch?:  ResearchDraftPatch;
   error?:  string;
 }
+
+// ─── Agent 13 — COMPANY ───────────────────────────────────────────────────────
+
+export interface CompanyInput {
+  ticker:       string;
+  company_name?: string;
+  analyst_note?: string;   // optional analyst context injected before analysis
+  edgar_facts?:  string;   // pre-fetched EDGAR XBRL data
+}
+
+// Self-assessment: how the company sees itself
+export interface CompanySelfView {
+  how_they_describe_themselves: string;  // from filings/IR language
+  stated_strategy:              string;  // what management says they are doing
+  key_metrics_management_uses:  string;  // what they track and report
+  red_flags_in_language:        string;  // hedging, vagueness, complexity
+}
+
+// Owner operator analysis
+export interface OwnerOperatorProfile {
+  is_owner_operator:        boolean;
+  founder_involvement:      string;   // founder-led / professional mgmt / post-founder
+  insider_ownership_pct:    string;   // % or "unknown"
+  agency_risk:              "low" | "medium" | "high";
+  incentive_alignment:      string;   // how compensation aligns with long-term value
+  key_decisions_assessment: string;   // 2-3 key decisions and what they reveal
+  imagine_running_it:       string;   // "If you were running this business, what would you do?" — gaps/concerns
+}
+
+// Business franchise deep analysis
+export interface CompanyFranchise {
+  executive_summary:    string;   // 3 paragraphs — what, how, why it matters
+  identity:             string;   // products, industry, revenue segments
+  geography:            string;   // countries, revenue distribution
+  business_model_type:  "recurring" | "cyclical" | "transactional" | "mixed";
+  business_model_logic: string;   // why that classification
+  moat_type:            string;   // brand | costs | network | regulation | other | none
+  moat_evidence:        string;   // concrete evidence
+  competitive_position: string;   // competitors, differentiation
+  customers_channels:   string;   // who buys, concentration risk
+  growth_history:       string;   // organic/inorganic, CAGR, consistency
+  catalyst_assessment:  string;   // most recent event — is it priced in?
+}
+
+// Seeing what isn't there yet
+export interface InvisibleLayer {
+  not_on_the_page:        string[];  // 3 things the filings/reports don't say
+  not_in_the_price:       string[];  // 3 things the market is not pricing in
+  market_wrong_assumption: string;   // the single biggest consensus mistake
+  analyst_blind_spots:    string[];  // what most analysts are missing
+}
+
+// Turd blossom assessment
+export interface CompanyTurdBlossom {
+  is_turd_blossom:    boolean;
+  current_reputation: string;   // why the market dislikes/ignores it
+  early_shoots:       string[]; // signs of improvement
+  blossom_thesis:     string;   // path from turd to blossom
+  blossom_timeline:   string;   // when could this re-rate
+}
+
+// Value Gorilla elevator pitch
+export interface CompanyGorillaElevator {
+  is_gorilla_candidate:   boolean;
+  economic_opportunity:   string;  // what large problem are they exploiting
+  exploitation_method:    string;  // what are they doing to exploit it
+  why_likely_to_succeed:  string;  // why will they win
+  why_market_doubts_it:   string;  // why is the stock priced as if they won't
+  elevator_pitch:         string;  // 2-3 sentence synthesis
+}
+
+// Investment thesis (qualitative only — durable, timeless)
+export interface CompanyThesisStatement {
+  thesis:            string;   // 1-3 paragraphs — the firm's answer to "why is this a value gorilla?"
+  three_year_test:   string;   // would this thesis still be true in 3 years?
+  key_risks:         string[]; // 2-3 durable risks that could invalidate it
+  thesis_quality:    "investment_grade" | "needs_work" | "incomplete";
+  quality_rationale: string;
+}
+
+export interface CompanyBoard {
+  self_view:          CompanySelfView;
+  franchise:          CompanyFranchise;
+  owner_operator:     OwnerOperatorProfile;
+  invisible_layer:    InvisibleLayer;
+  turd_blossom:       CompanyTurdBlossom;
+  gorilla_elevator:   CompanyGorillaElevator;
+  thesis_statement:   CompanyThesisStatement;
+  business_memo:      string;  // 200-word synthesis — investment memo style
+  analyst_questions:  string[]; // 3 most important open questions
+}
