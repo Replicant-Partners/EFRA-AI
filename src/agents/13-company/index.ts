@@ -133,26 +133,113 @@ What is the most recent event that could change future performance?
 Is the catalyst credible? Is it already priced into the stock?
 
 ════════════════════════════════════════════════════════════════
-PART 3 — OWNER OPERATOR ANALYSIS
+PART 3 — MANAGEMENT SKILL (Owner Operator + Capital Allocation)
 ════════════════════════════════════════════════════════════════
 
-The classic analysis of why owner-operators outperform has to do with agency problems.
-Misalignment of interests — management running the business for their own interests,
-not the long-term interests of shareholders.
+Management skill is quantified through two scorecards: the CEO scorecard (long-term capital
+allocation) and the CFO scorecard (short-term working capital cycle). The framework is
+similar to the Applied Financial Group (AFG) Economic Margin Framework — using best-practice
+accounting adjustments to get at the underlying economics of the business.
 
-Analyze:
-A) Is the founder still involved? What is insider ownership?
-B) Capital allocation track record — does management deploy capital wisely?
-   Good: decreasing capital + steady returns (pruning) OR increasing capital + improving returns
-   Poor: increasing capital + decreasing returns (value destruction)
-C) Key decisions in the last 3 years: M&A, buybacks, divestitures, restructuring. Assess them.
-D) IMAGINE YOU ARE RUNNING THE BUSINESS:
-   If you were the CEO of this company tomorrow, what would you be most worried about?
-   What would you do that management isn't doing? What doesn't make sense?
-   This exercise surfaces knowledge gaps and analytical concerns.
+The key insight: because a company's ROE compounds its existing equity capital base,
+if a company has an ROE of 20%, in the next five years the CEO will allocate an amount of
+capital equal to 100% of the existing equity base. How that capital is allocated will be
+one of the key drivers of what the business looks like five years from now.
 
-Agency problem on our side: Are WE taking a view aligned with the long-term best interests
-of the company, or are we confusing a short-term trade for a long-term investment?
+────────────────────────────────────────────────────────────────
+A) IDENTITY & ALIGNMENT
+────────────────────────────────────────────────────────────────
+- Is the founder still involved? What is insider ownership %?
+- CEO profile: name, tenure, origin (internal promotion vs external hire), background
+- Key executives: CFO, COO, business heads — stability, experience, unusual turnover
+- Agency risk assessment: are management incentives aligned with long-term shareholder value?
+  Look at compensation structure, long-term plan metrics, skin in the game
+
+────────────────────────────────────────────────────────────────
+B) CEO SCORECARD — LONG-TERM CAPITAL ALLOCATION
+────────────────────────────────────────────────────────────────
+
+The CEO's most important job is long-term capital allocation.
+The CEO's job is to drain capital from underperforming businesses and allocate it to
+outperforming ones. Score the CEO using the 4-quadrant framework:
+
+  GOOD — Pruning:       Capital DECREASING + Returns STEADY or IMPROVING
+                        → CEO is cutting losers, protecting quality
+  GOOD — Reinvesting:   Capital INCREASING + Returns IMPROVING
+                        → CEO is finding high-return uses for incremental capital
+  POOR — Destruction:   Capital INCREASING + Returns DECLINING
+                        → Classic value destruction: empire building, bad M&A
+  MIXED — Shrinking:    Capital DECREASING + Returns DECLINING
+                        → Shrinking with problems, possible turnaround or terminal decline
+
+Note: measuring over time is the key — not at a single point. Graph the ROIC and invested
+capital over 3-5 years to get the EKG of the business. Look for:
+  - ROIC vs WACC spread: is value being created or destroyed?
+  - Reinvestment quality: acquisitions, capex, R&D — what are the returns?
+  - 3 most important capital allocation decisions of the last 3-5 years (M&A, buybacks,
+    divestitures, new product bets) — were they sound?
+
+────────────────────────────────────────────────────────────────
+C) CFO SCORECARD — SHORT-TERM CAPITAL ALLOCATION (WORKING CAPITAL)
+────────────────────────────────────────────────────────────────
+
+While the CEO manages long-term capital, the CFO's daily job is how the company breathes
+cash in and out of its accounts — the working capital cycle.
+
+Important: negative working capital is a sign of MARKET POWER (customers pay before you
+pay suppliers), but it is NOT necessarily a sign of CFO skill. The CFO's scorecard is
+the STABILITY and CONSISTENT INCREMENTAL IMPROVEMENT of the working capital cycle
+through different economic conditions.
+
+Measure in "days balances" (convert each account to a days-equivalent):
+  DSO — Days Sales Outstanding:      Receivables ÷ (Revenue/365)
+  DPO — Days Payable Outstanding:    Payables ÷ (COGS/365)
+  DIO — Days Inventory Outstanding:  Inventory ÷ (COGS/365)
+  CCC — Cash Conversion Cycle:       DSO + DIO - DPO
+
+An exceptional CFO maintains steady working capital through different economic conditions
+and shows signs of incremental efficiencies. The key is CONSISTENCY.
+
+Red flags:
+  - DSO expanding (possible revenue pull-forward, collection issues)
+  - Inventory building faster than revenue (demand weakness)
+  - DPO stretching aggressively (squeezing suppliers = sign of cash stress)
+
+────────────────────────────────────────────────────────────────
+D) MANAGEMENT TRUST SCORE (Shadow Test)
+────────────────────────────────────────────────────────────────
+
+After analyzing all of the above, score management 0–100:
+"Is this a team I would trust with my capital for the next 5 years?"
+
+100 = Exceptional owner-operator, outstanding track record, fully aligned
+ 80 = Strong team, good track record, minor concerns
+ 60 = Adequate team, mixed track record, some alignment issues
+ 40 = Weak team or poor track record, misaligned incentives
+ 20 = Serious concerns: value destruction, agency problems, opacity
+  0 = Do not trust: fraud risk, egregious self-dealing, or complete misalignment
+
+────────────────────────────────────────────────────────────────
+E) IMAGINE YOU ARE RUNNING THE BUSINESS
+────────────────────────────────────────────────────────────────
+
+A simple but powerful exercise: imagine you are the CEO of this company tomorrow.
+You will find that you ask questions differently in this mode.
+
+"If you really understand a business you will find that you understand why management
+is doing things without needing to read their news releases or talk with them about it.
+If you need to talk to management to understand why they did something — you don't
+understand the business."
+
+Ask yourself:
+- What would you be most worried about?
+- What would you do differently that management isn't doing?
+- What decisions don't make sense to you — and why?
+- If you can't imagine running this business at all (something seems insane or doesn't
+  make sense) — that analytical discomfort is exactly what we are looking for.
+
+Also: are WE as analysts taking a view aligned with the long-term best interests of the
+company — or are we confusing a short-term trade for a long-term investment?
 
 ════════════════════════════════════════════════════════════════
 PART 4 — SEEING WHAT ISN'T THERE YET
@@ -258,10 +345,31 @@ OUTPUT JSON — exact structure required
   "owner_operator": {
     "is_owner_operator": true,
     "founder_involvement": "",
+    "ceo_profile": "",
+    "team_stability": "",
     "insider_ownership_pct": "",
     "agency_risk": "low|medium|high",
-    "incentive_alignment": "",
-    "key_decisions_assessment": "",
+    "ceo_scorecard": {
+      "verdict": "good_pruning|good_reinvesting|poor_destruction|mixed_shrinking|unknown",
+      "capital_trend": "decreasing|increasing|stable|unknown",
+      "returns_trend": "improving|declining|stable|unknown",
+      "roic_assessment": "",
+      "reinvestment_quality": "",
+      "key_decisions": "",
+      "verdict_rationale": ""
+    },
+    "cfo_scorecard": {
+      "score": "excellent|good|fair|poor|unknown",
+      "dso_trend": "improving|deteriorating|stable|unknown",
+      "dpo_trend": "improving|deteriorating|stable|unknown",
+      "dio_trend": "improving|deteriorating|stable|unknown",
+      "cash_conversion": "",
+      "consistency": "",
+      "red_flags": [],
+      "assessment": ""
+    },
+    "mgmt_trust_score": 0,
+    "trust_rationale": "",
     "imagine_running_it": ""
   },
   "invisible_layer": {
@@ -344,17 +452,49 @@ const JSON_SCHEMA = {
     owner_operator: {
       type: "object",
       properties: {
-        is_owner_operator:        { type: "boolean" },
-        founder_involvement:      { type: "string" },
-        insider_ownership_pct:    { type: "string" },
-        agency_risk:              { type: "string", enum: ["low","medium","high"] },
-        incentive_alignment:      { type: "string" },
-        key_decisions_assessment: { type: "string" },
-        imagine_running_it:       { type: "string" },
+        is_owner_operator:     { type: "boolean" },
+        founder_involvement:   { type: "string" },
+        ceo_profile:           { type: "string" },
+        team_stability:        { type: "string" },
+        insider_ownership_pct: { type: "string" },
+        agency_risk:           { type: "string", enum: ["low","medium","high"] },
+        ceo_scorecard: {
+          type: "object",
+          properties: {
+            verdict:             { type: "string", enum: ["good_pruning","good_reinvesting","poor_destruction","mixed_shrinking","unknown"] },
+            capital_trend:       { type: "string", enum: ["decreasing","increasing","stable","unknown"] },
+            returns_trend:       { type: "string", enum: ["improving","declining","stable","unknown"] },
+            roic_assessment:     { type: "string" },
+            reinvestment_quality:{ type: "string" },
+            key_decisions:       { type: "string" },
+            verdict_rationale:   { type: "string" },
+          },
+          required: ["verdict","capital_trend","returns_trend","roic_assessment","reinvestment_quality","key_decisions","verdict_rationale"],
+          additionalProperties: false,
+        },
+        cfo_scorecard: {
+          type: "object",
+          properties: {
+            score:          { type: "string", enum: ["excellent","good","fair","poor","unknown"] },
+            dso_trend:      { type: "string", enum: ["improving","deteriorating","stable","unknown"] },
+            dpo_trend:      { type: "string", enum: ["improving","deteriorating","stable","unknown"] },
+            dio_trend:      { type: "string", enum: ["improving","deteriorating","stable","unknown"] },
+            cash_conversion:{ type: "string" },
+            consistency:    { type: "string" },
+            red_flags:      { type: "array", items: { type: "string" } },
+            assessment:     { type: "string" },
+          },
+          required: ["score","dso_trend","dpo_trend","dio_trend","cash_conversion","consistency","red_flags","assessment"],
+          additionalProperties: false,
+        },
+        mgmt_trust_score:   { type: "number" },
+        trust_rationale:    { type: "string" },
+        imagine_running_it: { type: "string" },
       },
       required: [
-        "is_owner_operator","founder_involvement","insider_ownership_pct",
-        "agency_risk","incentive_alignment","key_decisions_assessment","imagine_running_it",
+        "is_owner_operator","founder_involvement","ceo_profile","team_stability",
+        "insider_ownership_pct","agency_risk","ceo_scorecard","cfo_scorecard",
+        "mgmt_trust_score","trust_rationale","imagine_running_it",
       ],
       additionalProperties: false,
     },

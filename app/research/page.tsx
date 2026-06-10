@@ -209,17 +209,102 @@ function CompanyResultPanel({ board, sources }: { board: CompanyBoard; sources: 
           )}
         </Section>
 
-        <Section id="owner_op" label="Owner Operator">
-          <div className="grid grid-cols-2 gap-4">
+        <Section id="owner_op" label="Management Skill">
+          {/* Identity */}
+          <div className="grid grid-cols-3 gap-4">
             <Field label="Founder involvement">{board.owner_operator.founder_involvement}</Field>
             <Field label="Insider ownership">{board.owner_operator.insider_ownership_pct}</Field>
             <Field label="Agency risk">
-              <Pill value={board.owner_operator.agency_risk}
-                    green={["low"]} red={["high"]} />
+              <Pill value={board.owner_operator.agency_risk} green={["low"]} red={["high"]} />
             </Field>
           </div>
-          <Field label="Incentive alignment">{board.owner_operator.incentive_alignment}</Field>
-          <Field label="Key decisions">{board.owner_operator.key_decisions_assessment}</Field>
+          <Field label="CEO">{board.owner_operator.ceo_profile}</Field>
+          <Field label="Team stability">{board.owner_operator.team_stability}</Field>
+
+          {/* CEO Scorecard */}
+          <div className="border border-[#EDE7E0] rounded p-3 space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-bold tracking-[0.14em] text-[#C8804A] uppercase">CEO Scorecard · Long-term Capital Allocation</span>
+              <Pill
+                value={board.owner_operator.ceo_scorecard.verdict.replace(/_/g, " ")}
+                green={["good pruning","good reinvesting"]}
+                red={["poor destruction"]}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-[11px]">
+              <div>
+                <span className="text-[#C0B8AC] uppercase tracking-wider text-[9px]">Capital trend · </span>
+                <span className="text-[#1E1A14]">{board.owner_operator.ceo_scorecard.capital_trend}</span>
+                <span className="text-[#C0B8AC] mx-1">+</span>
+                <span className="text-[#C0B8AC] uppercase tracking-wider text-[9px]">Returns · </span>
+                <span className="text-[#1E1A14]">{board.owner_operator.ceo_scorecard.returns_trend}</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-[#6E6258]">{board.owner_operator.ceo_scorecard.roic_assessment}</p>
+            <p className="text-[11px] text-[#6E6258]">{board.owner_operator.ceo_scorecard.reinvestment_quality}</p>
+            <div>
+              <Label>Key decisions</Label>
+              <p className="text-[11px] text-[#1E1A14]">{board.owner_operator.ceo_scorecard.key_decisions}</p>
+            </div>
+            <p className="text-[11px] text-[#A89E94] italic">{board.owner_operator.ceo_scorecard.verdict_rationale}</p>
+          </div>
+
+          {/* CFO Scorecard */}
+          <div className="border border-[#EDE7E0] rounded p-3 space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-bold tracking-[0.14em] text-[#C8804A] uppercase">CFO Scorecard · Working Capital Cycle</span>
+              <Pill
+                value={board.owner_operator.cfo_scorecard.score}
+                green={["excellent","good"]} red={["poor"]}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[10px]">
+              {[
+                { label: "DSO", trend: board.owner_operator.cfo_scorecard.dso_trend },
+                { label: "DPO", trend: board.owner_operator.cfo_scorecard.dpo_trend },
+                { label: "DIO", trend: board.owner_operator.cfo_scorecard.dio_trend },
+              ].map(({ label, trend }) => (
+                <div key={label} className="text-center border border-[#EDE7E0] rounded p-1.5">
+                  <div className="text-[9px] text-[#C0B8AC] uppercase tracking-wider">{label}</div>
+                  <div className={`font-semibold ${trend === "improving" ? "text-[#7A9E6A]" : trend === "deteriorating" ? "text-[#C84848]" : "text-[#A89E94]"}`}>
+                    {trend}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#6E6258]">{board.owner_operator.cfo_scorecard.cash_conversion}</p>
+            <p className="text-[11px] text-[#6E6258]">{board.owner_operator.cfo_scorecard.consistency}</p>
+            {board.owner_operator.cfo_scorecard.red_flags.length > 0 && (
+              <ul className="space-y-0.5">
+                {board.owner_operator.cfo_scorecard.red_flags.map((f, i) => (
+                  <li key={i} className="text-[11px] text-[#C84848] flex gap-1.5">
+                    <span>!</span>{f}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-[11px] text-[#A89E94] italic">{board.owner_operator.cfo_scorecard.assessment}</p>
+          </div>
+
+          {/* Trust score */}
+          <div className="flex items-center gap-4">
+            <div>
+              <Label>Management trust score</Label>
+              <div className="flex items-baseline gap-2">
+                <span className={`text-2xl font-bold ${
+                  board.owner_operator.mgmt_trust_score >= 70 ? "text-[#7A9E6A]"
+                  : board.owner_operator.mgmt_trust_score >= 45 ? "text-[#C8804A]"
+                  : "text-[#C84848]"
+                }`}>
+                  {board.owner_operator.mgmt_trust_score}
+                </span>
+                <span className="text-[#C0B8AC] text-sm">/100</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-[#6E6258] flex-1 italic">{board.owner_operator.trust_rationale}</p>
+          </div>
+
+          {/* Imagine running it */}
           <Field label="Imagine running it">
             <span className="text-[#C8804A]">{board.owner_operator.imagine_running_it}</span>
           </Field>
@@ -536,7 +621,7 @@ export default function ResearchPage() {
               moat_evidence:       `${board.franchise.value_creation_mechanism}\n\n${board.franchise.moat_evidence}`,
               economic_domain:     board.franchise.business_model_type,
               geographic_exposure: board.franchise.geography,
-              management_notes:    board.owner_operator.key_decisions_assessment,
+              management_notes:    `Trust: ${board.owner_operator.mgmt_trust_score}/100 · CEO: ${board.owner_operator.ceo_scorecard.verdict} · CFO: ${board.owner_operator.cfo_scorecard.score}`,
               main_thesis:         board.thesis_statement.thesis,
             });
             setCompanyDone(true);

@@ -752,15 +752,50 @@ export interface CompanySelfView {
   red_flags_in_language:        string;  // hedging, vagueness, complexity
 }
 
+export type CapitalAllocationVerdict2 = "good_pruning" | "good_reinvesting" | "poor_destruction" | "mixed_shrinking" | "unknown";
+export type WorkingCapitalScore       = "excellent" | "good" | "fair" | "poor" | "unknown";
+
+// CEO Scorecard — Long-term capital allocation
+export interface CeoScorecard {
+  verdict:          CapitalAllocationVerdict2;  // the 4-quadrant classification
+  capital_trend:    "decreasing" | "increasing" | "stable" | "unknown";
+  returns_trend:    "improving"  | "declining"  | "stable" | "unknown";
+  roic_assessment:  string;   // ROIC vs WACC — is value being created or destroyed?
+  reinvestment_quality: string; // where is capital going and what is the return?
+  key_decisions:    string;   // 3 most important capital allocation decisions (3-5Y)
+  verdict_rationale: string;  // narrative explanation of the verdict
+}
+
+// CFO Scorecard — Short-term capital allocation (working capital cycle)
+export interface CfoScorecard {
+  score:            WorkingCapitalScore;
+  dso_trend:        "improving" | "deteriorating" | "stable" | "unknown";  // days sales outstanding
+  dpo_trend:        "improving" | "deteriorating" | "stable" | "unknown";  // days payable outstanding
+  dio_trend:        "improving" | "deteriorating" | "stable" | "unknown";  // days inventory outstanding
+  cash_conversion:  string;   // cash conversion cycle assessment
+  consistency:      string;   // does working capital stay stable through economic conditions?
+  red_flags:        string[]; // DSO expansion, inventory build, payables stretch
+  assessment:       string;   // narrative: is the CFO running the business efficiently?
+}
+
 // Owner operator analysis
 export interface OwnerOperatorProfile {
-  is_owner_operator:        boolean;
-  founder_involvement:      string;   // founder-led / professional mgmt / post-founder
-  insider_ownership_pct:    string;   // % or "unknown"
-  agency_risk:              "low" | "medium" | "high";
-  incentive_alignment:      string;   // how compensation aligns with long-term value
-  key_decisions_assessment: string;   // 2-3 key decisions and what they reveal
-  imagine_running_it:       string;   // "If you were running this business, what would you do?" — gaps/concerns
+  // Identity & alignment
+  is_owner_operator:     boolean;
+  founder_involvement:   string;   // founder-led / professional mgmt / post-founder
+  ceo_profile:           string;   // who, tenure, origin (internal/external), background
+  team_stability:        string;   // key executives, unusual turnover, cohesion
+  insider_ownership_pct: string;   // % or "unknown"
+  agency_risk:           "low" | "medium" | "high";
+  // CEO Scorecard — long-term capital allocation
+  ceo_scorecard:         CeoScorecard;
+  // CFO Scorecard — short-term capital allocation
+  cfo_scorecard:         CfoScorecard;
+  // Shadow Test
+  mgmt_trust_score:      number;   // 0–100: would you trust this team with your capital?
+  trust_rationale:       string;   // why that score
+  // Imagine running it
+  imagine_running_it:    string;   // gaps and concerns surfaced by ownership exercise
 }
 
 export type MoatSource    = "brand" | "costs" | "network" | "regulatory" | "switching" | "other" | "none";
