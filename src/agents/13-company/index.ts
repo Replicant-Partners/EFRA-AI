@@ -62,10 +62,57 @@ STEP 3 — BUSINESS MODEL
 How does it make money? Classify: recurring / cyclical / transactional / mixed.
 Why that classification? What does this mean for earnings predictability?
 
-STEP 4 — COMPETITIVE ADVANTAGE
-What is the moat? Classify: brand / costs / network / regulation / other / none.
-Justify with concrete, specific evidence — not generic claims.
-Gross margin stability, switching costs, pricing power, retention data.
+STEP 4 — COMPETITIVE ADVANTAGE (MOAT)
+The moat is the answer to: "How does this business take one dollar and turn it into two?"
+It is the technical skill and competitive advantage that makes this possible — durably.
+
+MOAT SOURCE — classify the PRIMARY source:
+  brand       → customers pay a premium because of perception/trust (e.g. luxury, consumer goods)
+  costs       → structural cost advantage: scale, proprietary process, vertical integration
+  network     → product/service becomes more valuable as more users join (Metcalfe's Law)
+  regulatory  → licenses, patents, government contracts, compliance barriers to entry
+  switching   → customers are locked in by data, integrations, workflows, or contractual cost
+  other       → describe precisely
+  none        → competitive market, returns will revert to cost of capital over time
+
+MOAT DEPTH — assign one level using strict criteria:
+  Wide:
+    - Durable pricing power sustained through MULTIPLE economic cycles (evidence required)
+    - Gross margins STABLE or EXPANDING over 5+ years despite competitive pressure
+    - Returns on invested capital (ROIC) consistently ABOVE cost of capital for 5+ years
+    - Competitors have tried and failed to take market share
+  Narrow:
+    - Some competitive advantage but NOT YET PROVEN durable
+    - Margins or ROIC under pressure from competitors
+    - Advantage is real but may erode within 3-5 years without reinvestment
+  Building:
+    - Clear identifiable path to a wide moat — network effects still compounding,
+      switching costs still increasing, brand still forming
+    - Not there yet, but the trajectory is visible
+  None:
+    - Competitive market, no structural barrier
+    - ROIC converges to cost of capital, margins structurally thin
+
+DURABILITY — assess the time horizon:
+  High:   likely true for a decade or more
+  Medium: likely true for 3-5 years
+  Low:    may erode within 3 years
+
+VALUE CREATION MECHANISM — in one sentence: exactly HOW does the moat translate into
+shareholder value? (e.g. "pricing power allows 70%+ gross margins that fund R&D reinvestment
+at rates competitors cannot match, creating a compounding technological lead")
+
+EVIDENCE REQUIRED — cite specific, concrete data:
+  - Gross margin trend (3-5 year)
+  - ROIC vs. WACC spread
+  - Pricing power: have they raised prices without losing volume?
+  - Customer retention / churn data if available
+  - Competitor attempts to replicate and outcome
+
+Do NOT write "the company has a strong brand" without evidence.
+Do NOT claim a wide moat without 5+ years of above-cost-of-capital returns.
+
+→ Capture in: moat_source, moat_depth, moat_durability, value_creation_mechanism, moat_evidence
 
 STEP 5 — COMPETITIVE POSITIONING
 Who are the 2-3 most dangerous competitors?
@@ -198,7 +245,10 @@ OUTPUT JSON — exact structure required
     "geography": "",
     "business_model_type": "recurring|cyclical|transactional|mixed",
     "business_model_logic": "",
-    "moat_type": "brand|costs|network|regulation|other|none",
+    "moat_source": "brand|costs|network|regulatory|switching|other|none",
+    "moat_depth": "wide|narrow|building|none",
+    "moat_durability": "high|medium|low",
+    "value_creation_mechanism": "",
     "moat_evidence": "",
     "competitive_position": "",
     "customers_channels": "",
@@ -273,8 +323,11 @@ const JSON_SCHEMA = {
         geography:            { type: "string" },
         business_model_type:  { type: "string", enum: ["recurring","cyclical","transactional","mixed"] },
         business_model_logic: { type: "string" },
-        moat_type:            { type: "string" },
-        moat_evidence:        { type: "string" },
+        moat_source:              { type: "string", enum: ["brand","costs","network","regulatory","switching","other","none"] },
+        moat_depth:               { type: "string", enum: ["wide","narrow","building","none"] },
+        moat_durability:          { type: "string", enum: ["high","medium","low"] },
+        value_creation_mechanism: { type: "string" },
+        moat_evidence:            { type: "string" },
         competitive_position: { type: "string" },
         customers_channels:   { type: "string" },
         growth_history:       { type: "string" },
@@ -282,7 +335,8 @@ const JSON_SCHEMA = {
       },
       required: [
         "executive_summary","identity","geography","business_model_type",
-        "business_model_logic","moat_type","moat_evidence","competitive_position",
+        "business_model_logic","moat_source","moat_depth","moat_durability",
+        "value_creation_mechanism","moat_evidence","competitive_position",
         "customers_channels","growth_history","catalyst_assessment",
       ],
       additionalProperties: false,

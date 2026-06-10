@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         await new Promise(r => setTimeout(r, 80));
         send({ type: "log", msg: `─────────────────────────────────────────────` });
         await new Promise(r => setTimeout(r, 60));
-        send({ type: "log", msg: `Moat:         ${result.franchise.moat_type}` });
+        send({ type: "log", msg: `Moat:         ${result.franchise.moat_depth} · ${result.franchise.moat_source} · durability: ${result.franchise.moat_durability}` });
         await new Promise(r => setTimeout(r, 40));
         send({ type: "log", msg: `Model:        ${result.franchise.business_model_type}` });
         await new Promise(r => setTimeout(r, 40));

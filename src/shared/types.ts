@@ -763,19 +763,28 @@ export interface OwnerOperatorProfile {
   imagine_running_it:       string;   // "If you were running this business, what would you do?" — gaps/concerns
 }
 
+export type MoatSource    = "brand" | "costs" | "network" | "regulatory" | "switching" | "other" | "none";
+export type MoatDepth     = "wide" | "narrow" | "building" | "none";
+export type MoatDurability = "high" | "medium" | "low";
+
 // Business franchise deep analysis
 export interface CompanyFranchise {
-  executive_summary:    string;   // 3 paragraphs — what, how, why it matters
-  identity:             string;   // products, industry, revenue segments
-  geography:            string;   // countries, revenue distribution
-  business_model_type:  "recurring" | "cyclical" | "transactional" | "mixed";
-  business_model_logic: string;   // why that classification
-  moat_type:            string;   // brand | costs | network | regulation | other | none
-  moat_evidence:        string;   // concrete evidence
-  competitive_position: string;   // competitors, differentiation
-  customers_channels:   string;   // who buys, concentration risk
-  growth_history:       string;   // organic/inorganic, CAGR, consistency
-  catalyst_assessment:  string;   // most recent event — is it priced in?
+  executive_summary:        string;          // 3 paragraphs — what, how, why it matters
+  identity:                 string;          // products, industry, revenue segments
+  geography:                string;          // countries, revenue distribution
+  business_model_type:      "recurring" | "cyclical" | "transactional" | "mixed";
+  business_model_logic:     string;          // why that classification
+  // Moat — full framework
+  moat_source:              MoatSource;      // primary source of competitive advantage
+  moat_depth:               MoatDepth;       // Wide / Narrow / Building / None
+  moat_durability:          MoatDurability;  // High / Medium / Low
+  value_creation_mechanism: string;          // how moat → shareholder value (1 sentence)
+  moat_evidence:            string;          // concrete evidence: margins, ROIC, pricing power
+  // Rest of franchise
+  competitive_position:     string;          // competitors, differentiation
+  customers_channels:       string;          // who buys, concentration risk
+  growth_history:           string;          // organic/inorganic, CAGR, consistency
+  catalyst_assessment:      string;          // most recent event — is it priced in?
 }
 
 // Seeing what isn't there yet

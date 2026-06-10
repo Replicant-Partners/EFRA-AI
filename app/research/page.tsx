@@ -137,7 +137,7 @@ function CompanyResultPanel({ board, sources }: { board: CompanyBoard; sources: 
 
       {/* Elevator pitch — always visible */}
       <div className="bg-[#F5F0EB] border border-[#EDE7E0] rounded p-4 space-y-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <Pill value={board.gorilla_elevator.is_gorilla_candidate ? "GORILLA CANDIDATE" : "NOT A GORILLA"}
                 green={["GORILLA CANDIDATE"]} red={["NOT A GORILLA"]} />
           <span className="text-[#D8D0C8]">·</span>
@@ -146,6 +146,10 @@ function CompanyResultPanel({ board, sources }: { board: CompanyBoard; sources: 
           <span className="text-[#D8D0C8]">·</span>
           <Pill value={board.turd_blossom.is_turd_blossom ? "TURD BLOSSOM" : "QUALITY COMPOUNDER"}
                 green={["TURD BLOSSOM"]} />
+          <span className="text-[#D8D0C8]">·</span>
+          <span className="text-[9px] text-[#A89E94] uppercase tracking-wider">
+            moat: {board.franchise.moat_depth} · {board.franchise.moat_source} · {board.franchise.moat_durability} durability
+          </span>
         </div>
         <p className="text-[13px] text-[#1E1A14] font-medium leading-relaxed italic">
           &ldquo;{board.gorilla_elevator.elevator_pitch}&rdquo;
@@ -174,9 +178,16 @@ function CompanyResultPanel({ board, sources }: { board: CompanyBoard; sources: 
               <span className="text-[#6E6258]">— {board.franchise.business_model_logic}</span>
             </Field>
             <Field label="Moat">
-              <Pill value={board.franchise.moat_type}
-                    green={["network","brand","costs","regulation"]} red={["none"]} />
-              <p className="text-[#6E6258] mt-1">{board.franchise.moat_evidence}</p>
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <Pill value={board.franchise.moat_depth}
+                      green={["wide"]} red={["none"]} />
+                <span className="text-[#D8D0C8]">·</span>
+                <span className="text-[9px] text-[#A89E94] uppercase tracking-wider">{board.franchise.moat_source}</span>
+                <span className="text-[#D8D0C8]">·</span>
+                <span className="text-[9px] text-[#A89E94]">durability: {board.franchise.moat_durability}</span>
+              </div>
+              <p className="text-[11px] text-[#C8804A] italic mb-1">{board.franchise.value_creation_mechanism}</p>
+              <p className="text-[11px] text-[#6E6258]">{board.franchise.moat_evidence}</p>
             </Field>
           </div>
           <Field label="Identity">{board.franchise.identity}</Field>
@@ -518,15 +529,15 @@ export default function ResearchPage() {
             setCompany(prev => ({ ...prev, status: "done", result: board }));
             // Seed draft from COMPANY result
             updateDraft({
-              ticker:           ticker.toUpperCase().trim(),
+              ticker:              ticker.toUpperCase().trim(),
               mode,
-              business_summary: board.franchise.executive_summary,
-              moat_type:        board.franchise.moat_type,
-              moat_evidence:    board.franchise.moat_evidence,
-              economic_domain:  board.franchise.business_model_type,
+              business_summary:    board.franchise.executive_summary,
+              moat_type:           `${board.franchise.moat_depth} · ${board.franchise.moat_source}`,
+              moat_evidence:       `${board.franchise.value_creation_mechanism}\n\n${board.franchise.moat_evidence}`,
+              economic_domain:     board.franchise.business_model_type,
               geographic_exposure: board.franchise.geography,
-              management_notes: board.owner_operator.key_decisions_assessment,
-              main_thesis:      board.thesis_statement.thesis,
+              management_notes:    board.owner_operator.key_decisions_assessment,
+              main_thesis:         board.thesis_statement.thesis,
             });
             setCompanyDone(true);
           } else if (msg.type === "error") {
