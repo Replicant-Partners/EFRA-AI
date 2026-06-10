@@ -20,7 +20,7 @@ export interface ILanguageModel {
 
 /** Canonical model aliases — single source of truth for the whole pipeline. */
 export const MODELS = {
-  haiku:  "anthropic/claude-haiku-4-5",
-  sonnet: "anthropic/claude-sonnet-4-6",
-  opus:   "anthropic/claude-opus-4-6",
+  haiku:  "anthropic/claude-haiku-4.5",
+  sonnet: "anthropic/claude-sonnet-4.6",
+  opus:   "anthropic/claude-opus-4.6",
 } as const;
