@@ -790,7 +790,7 @@ Think like an owner. Show the math in the 3-stage valuation.
     system:      SYSTEM_PROMPT,
     user:        userMessage,
     temperature: 0.2,
-    max_tokens:  8000,
+    max_tokens:  16000,
   });
 
   try {
