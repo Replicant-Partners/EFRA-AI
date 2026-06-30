@@ -791,8 +791,13 @@ Think like an owner. Show the math in the 3-stage valuation.
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  8000,
-    json_schema: JSON_SCHEMA,
   });
 
-  return JSON.parse(extractJSON(raw)) as CompanyBoard;
+  try {
+    const jsonStr = extractJSON(raw);
+    return JSON.parse(jsonStr) as CompanyBoard;
+  } catch (err) {
+    console.error("[Company Agent] Failed to parse JSON. Raw response:", raw.slice(0, 500));
+    throw new Error(`Company agent returned invalid JSON: ${(err as Error).message}`);
+  }
 }
