@@ -97,6 +97,7 @@ export default function DocsPage() {
           ["#kata",           "07 · Kata"],
           ["#communication",  "08 · Communication"],
           ["#lens",           "09 · Lens"],
+          ["#research",       "Research Pipeline (10-13)"],
           ["#modes",          "Modes: Valentine · Gunn · Dual"],
           ["#concepts",       "Key Concepts"],
           ["#architecture",   "Architecture: Ports & Adapters"],
@@ -797,6 +798,116 @@ export default function DocsPage() {
           revise the thesis before publishing — but it does not force a DROP. The portfolio
           manager reads the Lens output and decides. Like Kata, if Lens fails for any reason,
           the pipeline completes without it.
+        </Note>
+      </Section>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <Section id="research">
+        <h2 className="text-base font-bold tracking-widest text-[#1E1A14] uppercase mb-4">Research Pipeline</h2>
+        <p className="prose-tufte">
+          The Research Pipeline is a separate 4-agent workflow designed for deep company analysis.
+          Unlike the main pipeline (01–09) which produces Flash Notes, the Research Pipeline
+          produces comprehensive investment theses with long-range imagination.
+        </p>
+
+        <div className="mt-6 font-mono text-[10px] text-[#8C7E70] leading-loose bg-[#F5F0EB] rounded px-4 py-3">
+          <div>COMPANY (13) → GORILLA (10) → IMAGINE (11) → THESIS (12)</div>
+          <div className="pl-4 text-[#C0B8AC]">Each agent passes context to the next</div>
+        </div>
+
+        <div className="mt-6 space-y-2">
+          {[
+            ["13", "COMPANY",  "Deep company analysis: franchise, management, financials, turd blossom assessment."],
+            ["10", "GORILLA",  "Value Gorilla framework: obvious problem, invisible gorilla, combinatorial solution, choke point."],
+            ["11", "IMAGINE",  "Long-range imagination: 5/10/20 year scenarios, digital transformation stage, falsifiable predictions."],
+            ["12", "THESIS",   "Investment thesis synthesis: business franchise + management quality + valuation gap."],
+          ].map(([num, name, desc]) => (
+            <div key={num} className="flex gap-3 text-[11px]">
+              <span className="text-[#C0B8AC] font-mono w-5 flex-shrink-0">{num}</span>
+              <span className="text-[#C8804A] font-semibold w-24 flex-shrink-0 tracking-wider">{name}</span>
+              <span className="text-[#8C7E70]">{desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <Block label="Agent 13 — COMPANY">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Produces a deep, idiosyncratic company analysis — not a generic industry report.
+            Thinks like an owner: focused on growth and profitability, not trading patterns.
+          </p>
+          <div className="space-y-1 text-[11px]">
+            <Field name="self_view">How the company describes itself in filings and IR presentations</Field>
+            <Field name="franchise">8-step business franchise analysis: identity, geography, moat, competitive position</Field>
+            <Field name="owner_operator">CEO scorecard (long-term capital allocation) + CFO scorecard (working capital)</Field>
+            <Field name="financials">Financial signposts + 3-stage valuation framework (V = Profits / (r − g))</Field>
+            <Field name="invisible_layer">What&apos;s not on the page, what&apos;s not in the price</Field>
+            <Field name="turd_blossom">Is this a turd blossom? Early shoots of improvement?</Field>
+            <Field name="gorilla_elevator">Value Gorilla elevator pitch: economic opportunity + exploitation + why market doubts</Field>
+            <Field name="thesis_statement">Durable, timeless investment thesis covering all three pillars</Field>
+          </div>
+        </Block>
+
+        <Block label="Agent 10 — GORILLA">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Applies the Value Gorilla Framework — four dimensions that must all be present for
+            a highest-conviction investment. Named after Geoffrey Moore&apos;s &quot;Gorilla&quot; (market-dominant winner)
+            and the Invisible Gorilla experiment (the solution is invisible to most observers).
+          </p>
+          <div className="space-y-1 text-[11px]">
+            <Field name="obvious_problem" type="25%">Large, obvious, structural problem that everyone knows exists</Field>
+            <Field name="invisible_gorilla" type="30%">The opportunity is being ignored or misunderstood by the market</Field>
+            <Field name="combinatorial" type="25%">New combination of existing technologies solving an old problem</Field>
+            <Field name="choke_point" type="20%">Strategic position in the value chain (upstream/midstream/platform/last-mile)</Field>
+          </div>
+          <div className="mt-3 text-[10px] text-[#A89E94]">
+            Verdict: <Tag color="green">GORILLA</Tag> <Tag color="amber">SMALL_ANIMAL</Tag> <Tag color="gray">PEDESTRIAN</Tag>
+          </div>
+        </Block>
+
+        <Block label="Agent 11 — IMAGINE">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Applies the Focus & Imagination framework. Projects the future of a business at 5, 10, and 20 years
+            and walks it back analytically to today. Invests in the world as it WILL BE, not as it is.
+          </p>
+          <div className="space-y-1 text-[11px]">
+            <Field name="digital_stage">MODEL → SHADOW → TWIN → SOURCE (digital transformation stage)</Field>
+            <Field name="growth_driver">innovation | demographic | both | neither</Field>
+            <Field name="scenarios">Three long-range scenarios: 5Y, 10Y, 20Y horizons with probability</Field>
+            <Field name="not_on_the_page">3–5 things the filings don&apos;t capture</Field>
+            <Field name="not_in_the_price">3–5 things the market is not pricing in</Field>
+            <Field name="predictions">Falsifiable predictions with specific test conditions and horizons</Field>
+          </div>
+        </Block>
+
+        <Block label="Agent 12 — THESIS">
+          <p className="text-[11px] text-[#8C7E70] leading-relaxed mb-3">
+            Synthesizes all prior research into a formal investment thesis. Covers the three pillars:
+            Business Franchise + Management Quality + Valuation. Must be durable and timeless.
+          </p>
+          <div className="space-y-1 text-[11px]">
+            <Field name="thesis_statement">1–3 paragraphs: what makes this a Value Gorilla?</Field>
+            <Field name="business_franchise">Moat strength, value creation mechanism, durability, key risks</Field>
+            <Field name="management_quality">Capital allocation verdict, leadership assessment, culture indicators</Field>
+            <Field name="financial_signposts">Gross margin stability, negative working capital, ROIC</Field>
+            <Field name="value_expectations">3-stage framework: Stage 1 consensus → Stage 2 normalization → Stage 3 terminal</Field>
+            <Field name="thesis_quality">investment_grade | needs_work | incomplete</Field>
+          </div>
+        </Block>
+
+        <Block label="API Endpoint">
+          <div className="font-mono text-[10px] text-[#8C7E70] bg-[#F5F0EB] rounded px-3 py-2">
+            POST /api/research/pipeline
+          </div>
+          <div className="mt-2 text-[11px] text-[#A89E94]">
+            Returns Server-Sent Events with progress updates for each agent.
+            Fetches EDGAR data automatically before starting the pipeline.
+          </div>
+        </Block>
+
+        <Note>
+          The Research Pipeline never blocks — if any agent fails, it returns partial results.
+          The pipeline is designed for deep analysis, not quick decisions. Expect 3–5 minutes
+          for a complete run depending on the complexity of the company.
         </Note>
       </Section>
 

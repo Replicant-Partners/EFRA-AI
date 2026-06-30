@@ -27,13 +27,15 @@ Live: **[efra-ai-production.up.railway.app](https://efra-ai-production.up.railwa
 | Cost per Flash Note | ~$0.09 |
 | End-to-end analysis time | ~5–7 minutes |
 | PT hit rate target | 58% |
-| Agents | 9 |
+| Agents | 13 (9 pipeline + 4 research) |
 | Operating modes | 3 (Valentine · Gunn · Dual) |
 | Deployment | Railway (auto-deploy on push) |
 
 ---
 
-## The 9 Agents
+## The 13 Agents
+
+### Main Pipeline (01-09)
 
 | # | Agent | Role | Gate / Output |
 |---|-------|------|---------------|
@@ -59,6 +61,25 @@ Idea → SCOUT → INTEL → FORENSIC(pre) → CF → FORENSIC(full) → VALUATI
 ```
 
 KATA and LENS are coaching/auditing steps — they never block publication.
+
+### Research Pipeline (10-13)
+
+| # | Agent | Role | Output |
+|---|-------|------|--------|
+| 10 | **GORILLA** | Value Gorilla framework — 4 dimensions | GORILLA / SMALL_ANIMAL / PEDESTRIAN |
+| 11 | **IMAGINE** | Long-range imagination — 5/10/20Y scenarios | Digital stage + falsifiable predictions |
+| 12 | **THESIS** | Investment thesis synthesis | investment_grade / needs_work / incomplete |
+| 13 | **COMPANY** | Deep company analysis | Franchise + Management + Financials |
+
+```
+COMPANY (13) → GORILLA (10) → IMAGINE (11) → THESIS (12)
+     |              |              |              |
+  Franchise    4 Dimensions    Scenarios     Final Thesis
+  Management   Invisibility    Predictions   3 Pillars
+  Financials   Combinatorial   Digital Stage Quality Gate
+```
+
+Each agent passes its output to the next, building a comprehensive investment thesis.
 
 ---
 
@@ -119,6 +140,68 @@ Eight defining characteristics: ambitious goals, high-performance employees, dep
 - Complement-creator vs. substitute-provider
 
 **Output:** `LensBoard` — five lens scores, `overall_verdict` (CONSISTENT / PARTIAL / INCONSISTENT), `key_tensions`, `recommendations`, 200-word `pm_memo`.
+
+---
+
+## Agent 10 — GORILLA (Value Gorilla Framework)
+
+Evaluates whether an investment opportunity meets the firm's highest-conviction profile. All four dimensions must be present for a true Value Gorilla.
+
+| Dimension | Weight | Description |
+|-----------|--------|-------------|
+| **Obvious Problem** | 25% | Large, structural, widely acknowledged problem |
+| **Invisible Gorilla** | 30% | Market can't see the solution (blind spot) |
+| **Combinatorial Solution** | 25% | New combination of existing technologies |
+| **Choke Point** | 20% | Strategic position in value chain |
+
+**Verdict:** `GORILLA` (≥75) / `SMALL_ANIMAL` (50-74) / `PEDESTRIAN` (<50)
+
+---
+
+## Agent 11 — IMAGINE (Focus & Imagination)
+
+Projects the future of a business at 5, 10, and 20 years and walks it back analytically to today.
+
+**Digital Transformation Stages:**
+1. **MODEL** — Digital version exists, decisions still physical
+2. **SHADOW** — Live synchronization, physical-first decisions
+3. **TWIN** — Digital is authoritative, physical coordinated by digital
+4. **SOURCE** — Digital IS the source, physical is output
+
+**Growth Driver Classification:** `innovation` / `demographic` / `both` / `neither`
+
+**Output:** `ImagineBoard` — digital stage, growth driver, 3 scenarios (5Y/10Y/20Y), falsifiable predictions, what's not on the page, what's not in the price.
+
+---
+
+## Agent 12 — THESIS (Investment Thesis Synthesis)
+
+Synthesizes all prior research into a formal investment thesis covering the three pillars.
+
+**Three Pillars:**
+1. **Business Franchise** — moat strength, value creation mechanism, durability
+2. **Management Quality** — capital allocation verdict, leadership assessment
+3. **Valuation** — 3-stage framework (consensus → normalization → terminal)
+
+**Quality Gate:** `investment_grade` / `needs_work` / `incomplete`
+
+---
+
+## Agent 13 — COMPANY (Deep Company Analysis)
+
+Produces a deep, idiosyncratic company analysis. Thinks like an owner — focused on growth and profitability, not trading patterns.
+
+**8-Part Framework:**
+1. **Self-View** — how the company describes itself
+2. **Business Franchise** — identity, geography, moat, competitive position
+3. **Management Skill** — CEO scorecard (long-term) + CFO scorecard (working capital)
+4. **Financial Profile** — signposts + 3-stage valuation
+5. **Invisible Layer** — what's not on the page, what's not in the price
+6. **Turd Blossom** — is market pricing it like a turd? Early shoots of improvement?
+7. **Value Gorilla Elevator Pitch** — economic opportunity + exploitation + why market doubts
+8. **Investment Thesis Statement** — durable, timeless, covering all three pillars
+
+**Output:** `CompanyBoard` — comprehensive company analysis with all 8 sections.
 
 ---
 
