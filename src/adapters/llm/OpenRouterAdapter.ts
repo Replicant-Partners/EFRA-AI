@@ -31,11 +31,8 @@ export class OpenRouterAdapter implements ILanguageModel {
       ],
     };
 
-    // Note: Anthropic Claude does not support json_schema response_format like OpenAI.
-    // Use json_object mode for JSON output, and rely on the prompt for structure.
-    if (params.json_mode || params.json_schema) {
-      body.response_format = { type: "json_object" };
-    }
+    // Note: Anthropic Claude via OpenRouter does not reliably support response_format.
+    // JSON structure is enforced via the system prompt instead.
 
     if (params.thinking) {
       body.thinking = { type: "adaptive" };
