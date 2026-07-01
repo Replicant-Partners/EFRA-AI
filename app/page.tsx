@@ -212,7 +212,6 @@ export default function Home() {
             if (msg.final) {
               setResearchDone(true);
               setResearchRunning(false);
-              void saveResearchToLibrary({ ...researchStateRef.current });
             } else {
               // Auto-advance — no approval step in research pipeline
               await runResearchStep(idx + 1);
@@ -600,6 +599,8 @@ export default function Home() {
           {/* Research Pipeline */}
           {isDone && !error && (
             <div className="border-t border-[#E4DDD6] pt-6 space-y-4">
+
+              {/* Header row */}
               <div className="flex items-baseline justify-between">
                 <div>
                   <h2 className="text-xs font-bold tracking-widest uppercase text-[#1E1A14]">
@@ -609,24 +610,27 @@ export default function Home() {
                     13 · COMPANY → 10 · GORILLA → 11 · IMAGINE → 12 · THESIS
                   </p>
                 </div>
-                {!researchRunning && !researchDone && (
-                  <button
-                    onClick={startResearch}
-                    className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
-                  >
-                    Run Research →
-                  </button>
-                )}
-                {researchDone && (
-                  <button
-                    onClick={startResearch}
-                    className="text-xs text-[#A89E94] hover:text-[#C8804A] transition-colors"
-                  >
-                    ↺ Re-run Research
-                  </button>
-                )}
+                <div className="flex items-baseline gap-4">
+                  {researchDone && !researchError && (
+                    <button
+                      onClick={startResearch}
+                      className="text-xs text-[#A89E94] hover:text-[#6E6258] transition-colors"
+                    >
+                      ↺ Re-run
+                    </button>
+                  )}
+                  {!researchRunning && !researchDone && (
+                    <button
+                      onClick={startResearch}
+                      className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                    >
+                      Run Research →
+                    </button>
+                  )}
+                </div>
               </div>
 
+              {/* Agent steps */}
               {(researchRunning || researchDone || !!researchError) && (
                 <div>
                   {RESEARCH_AGENTS.map(agent => (
@@ -642,14 +646,28 @@ export default function Home() {
                   ))}
                 </div>
               )}
-            </div>
-          )}
+
+              {/* Save button — appears when research is complete */}
+              {researchDone && !researchError && researchSaveStatus === "idle" && (
+                <div className="border-t border-[#E4DDD6] pt-4">
+                  <button
+                    onClick={() => saveResearchToLibrary({ ...researchStateRef.current })}
+                    className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                  >
+                    Save to Research Library →
+                  </button>
+                </div>
+              )}
+
+              {/* Save status */}
               {researchDone && !researchError && researchSaveStatus === "saving" && (
-                <p className="t-label text-[#A89E94]">saving to research library…</p>
+                <div className="border-t border-[#E4DDD6] pt-4">
+                  <p className="t-label text-[#A89E94]">Saving to research library…</p>
+                </div>
               )}
               {researchDone && !researchError && researchSaveStatus === "saved" && savedResearchId && (
-                <div className="flex items-center gap-4">
-                  <span className="t-label text-[#7A9E6A]">saved to research library</span>
+                <div className="border-t border-[#E4DDD6] pt-4 flex items-center gap-4">
+                  <span className="t-label text-[#7A9E6A]">Saved to research library</span>
                   <a
                     href={`/research-library/${savedResearchId}`}
                     className="text-xs text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
@@ -659,9 +677,18 @@ export default function Home() {
                 </div>
               )}
               {researchDone && !researchError && researchSaveStatus === "error" && (
-                <p className="t-label text-[#C84848]">save failed — results still visible above</p>
+                <div className="border-t border-[#E4DDD6] pt-4 space-y-2">
+                  <p className="t-label text-[#C84848]">Save failed</p>
+                  <button
+                    onClick={() => saveResearchToLibrary({ ...researchStateRef.current })}
+                    className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                  >
+                    Retry Save →
+                  </button>
+                </div>
               )}
 
+              {/* Research error + retry agent */}
               {researchError && (
                 <div className="border-t border-[#C84848]/30 pt-4 space-y-3">
                   <p className="text-xs text-[#C84848]">{researchError}</p>
@@ -681,6 +708,9 @@ export default function Home() {
                   </button>
                 </div>
               )}
+
+            </div>
+          )}
         </div>
       )}
     </div>
