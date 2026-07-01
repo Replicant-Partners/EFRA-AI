@@ -592,11 +592,17 @@ export async function POST(request: Request) {
           log(`Running deep company analysis for ${ticker}…`);
           log(`Part 1: Self-view · Part 2: Franchise · Part 3: Management…`);
 
-          const result = await runCompany(llm, {
-            ticker,
-            company_name: undefined,
-            analyst_note: (state as { analyst_notes?: Record<string, string> }).analyst_notes?.["company"],
-          });
+          log(`This agent runs 7 analytical parts — may take 3-5 minutes...`);
+          let kaCount = 0;
+          const keepaliveC = setInterval(() => { kaCount++; log(`Analyzing part ${Math.min(kaCount, 7)}/7... (${kaCount * 15}s elapsed)`); }, 15000);
+          let result;
+          try {
+            result = await runCompany(llm, {
+              ticker,
+              company_name: undefined,
+              analyst_note: (state as { analyst_notes?: Record<string, string> }).analyst_notes?.["company"],
+            });
+          } finally { clearInterval(keepaliveC); }
 
           log(`─────────────────────`);
           log(`Moat:        ${result?.franchise?.moat_source ?? "?"} — ${result?.franchise?.moat_depth ?? "?"} (${result?.franchise?.moat_durability ?? "?"})`);
@@ -640,7 +646,12 @@ export async function POST(request: Request) {
             news_headlines:     company?.analyst_questions                 ?? [],
           };
 
-          const result = await runGorilla(llm, gorillaInput);
+          let kaG = 0;
+          const keepaliveG = setInterval(() => { kaG++; log(`Scoring dimensions... (${kaG * 15}s elapsed)`); }, 15000);
+          let result;
+          try {
+            result = await runGorilla(llm, gorillaInput);
+          } finally { clearInterval(keepaliveG); }
 
           log(`─────────────────────`);
           log(`Verdict:      ${result?.gorilla_verdict ?? "?"}`);
@@ -682,7 +693,12 @@ export async function POST(request: Request) {
             news_headlines:     company?.analyst_questions                          ?? [],
           };
 
-          const result = await runImagine(llm, imagineInput);
+          let kaI = 0;
+          const keepaliveI = setInterval(() => { kaI++; log(`Projecting scenarios... (${kaI * 15}s elapsed)`); }, 15000);
+          let result;
+          try {
+            result = await runImagine(llm, imagineInput);
+          } finally { clearInterval(keepaliveI); }
 
           log(`─────────────────────`);
           log(`Digital stage:  ${result?.digital_stage ?? "?"}`);
@@ -723,7 +739,12 @@ export async function POST(request: Request) {
             news_headlines:     company?.analyst_questions                         ?? [],
           };
 
-          const result = await runThesis(llm, thesisInput);
+          let kaT = 0;
+          const keepaliveT = setInterval(() => { kaT++; log(`Building thesis... (${kaT * 15}s elapsed)`); }, 15000);
+          let result;
+          try {
+            result = await runThesis(llm, thesisInput);
+          } finally { clearInterval(keepaliveT); }
 
           log(`─────────────────────`);
           log(`Thesis quality:  ${result?.thesis_quality ?? "?"}`);
