@@ -6,6 +6,11 @@ import { runValuation } from "@/src/agents/05-valuation/index";
 import { runKata } from "@/src/agents/08-kata/index";
 import { runCommunication } from "@/src/agents/06-communication/index";
 import { runLens } from "@/src/agents/09-lens/index";
+import { runCompany } from "@/src/agents/13-company/index";
+import { runGorilla } from "@/src/agents/10-gorilla/index";
+import { runImagine } from "@/src/agents/11-imagine/index";
+import { runThesis } from "@/src/agents/12-thesis/index";
+import type { CompanyBoard, GorillaInput } from "@/src/shared/types";
 import { buildLLM } from "@/src/configurator";
 import type { ILanguageModel, ChatParams } from "@/src/core/ports/ILanguageModel";
 import type { PipelineState, ScoutInput } from "@/src/shared/types";
@@ -579,6 +584,152 @@ export async function POST(request: Request) {
               log(`  · ${r}`);
             }
           }
+
+          send({ type: "done", result, final: true });
+
+        // ── 13 COMPANY ─────────────────────────────────────────────────────────────────
+        } else if (agent === "company") {
+          log(`Running deep company analysis for ${ticker}…`);
+          log(`Part 1: Self-view · Part 2: Franchise · Part 3: Management…`);
+
+          const result = await runCompany(llm, {
+            ticker,
+            company_name: undefined,
+            analyst_note: (state as { analyst_notes?: Record<string, string> }).analyst_notes?.["company"],
+          });
+
+          log(`─────────────────────`);
+          log(`Moat:        ${result?.franchise?.moat_source ?? "?"} — ${result?.franchise?.moat_depth ?? "?"} (${result?.franchise?.moat_durability ?? "?"})`);
+          log(`Trust score: ${result?.owner_operator?.mgmt_trust_score ?? "?"}/100`);
+          log(`Thesis:      ${result?.thesis_statement?.thesis_quality ?? "?"}`);
+          log(`CEO verdict: ${result?.owner_operator?.ceo_scorecard?.verdict ?? "?"}`);
+          if (result?.gorilla_elevator?.elevator_pitch) {
+            log(`─────────────────────`);
+            log(`Gorilla pitch: ${result.gorilla_elevator.elevator_pitch}`);
+          }
+
+          send({ type: "done", result });
+
+        // ── 10 GORILLA ─────────────────────────────────────────────────────────────────
+        } else if (agent === "gorilla") {
+          log(`Applying Value Gorilla Framework — scoring 4 dimensions…`);
+          log(`Obvious Problem · Invisible Gorilla · Combinatorial · Choke Point`);
+
+          const company = state.company as CompanyBoard | undefined;
+          const gorillaInput: GorillaInput = {
+            ticker,
+            company_name: company?.franchise?.identity,
+            analyst_id,
+            business_summary:   company?.franchise?.executive_summary ?? "",
+            economic_domain:    company?.franchise?.identity          ?? "",
+            geographic_exposure: company?.franchise?.geography        ?? "",
+            moat_type:          company?.franchise?.moat_source       ?? "",
+            moat_evidence:      company?.franchise?.moat_evidence     ?? "",
+            key_metrics: [
+              company?.financials?.signposts?.revenue_cagr_3y,
+              company?.financials?.signposts?.gross_margin_latest,
+              company?.financials?.signposts?.roic,
+            ].filter(Boolean).join("; "),
+            management_notes:   company?.owner_operator?.trust_rationale ?? "",
+            main_thesis:        company?.thesis_statement?.thesis         ?? "",
+            catalyst:           company?.franchise?.catalyst_assessment   ?? "",
+            bull_triggers:      company?.gorilla_elevator?.why_likely_to_succeed ?? "",
+            base_narrative:     company?.business_memo                    ?? "",
+            bear_risk:          (company?.thesis_statement?.key_risks ?? []).join("; "),
+            invalidation:       company?.thesis_statement?.key_risks?.[0] ?? "",
+            news_headlines:     company?.analyst_questions                 ?? [],
+          };
+
+          const result = await runGorilla(llm, gorillaInput);
+
+          log(`─────────────────────`);
+          log(`Verdict:      ${result?.gorilla_verdict ?? "?"}`);
+          log(`Total score:  ${result?.gorilla_total ?? "?"}/100`);
+          log(`  Obvious:    ${result?.obvious_problem?.score ?? "?"}/100 (25%)`);
+          log(`  Invisible:  ${result?.invisible_gorilla?.score ?? "?"}/100 (30%)`);
+          log(`  Combin.:    ${result?.combinatorial?.score ?? "?"}/100 (25%)`);
+          log(`  Choke pt:   ${result?.choke_point?.score ?? "?"}/100 (20%)`);
+
+          send({ type: "done", result });
+
+        // ── 11 IMAGINE ─────────────────────────────────────────────────────────────────
+        } else if (agent === "imagine") {
+          log(`Projecting ${ticker} at 5Y · 10Y · 20Y horizons…`);
+          log(`Digital stage · Growth driver · Falsifiable predictions`);
+
+          const company = state.company as CompanyBoard | undefined;
+          const imagineInput: GorillaInput = {
+            ticker,
+            company_name: company?.franchise?.identity,
+            analyst_id,
+            business_summary:    company?.franchise?.executive_summary ?? "",
+            economic_domain:     company?.franchise?.identity          ?? "",
+            geographic_exposure: company?.franchise?.geography         ?? "",
+            moat_type:           company?.franchise?.moat_source       ?? "",
+            moat_evidence:       company?.franchise?.moat_evidence     ?? "",
+            key_metrics: [
+              company?.financials?.signposts?.revenue_cagr_3y,
+              company?.financials?.signposts?.gross_margin_latest,
+              company?.financials?.signposts?.roic,
+            ].filter(Boolean).join("; "),
+            management_notes:   company?.owner_operator?.trust_rationale          ?? "",
+            main_thesis:        company?.thesis_statement?.thesis                  ?? "",
+            catalyst:           company?.franchise?.catalyst_assessment            ?? "",
+            bull_triggers:      company?.gorilla_elevator?.why_likely_to_succeed   ?? "",
+            base_narrative:     company?.business_memo                             ?? "",
+            bear_risk:          (company?.thesis_statement?.key_risks ?? []).join("; "),
+            invalidation:       company?.thesis_statement?.key_risks?.[0]          ?? "",
+            news_headlines:     company?.analyst_questions                          ?? [],
+          };
+
+          const result = await runImagine(llm, imagineInput);
+
+          log(`─────────────────────`);
+          log(`Digital stage:  ${result?.digital_stage ?? "?"}`);
+          log(`Growth driver:  ${result?.growth_driver ?? "?"}`);
+          log(`Confidence:     ${result?.imagination_confidence != null ? (result.imagination_confidence * 100).toFixed(0) : "?"}%`);
+          log(`Scenarios:      ${result?.scenarios?.length ?? 0} horizons`);
+          log(`Predictions:    ${result?.predictions?.length ?? 0} falsifiable`);
+
+          send({ type: "done", result });
+
+        // ── 12 THESIS ────────────────────────────────────────────────────────────────
+        } else if (agent === "thesis") {
+          log(`Synthesizing investment thesis — three pillars…`);
+          log(`Business Franchise · Management Quality · Valuation Gap`);
+
+          const company = state.company as CompanyBoard | undefined;
+          const thesisInput: GorillaInput = {
+            ticker,
+            company_name: company?.franchise?.identity,
+            analyst_id,
+            business_summary:    company?.franchise?.executive_summary ?? "",
+            economic_domain:     company?.franchise?.identity          ?? "",
+            geographic_exposure: company?.franchise?.geography         ?? "",
+            moat_type:           company?.franchise?.moat_source       ?? "",
+            moat_evidence:       company?.franchise?.moat_evidence     ?? "",
+            key_metrics: [
+              company?.financials?.signposts?.revenue_cagr_3y,
+              company?.financials?.signposts?.gross_margin_latest,
+              company?.financials?.signposts?.roic,
+            ].filter(Boolean).join("; "),
+            management_notes:   company?.owner_operator?.trust_rationale         ?? "",
+            main_thesis:        company?.thesis_statement?.thesis                 ?? "",
+            catalyst:           company?.franchise?.catalyst_assessment           ?? "",
+            bull_triggers:      company?.gorilla_elevator?.why_likely_to_succeed  ?? "",
+            base_narrative:     company?.business_memo                            ?? "",
+            bear_risk:          (company?.thesis_statement?.key_risks ?? []).join("; "),
+            invalidation:       company?.thesis_statement?.key_risks?.[0]         ?? "",
+            news_headlines:     company?.analyst_questions                         ?? [],
+          };
+
+          const result = await runThesis(llm, thesisInput);
+
+          log(`─────────────────────`);
+          log(`Thesis quality:  ${result?.thesis_quality ?? "?"}`);
+          log(`Moat strength:   ${result?.business_franchise?.moat_strength ?? "?"}`);
+          log(`Durability:      ${result?.business_franchise?.durability ?? "?"}`);
+          log(`Capital alloc.:  ${result?.management_quality?.capital_allocation_verdict ?? "?"}`);
 
           send({ type: "done", result, final: true });
         }

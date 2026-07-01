@@ -269,6 +269,11 @@ export interface PipelineState {
   communication?: CommOutput;
   kata?: KataBoard;
   lens?: LensBoard;
+  // Research pipeline (10–13) — run independently after main pipeline
+  company?: CompanyBoard;
+  gorilla?: GorillaBoard;
+  imagine?: ImagineBoard;
+  thesis?: ThesisBoard;
   // Analyst notes added at each approval step.
   // Key = the agent that just completed (e.g. "scout", "intel").
   // Value = the note the analyst wrote before approving and continuing.

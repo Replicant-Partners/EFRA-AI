@@ -1,6 +1,6 @@
 "use client";
 
-import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput, KataBoard, LensBoard } from "@/src/shared/types";
+import type { AgentEvent, ScoutOutput, IntelBundle, ForensicProfile, CFOutput, ValuationModel, CommOutput, KataBoard, LensBoard, GorillaBoard, ImagineBoard, ThesisBoard, CompanyBoard } from "@/src/shared/types";
 
 interface Props {
   agentKey: string;
@@ -822,6 +822,233 @@ function AgentSummary({ agentKey, result }: { agentKey: string; result: unknown 
           <span className="block border-t border-[#EDE7E0] pt-2">
             {label("PM Memo")}
             <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.pm_memo}</span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+
+  if (agentKey === "company") {
+    const r = result as CompanyBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+    const trustColor = (score: number) =>
+      score >= 70 ? "text-[#7A9E6A]" : score >= 50 ? "text-[#C89040]" : "text-[#C84848]";
+    const moatDepthColor = (depth: string) =>
+      depth === "wide" ? "text-[#7A9E6A]" : depth === "narrow" ? "text-[#C89040]" : "text-[#A89E94]";
+
+    return (
+      <span className="block space-y-2">
+        <span className="block text-[#A89E94] text-[11px]">
+          moat <span className={moatDepthColor(r.franchise?.moat_depth ?? "")}>{r.franchise?.moat_depth ?? "?"}</span>
+          {" · "}trust <span className={trustColor(r.owner_operator?.mgmt_trust_score ?? 0)}>{r.owner_operator?.mgmt_trust_score ?? "?"}/100</span>
+          {r.franchise?.moat_source && <> · source <span className="text-[#6E6258]">{r.franchise.moat_source}</span></>}
+          {r.thesis_statement?.thesis_quality && (
+            <> · <span className={r.thesis_statement.thesis_quality === "investment_grade" ? "text-[#7A9E6A]" : r.thesis_statement.thesis_quality === "needs_work" ? "text-[#C89040]" : "text-[#C84848]"}>
+              {r.thesis_statement.thesis_quality.replace("_", " ")}
+            </span></>
+          )}
+        </span>
+        {r.business_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Business")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.business_memo}</span>
+          </span>
+        )}
+        {r.gorilla_elevator?.elevator_pitch && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Gorilla Elevator Pitch")}
+            <span className="block text-[11px] text-[#C8804A] font-medium leading-relaxed">{r.gorilla_elevator.elevator_pitch}</span>
+            {r.gorilla_elevator?.why_market_doubts_it && (
+              <span className="block text-[11px] text-[#A89E94] mt-1 leading-relaxed">
+                Why market doubts: {r.gorilla_elevator.why_market_doubts_it}
+              </span>
+            )}
+          </span>
+        )}
+        {(r.analyst_questions ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Open Questions")}
+            {r.analyst_questions.map((q, i) => (
+              <span key={i} className="flex items-start gap-2 text-[11px]">
+                <span className="text-[#C89040] shrink-0">Q{i + 1}</span>
+                <span className="text-[#6E6258]">{q}</span>
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (agentKey === "gorilla") {
+    const r = result as GorillaBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+    const verdictColor =
+      r.gorilla_verdict === "GORILLA"      ? "text-[#C8804A]" :
+      r.gorilla_verdict === "SMALL_ANIMAL" ? "text-[#C89040]" : "text-[#A89E94]";
+    const dimScore = (score: number) =>
+      score >= 75 ? "text-[#7A9E6A]" : score >= 50 ? "text-[#C8804A]" : "text-[#C84848]";
+
+    return (
+      <span className="block space-y-2">
+        <span className="block text-[#A89E94] text-[11px]">
+          verdict <span className={`font-semibold ${verdictColor}`}>{r.gorilla_verdict}</span>
+          {" · "}score <span className="text-[#C8804A]">{r.gorilla_total}</span>/100
+        </span>
+        <span className="block border-t border-[#EDE7E0] pt-2">
+          {label("Four Dimensions")}
+          <span className="flex border border-[#EDE7E0] text-center overflow-hidden rounded-sm">
+            {([
+              { key: "obvious_problem",   label: "Obvious",    weight: "25%" },
+              { key: "invisible_gorilla", label: "Invisible",  weight: "30%" },
+              { key: "combinatorial",     label: "Combin.",    weight: "25%" },
+              { key: "choke_point",       label: "Choke",      weight: "20%" },
+            ] as const).map((dim, i) => {
+              const d = r[dim.key as keyof GorillaBoard] as { score: number } | undefined;
+              const score = d?.score ?? 0;
+              return (
+                <span key={dim.key} className={`flex-1 py-2 px-1 ${i < 3 ? "border-r border-[#EDE7E0]" : ""}`}>
+                  <span className="block text-[8px] text-[#C0B8AC] uppercase tracking-wider mb-1">{dim.label}</span>
+                  <span className={`block text-[12px] font-bold ${dimScore(score)}`}>{score}</span>
+                  <span className="block text-[8px] text-[#A89E94]">{dim.weight}</span>
+                </span>
+              );
+            })}
+          </span>
+        </span>
+        {r.verdict_rationale && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Verdict")}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.verdict_rationale}</span>
+          </span>
+        )}
+        {(r.key_questions ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Key Questions")}
+            {r.key_questions.map((q, i) => (
+              <span key={i} className="flex items-start gap-2 text-[11px]">
+                <span className="text-[#C89040] shrink-0">Q{i + 1}</span>
+                <span className="text-[#6E6258]">{q}</span>
+              </span>
+            ))}
+          </span>
+        )}
+        {r.gorilla_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Gorilla Memo")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.gorilla_memo}</span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (agentKey === "imagine") {
+    const r = result as ImagineBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+    const stageColor = (stage: string) =>
+      stage === "source" ? "text-[#C8804A]" :
+      stage === "twin"   ? "text-[#7A9E6A]" :
+      stage === "shadow" ? "text-[#C89040]" : "text-[#A89E94]";
+
+    return (
+      <span className="block space-y-2">
+        <span className="block text-[#A89E94] text-[11px]">
+          digital stage <span className={`font-semibold ${stageColor(r.digital_stage)}`}>{r.digital_stage}</span>
+          {" · "}growth <span className="text-[#6E6258]">{r.growth_driver}</span>
+          {" · "}confidence <span className="text-[#8C7E70]">{((r.imagination_confidence ?? 0) * 100).toFixed(0)}%</span>
+        </span>
+        {(r.scenarios ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Long-Range Scenarios")}
+            <span className="block space-y-2">
+              {r.scenarios.map((s, i) => (
+                <span key={i} className="block border border-[#EDE7E0] rounded-sm px-2.5 py-2">
+                  <span className="flex items-baseline gap-2 mb-1">
+                    <span className="text-[10px] font-bold text-[#C8804A]">{s.horizon.toUpperCase()}</span>
+                    <span className="text-[10px] text-[#A89E94]">{((s.probability ?? 0) * 100).toFixed(0)}% prob</span>
+                    <span className="text-[10px] text-[#8C7E70]">force: {s.key_force}</span>
+                  </span>
+                  <span className="block text-[11px] text-[#6E6258] leading-relaxed">{s.world}</span>
+                </span>
+              ))}
+            </span>
+          </span>
+        )}
+        {(r.not_in_the_price ?? []).length > 0 && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Not in the Price")}
+            {r.not_in_the_price.map((item, i) => (
+              <span key={i} className="flex items-start gap-2 text-[11px]">
+                <span className="text-[#C8804A] shrink-0">→</span>
+                <span className="text-[#6E6258]">{item}</span>
+              </span>
+            ))}
+          </span>
+        )}
+        {r.imagine_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Imagine Memo")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.imagine_memo}</span>
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  if (agentKey === "thesis") {
+    const r = result as ThesisBoard;
+    const label = (txt: string) => (
+      <span className="block text-[9px] font-semibold tracking-[0.12em] text-[#C0B8AC] uppercase mb-1">{txt}</span>
+    );
+    const qualityColor =
+      r.thesis_quality === "investment_grade" ? "text-[#7A9E6A]" :
+      r.thesis_quality === "needs_work"       ? "text-[#C89040]" : "text-[#C84848]";
+    const moatColor = (s: string) =>
+      s === "wide" ? "text-[#7A9E6A]" : s === "narrow" ? "text-[#C89040]" : "text-[#A89E94]";
+
+    return (
+      <span className="block space-y-2">
+        <span className="block text-[#A89E94] text-[11px]">
+          quality <span className={`font-semibold ${qualityColor}`}>{r.thesis_quality?.replace("_", " ")}</span>
+          {r.business_franchise?.moat_strength && (
+            <> · moat <span className={moatColor(r.business_franchise.moat_strength)}>{r.business_franchise.moat_strength}</span></>
+          )}
+          {r.business_franchise?.durability && (
+            <> · durability <span className="text-[#6E6258]">{r.business_franchise.durability}</span></>
+          )}
+        </span>
+        {r.business_franchise?.summary && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Business Franchise")}
+            <span className="block text-[11px] text-[#6E6258] leading-relaxed">{r.business_franchise.summary}</span>
+            {r.business_franchise?.value_creation_mechanism && (
+              <span className="block text-[10px] text-[#A89E94] mt-1 italic">{r.business_franchise.value_creation_mechanism}</span>
+            )}
+          </span>
+        )}
+        {r.management_quality?.summary && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Management")}
+            <span className="block text-[11px] text-[#6E6258]">{r.management_quality.summary}</span>
+            {r.management_quality?.capital_allocation_verdict && (
+              <span className="block text-[10px] text-[#A89E94] mt-0.5">
+                capital allocation: <span className="text-[#8C7E70]">{r.management_quality.capital_allocation_verdict}</span>
+              </span>
+            )}
+          </span>
+        )}
+        {r.thesis_memo && (
+          <span className="block border-t border-[#EDE7E0] pt-2">
+            {label("Thesis Memo")}
+            <span className="block prose-tufte text-[11px] text-[#6E6258] leading-relaxed">{r.thesis_memo}</span>
           </span>
         )}
       </span>

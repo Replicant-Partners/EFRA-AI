@@ -11,6 +11,8 @@ export type { AgentEvent };
 
 type AgentKey = "scout" | "intel" | "forensic_pre" | "cf" | "forensic" | "valuation" | "communication" | "kata" | "lens";
 
+type ResearchAgentKey = "company" | "gorilla" | "imagine" | "thesis";
+
 type FormData = {
   ticker: string;
   analyst_id: string;
@@ -31,6 +33,13 @@ const AGENTS: { key: AgentKey; label: string; desc: string }[] = [
   { key: "lens",          label: "09 · LENS",            desc: "Consistency Auditor" },
 ];
 
+const RESEARCH_AGENTS: { key: ResearchAgentKey; label: string; desc: string }[] = [
+  { key: "company", label: "13 · COMPANY",  desc: "Deep Company Analysis" },
+  { key: "gorilla", label: "10 · GORILLA",  desc: "Value Gorilla Framework" },
+  { key: "imagine", label: "11 · IMAGINE",  desc: "Long-Range Scenarios" },
+  { key: "thesis",  label: "12 · THESIS",   desc: "Investment Thesis" },
+];
+
 // maps agent key → which key in PipelineState to store result
 const STATE_KEY: Record<AgentKey, keyof PipelineState> = {
   scout:         "scout",
@@ -42,6 +51,13 @@ const STATE_KEY: Record<AgentKey, keyof PipelineState> = {
   communication: "communication",
   kata:          "kata",
   lens:          "lens",
+};
+
+const RESEARCH_STATE_KEY: Record<ResearchAgentKey, string> = {
+  company: "company",
+  gorilla: "gorilla",
+  imagine: "imagine",
+  thesis:  "thesis",
 };
 
 export default function Home() {
@@ -61,6 +77,14 @@ export default function Home() {
   // Refs avoid stale closures in async SSE consumer
   const formDataRef = useRef<FormData | null>(null);
   const pipeStateRef = useRef<Partial<PipelineState> & { idea_id?: string }>({});
+
+  // ── Research pipeline state ────────────────────────────────────────────────
+  const [researchStepIdx,   setResearchStepIdx]   = useState(0);
+  const [researchRunning,   setResearchRunning]   = useState(false);
+  const [researchDone,      setResearchDone]      = useState(false);
+  const [researchEvents,    setResearchEvents]    = useState<Record<string, AgentEvent>>({});
+  const [researchLogs,      setResearchLogs]      = useState<Record<string, string[]>>({});
+  const researchStateRef = useRef<Partial<Record<string, unknown>>>({});
 
   async function callAgent(agentKey: string, fd: FormData, retryCount = 0): Promise<Response> {
     const controller = new AbortController();
@@ -92,6 +116,136 @@ export default function Home() {
       }
       throw err;
     }
+  }
+
+  async function callResearchAgent(agentKey: string, fd: FormData, retryCount = 0): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4 * 60 * 1000);
+    try {
+      const res = await fetch("/api/agent", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent: agentKey,
+          ticker: fd.ticker,
+          analyst_id: fd.analyst_id,
+          catalyst: fd.catalyst,
+          mode: fd.mode,
+          news: fd.news,
+          state: { ...pipeStateRef.current, ...researchStateRef.current },
+        }),
+      });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      if (retryCount === 0 && String(err).includes("network")) {
+        await new Promise(r => setTimeout(r, 1500));
+        return callResearchAgent(agentKey, fd, 1);
+      }
+      throw err;
+    }
+  }
+
+  async function runResearchStep(idx: number) {
+    if (idx >= RESEARCH_AGENTS.length) {
+      setResearchDone(true);
+      setResearchRunning(false);
+      return;
+    }
+
+    const agent = RESEARCH_AGENTS[idx];
+    const fd = formDataRef.current!;
+
+    setResearchStepIdx(idx);
+    setResearchRunning(true);
+    setResearchEvents(prev => ({ ...prev, [agent.key]: { agent: agent.key, status: "running" } }));
+    setResearchLogs(prev => ({ ...prev, [agent.key]: [] }));
+
+    try {
+      const res = await callResearchAgent(agent.key, fd);
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (!json) continue;
+
+          const msg = JSON.parse(json) as {
+            type: string;
+            msg?: string;
+            result?: unknown;
+            final?: boolean;
+            error?: string;
+          };
+
+          if (msg.type === "log" && msg.msg) {
+            setResearchLogs(prev => ({
+              ...prev,
+              [agent.key]: [...(prev[agent.key] ?? []), msg.msg!],
+            }));
+          } else if (msg.type === "done") {
+            const stateKey = RESEARCH_STATE_KEY[agent.key];
+            researchStateRef.current = { ...researchStateRef.current, [stateKey]: msg.result };
+
+            setResearchEvents(prev => ({
+              ...prev,
+              [agent.key]: { agent: agent.key, status: "done", result: msg.result, final: msg.final },
+            }));
+
+            if (msg.final) {
+              setResearchDone(true);
+              setResearchRunning(false);
+            } else {
+              // Auto-advance — no approval step in research pipeline
+              await runResearchStep(idx + 1);
+            }
+          } else if (msg.type === "error") {
+            setResearchEvents(prev => ({
+              ...prev,
+              [agent.key]: { agent: agent.key, status: "error", error: msg.error },
+            }));
+            setResearchRunning(false);
+            setResearchDone(true);
+          }
+        }
+      }
+    } catch (err) {
+      const msg = String(err);
+      const isAbort = msg.includes("abort") || msg.includes("AbortError");
+      const display = isAbort
+        ? `Timeout — agent ${agent.label} took too long. Try again.`
+        : msg;
+      setResearchEvents(prev => ({
+        ...prev,
+        [agent.key]: { agent: agent.key, status: "error", error: display },
+      }));
+      setResearchRunning(false);
+      setResearchDone(true);
+    }
+  }
+
+  function startResearch() {
+    researchStateRef.current = {};
+    setResearchStepIdx(0);
+    setResearchRunning(false);
+    setResearchDone(false);
+    setResearchEvents({});
+    setResearchLogs({});
+    runResearchStep(0);
   }
 
   async function runStep(idx: number) {
@@ -412,6 +566,54 @@ export default function Home() {
           {/* Revise panel — only when analysis is saved */}
           {isDone && finalState && !error && savedAnalysisId && (
             <RevisePanel analysisId={savedAnalysisId} />
+          )}
+
+          {/* Research Pipeline */}
+          {isDone && !error && (
+            <div className="border-t border-[#E4DDD6] pt-6 space-y-4">
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <h2 className="text-xs font-bold tracking-widest uppercase text-[#1E1A14]">
+                    Research Pipeline
+                  </h2>
+                  <p className="t-label mt-1">
+                    13 · COMPANY → 10 · GORILLA → 11 · IMAGINE → 12 · THESIS
+                  </p>
+                </div>
+                {!researchRunning && !researchDone && (
+                  <button
+                    onClick={startResearch}
+                    className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                  >
+                    Run Research →
+                  </button>
+                )}
+                {researchDone && (
+                  <button
+                    onClick={startResearch}
+                    className="text-xs text-[#A89E94] hover:text-[#C8804A] transition-colors"
+                  >
+                    ↺ Re-run Research
+                  </button>
+                )}
+              </div>
+
+              {(researchRunning || researchDone) && (
+                <div>
+                  {RESEARCH_AGENTS.map(agent => (
+                    <AgentStep
+                      key={agent.key}
+                      agentKey={agent.key}
+                      label={agent.label}
+                      desc={agent.desc}
+                      event={researchEvents[agent.key]}
+                      logs={researchLogs[agent.key]}
+                      pipelineRunning={researchRunning}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
