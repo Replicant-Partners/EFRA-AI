@@ -791,6 +791,7 @@ Think like an owner. Show the math in the 3-stage valuation.
     user:        userMessage,
     temperature: 0.2,
     max_tokens:  16000,
+    json_mode:   true,
   });
 
   try {
