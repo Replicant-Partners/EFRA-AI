@@ -84,6 +84,7 @@ export default function Home() {
   const [researchDone,      setResearchDone]      = useState(false);
   const [researchEvents,    setResearchEvents]    = useState<Record<string, AgentEvent>>({});
   const [researchLogs,      setResearchLogs]      = useState<Record<string, string[]>>({});
+  const [researchError, setResearchError] = useState<string | null>(null);
   const researchStateRef = useRef<Partial<Record<string, unknown>>>({});
 
   async function callAgent(agentKey: string, fd: FormData, retryCount = 0): Promise<Response> {
@@ -218,8 +219,8 @@ export default function Home() {
               ...prev,
               [agent.key]: { agent: agent.key, status: "error", error: msg.error },
             }));
+            setResearchError(msg.error ?? "Unknown error");
             setResearchRunning(false);
-            setResearchDone(true);
           }
         }
       }
@@ -233,8 +234,8 @@ export default function Home() {
         ...prev,
         [agent.key]: { agent: agent.key, status: "error", error: display },
       }));
+      setResearchError(display);
       setResearchRunning(false);
-      setResearchDone(true);
     }
   }
 
@@ -243,6 +244,7 @@ export default function Home() {
     setResearchStepIdx(0);
     setResearchRunning(false);
     setResearchDone(false);
+    setResearchError(null);
     setResearchEvents({});
     setResearchLogs({});
     runResearchStep(0);
@@ -598,7 +600,7 @@ export default function Home() {
                 )}
               </div>
 
-              {(researchRunning || researchDone) && (
+              {(researchRunning || researchDone || !!researchError) && (
                 <div>
                   {RESEARCH_AGENTS.map(agent => (
                     <AgentStep
@@ -615,6 +617,25 @@ export default function Home() {
               )}
             </div>
           )}
+              {researchError && (
+                <div className="border-t border-[#C84848]/30 pt-4 space-y-3">
+                  <p className="text-xs text-[#C84848]">{researchError}</p>
+                  <button
+                    onClick={() => {
+                      setResearchError(null);
+                      setResearchEvents(prev => {
+                        const next = { ...prev };
+                        delete next[RESEARCH_AGENTS[researchStepIdx].key];
+                        return next;
+                      });
+                      runResearchStep(researchStepIdx);
+                    }}
+                    className="text-xs font-bold tracking-widest uppercase text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                  >
+                    Retry {RESEARCH_AGENTS[researchStepIdx]?.label}
+                  </button>
+                </div>
+              )}
         </div>
       )}
     </div>
