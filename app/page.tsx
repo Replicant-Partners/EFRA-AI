@@ -84,7 +84,9 @@ export default function Home() {
   const [researchDone,      setResearchDone]      = useState(false);
   const [researchEvents,    setResearchEvents]    = useState<Record<string, AgentEvent>>({});
   const [researchLogs,      setResearchLogs]      = useState<Record<string, string[]>>({});
-  const [researchError, setResearchError] = useState<string | null>(null);
+  const [researchError,      setResearchError]      = useState<string | null>(null);
+  const [researchSaveStatus, setResearchSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [savedResearchId,    setSavedResearchId]    = useState<string | null>(null);
   const researchStateRef = useRef<Partial<Record<string, unknown>>>({});
 
   async function callAgent(agentKey: string, fd: FormData, retryCount = 0): Promise<Response> {
@@ -210,6 +212,7 @@ export default function Home() {
             if (msg.final) {
               setResearchDone(true);
               setResearchRunning(false);
+              void saveResearchToLibrary({ ...researchStateRef.current });
             } else {
               // Auto-advance — no approval step in research pipeline
               await runResearchStep(idx + 1);
@@ -245,9 +248,33 @@ export default function Home() {
     setResearchRunning(false);
     setResearchDone(false);
     setResearchError(null);
+    setResearchSaveStatus("idle");
+    setSavedResearchId(null);
     setResearchEvents({});
     setResearchLogs({});
     runResearchStep(0);
+  }
+
+  async function saveResearchToLibrary(researchState: Record<string, unknown>) {
+    if (!formDataRef.current) return;
+    setResearchSaveStatus("saving");
+    try {
+      const res = await fetch("/api/research", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:     formDataRef.current.ticker,
+          analyst_id: formDataRef.current.analyst_id,
+          state:      researchState,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as { id: string };
+      setSavedResearchId(data.id);
+      setResearchSaveStatus("saved");
+    } catch {
+      setResearchSaveStatus("error");
+    }
   }
 
   async function runStep(idx: number) {
@@ -617,6 +644,24 @@ export default function Home() {
               )}
             </div>
           )}
+              {researchDone && !researchError && researchSaveStatus === "saving" && (
+                <p className="t-label text-[#A89E94]">saving to research library…</p>
+              )}
+              {researchDone && !researchError && researchSaveStatus === "saved" && savedResearchId && (
+                <div className="flex items-center gap-4">
+                  <span className="t-label text-[#7A9E6A]">saved to research library</span>
+                  <a
+                    href={`/research-library/${savedResearchId}`}
+                    className="text-xs text-[#C8804A] hover:text-[#A86030] border-b border-[#C8804A]/40 hover:border-[#A86030] pb-0.5 transition-colors"
+                  >
+                    View in Research Library →
+                  </a>
+                </div>
+              )}
+              {researchDone && !researchError && researchSaveStatus === "error" && (
+                <p className="t-label text-[#C84848]">save failed — results still visible above</p>
+              )}
+
               {researchError && (
                 <div className="border-t border-[#C84848]/30 pt-4 space-y-3">
                   <p className="text-xs text-[#C84848]">{researchError}</p>

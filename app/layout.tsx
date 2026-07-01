@@ -24,6 +24,7 @@ export default function RootLayout({
             <a href="/research" className="t-label hover:text-[#C8804A] transition-colors">Research</a>
             <a href="/screener" className="t-label hover:text-[#C8804A] transition-colors">Screener</a>
             <a href="/library" className="t-label hover:text-[#C8804A] transition-colors">Library</a>
+            <a href="/research-library" className="t-label hover:text-[#C8804A] transition-colors">Research</a>
             <a href="/observatory" className="t-label hover:text-[#C8804A] transition-colors">Observatory</a>
             <a href="/docs" className="t-label hover:text-[#C8804A] transition-colors">Guide</a>
           </nav>

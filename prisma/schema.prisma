@@ -428,3 +428,36 @@ model DyadEntry {
   @@index([analysis_id])
   @@index([created_at])
 }
+
+// ─── Research Library ─────────────────────────────────────────────────────────
+// Stores the output of the Research Pipeline (COMPANY → GORILLA → IMAGINE → THESIS).
+// Separate from Analysis (main pipeline) because research produces different outputs.
+
+model ResearchAnalysis {
+  id             String   @id @default(cuid())
+  ticker         String
+  analyst_id     String
+
+  // Denormalized metadata for fast list queries (no JSON parsing needed)
+  moat_source    String?   // company.franchise.moat_source
+  moat_depth     String?   // company.franchise.moat_depth
+  trust_score    Float?    // company.owner_operator.mgmt_trust_score
+  thesis_quality String?   // thesis.thesis_quality
+  gorilla_verdict String?  // gorilla.gorilla_verdict
+  gorilla_total   Float?   // gorilla.gorilla_total
+  digital_stage   String?  // imagine.digital_stage
+  growth_driver   String?  // imagine.growth_driver
+  imagination_confidence Float? // imagine.imagination_confidence
+
+  // Full outputs from all 4 agents
+  full_state     Json     // { company: CompanyBoard, gorilla: GorillaBoard, imagine: ImagineBoard, thesis: ThesisBoard }
+
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([ticker])
+  @@index([analyst_id])
+  @@index([created_at])
+  @@index([gorilla_verdict])
+  @@index([thesis_quality])
+}
